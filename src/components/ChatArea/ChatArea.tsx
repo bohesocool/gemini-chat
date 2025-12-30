@@ -8,6 +8,7 @@
 import { useState, useCallback } from 'react';
 import { useChatWindowStore } from '../../stores/chatWindow';
 import { useSettingsStore } from '../../stores/settings';
+import { useModelStore } from '../../stores/model';
 import { ChatHeader } from './ChatHeader';
 import { SubTopicTabs } from './SubTopicTabs';
 import { ChatConfigPanel } from './ChatConfigPanel';
@@ -15,8 +16,9 @@ import { VirtualMessageList } from './VirtualMessageList';
 import { MessageInput } from '../MessageInput';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import type { ChatWindowConfig } from '../../types/chatWindow';
-import type { Attachment, ImageGenerationConfig } from '../../types/models';
+import type { Attachment, ImageGenerationConfig, ThinkingLevel } from '../../types/models';
 import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
+import { resolveStreamingEnabled } from '../../services/streaming';
 
 // ============ 类型定义 ============
 
@@ -58,10 +60,18 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     updateAdvancedConfig,
     regenerateMessage,
     editMessage,
-    clearError,
+    updateMessageError,
+    retryUserMessage,
+    deleteMessage,
   } = useChatWindowStore();
 
   const { apiEndpoint, apiKey } = useSettingsStore();
+
+  // 获取模型能力 - 需求: 4.6
+  const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
+
+  // 获取全局设置用于解析流式设置
+  const getFullSettings = useSettingsStore(state => state.getFullSettings);
 
   // 确定当前窗口 ID
   const currentWindowId = propWindowId || activeWindowId;
@@ -149,6 +159,28 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     });
   }, [currentWindowId, currentWindow, updateWindowConfig]);
 
+  // 获取当前图片配置 - 需求: 5.2
+  const currentImageConfig: ImageGenerationConfig = currentWindow?.config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG;
+
+  // 获取当前模型能力 - 需求: 4.6
+  const currentModelCapabilities = currentWindow
+    ? getEffectiveCapabilities(currentWindow.config.model)
+    : undefined;
+
+  // 获取流式设置 - 需求: 4.1
+  const streamingEnabled = currentWindow
+    ? resolveStreamingEnabled(currentWindow.config, getFullSettings())
+    : true;
+
+  // 获取思维链设置 - 需求: 4.2
+  const includeThoughts = currentWindow?.config.advancedConfig?.includeThoughts;
+
+  // 获取思考程度 - 需求: 4.3
+  const thinkingLevel = currentWindow?.config.advancedConfig?.thinkingLevel;
+
+  // 获取思考预算 - 需求: 4.3
+  const thinkingBudget = currentWindow?.config.advancedConfig?.thinkingBudget;
+
   // 处理图片配置变更 - 需求: 5.1
   const handleImageConfigChange = useCallback(
     (config: Partial<ImageGenerationConfig>) => {
@@ -160,8 +192,38 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     [currentWindowId, updateAdvancedConfig]
   );
 
-  // 获取当前图片配置 - 需求: 5.2
-  const currentImageConfig: ImageGenerationConfig = currentWindow?.config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG;
+  // 处理流式输出切换 - 需求: 4.1
+  const handleStreamingToggle = useCallback(() => {
+    if (!currentWindowId || !currentWindow) return;
+    // 切换窗口级别的流式设置
+    updateWindowConfig(currentWindowId, {
+      streamingEnabled: !streamingEnabled,
+    });
+  }, [currentWindowId, currentWindow, streamingEnabled, updateWindowConfig]);
+
+  // 处理思维链切换 - 需求: 4.2
+  const handleThoughtsToggle = useCallback(() => {
+    if (!currentWindowId) return;
+    updateAdvancedConfig(currentWindowId, {
+      includeThoughts: !includeThoughts,
+    });
+  }, [currentWindowId, includeThoughts, updateAdvancedConfig]);
+
+  // 处理思考程度变更 - 需求: 4.3
+  const handleThinkingLevelChange = useCallback((level: ThinkingLevel) => {
+    if (!currentWindowId) return;
+    updateAdvancedConfig(currentWindowId, {
+      thinkingLevel: level,
+    });
+  }, [currentWindowId, updateAdvancedConfig]);
+
+  // 处理思考预算变更 - 需求: 4.3
+  const handleThinkingBudgetChange = useCallback((budget: number) => {
+    if (!currentWindowId) return;
+    updateAdvancedConfig(currentWindowId, {
+      thinkingBudget: budget,
+    });
+  }, [currentWindowId, updateAdvancedConfig]);
 
   // 打开配置面板
   const handleOpenConfig = useCallback(() => {
@@ -206,44 +268,43 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     [currentWindowId, currentWindow, editMessage, regenerateMessage]
   );
 
-  // 处理重试（错误后重新发送最后一条消息）
-  const handleRetry = useCallback(async () => {
+  // 处理重试（消息级别错误后重新发送）
+  const handleRetry = useCallback(async (messageId: string) => {
     if (!currentWindowId || !currentWindow || !currentSubTopic) return;
     
-    // 清除错误
-    clearError();
+    // 找到对应的消息
+    const message = currentSubTopic.messages.find(m => m.id === messageId);
+    if (!message) return;
     
-    // 找到最后一条AI消息（如果有的话）或者最后一条用户消息
-    const messages = currentSubTopic.messages;
+    // 先清除消息的错误状态
+    await updateMessageError(currentWindowId, currentWindow.activeSubTopicId, messageId, null);
     
-    if (messages.length === 0) return;
-    
-    const lastMessage = messages[messages.length - 1];
-    
-    if (lastMessage.role === 'model') {
-      // 如果最后一条是AI消息，重新生成它
-      await regenerateMessage(currentWindowId, currentWindow.activeSubTopicId, lastMessage.id);
+    if (message.role === 'model') {
+      // 如果是 AI 消息，重新生成它
+      setRegeneratingMessageId(messageId);
+      try {
+        await regenerateMessage(currentWindowId, currentWindow.activeSubTopicId, messageId);
+      } finally {
+        setRegeneratingMessageId(null);
+      }
     } else {
-      // 如果最后一条是用户消息（说明AI还没回复就出错了）
-      // 重新发送这条用户消息
-      await sendMessage(
-        currentWindowId,
-        currentWindow.activeSubTopicId,
-        lastMessage.content,
-        lastMessage.attachments,
-        {
-          endpoint: apiEndpoint,
-          apiKey: apiKey,
-          model: currentWindow.config.model,
-        }
-      );
+      // 如果是用户消息（说明 AI 还没回复就出错了）
+      // 使用 retryUserMessage 重试，不创建新的用户消息
+      await retryUserMessage(currentWindowId, currentWindow.activeSubTopicId, messageId);
     }
-  }, [currentWindowId, currentWindow, currentSubTopic, clearError, regenerateMessage, sendMessage, apiEndpoint, apiKey]);
+  }, [currentWindowId, currentWindow, currentSubTopic, updateMessageError, regenerateMessage, retryUserMessage]);
 
-  // 处理关闭错误提示
-  const handleDismissError = useCallback(() => {
-    clearError();
-  }, [clearError]);
+  // 处理关闭错误提示（消息级别）
+  const handleDismissError = useCallback(async (messageId: string) => {
+    if (!currentWindowId || !currentWindow) return;
+    await updateMessageError(currentWindowId, currentWindow.activeSubTopicId, messageId, null);
+  }, [currentWindowId, currentWindow, updateMessageError]);
+
+  // 处理删除消息
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    if (!currentWindowId || !currentWindow) return;
+    await deleteMessage(currentWindowId, currentWindow.activeSubTopicId, messageId);
+  }, [currentWindowId, currentWindow, deleteMessage]);
 
 
 
@@ -293,10 +354,11 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         renderContent={renderContent}
         onRegenerateMessage={handleRegenerateMessage}
         onEditMessage={handleEditMessage}
+        onDeleteMessage={handleDeleteMessage}
         regeneratingMessageId={regeneratingMessageId}
       />
 
-      {/* 消息输入 - Requirements: 5.1, 5.4, 联网搜索, 图片配置 */}
+      {/* 消息输入 - Requirements: 5.1, 5.4, 联网搜索, 图片配置, 状态指示器 */}
       {/* 注意：已移除 ModelParamsBar 组件 - Requirements: 7.5 */}
       <MessageInput
         onSend={handleSendMessage}
@@ -313,6 +375,15 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         currentModel={currentWindow.config.model}
         imageConfig={currentImageConfig}
         onImageConfigChange={handleImageConfigChange}
+        streamingEnabled={streamingEnabled}
+        onStreamingToggle={handleStreamingToggle}
+        includeThoughts={includeThoughts}
+        onThoughtsToggle={handleThoughtsToggle}
+        thinkingLevel={thinkingLevel}
+        onThinkingLevelChange={handleThinkingLevelChange}
+        thinkingBudget={thinkingBudget}
+        onThinkingBudgetChange={handleThinkingBudgetChange}
+        modelCapabilities={currentModelCapabilities}
       />
 
       {/* 毛玻璃配置面板 - Requirements: 6.4, 6.5 */}

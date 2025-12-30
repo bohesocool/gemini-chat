@@ -19,6 +19,8 @@ export interface ImageConfigToolbarProps {
   onChange: (config: Partial<ImageGenerationConfig>) => void;
   /** 是否禁用 - Requirements: 6.4 */
   disabled?: boolean;
+  /** 是否支持图片分辨率设置 - Requirements: 3.1, 3.4 */
+  supportsImageSize?: boolean;
 }
 
 /**
@@ -62,6 +64,7 @@ export function ImageConfigToolbar({
   config,
   onChange,
   disabled = false,
+  supportsImageSize = true,
 }: ImageConfigToolbarProps) {
   /**
    * 处理宽高比选择
@@ -97,13 +100,15 @@ export function ImageConfigToolbar({
       />
 
       {/* 分辨率选择按钮 - Requirements: 3.2, 3.3, 3.4, 4.2 */}
-      <DropdownButton
-        value={config.imageSize}
-        options={IMAGE_SIZE_OPTIONS}
-        onSelect={handleImageSizeChange}
-        label="分辨率"
-        disabled={disabled}
-      />
+      {supportsImageSize && (
+        <DropdownButton
+          value={config.imageSize}
+          options={IMAGE_SIZE_OPTIONS}
+          onSelect={handleImageSizeChange}
+          label="分辨率"
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 }

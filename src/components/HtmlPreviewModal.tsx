@@ -3,7 +3,9 @@
  * 需求: 4.6, 4.7, 4.8, 4.9, 4.10
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { wrapHtmlContent } from '../utils/htmlWrapper';
 
 interface HtmlPreviewModalProps {
   /** HTML 代码内容 */
@@ -19,7 +21,10 @@ interface HtmlPreviewModalProps {
  * 使用 sandbox iframe 安全渲染 HTML 内容
  */
 export function HtmlPreviewModal({ html, isOpen, onClose }: HtmlPreviewModalProps) {
-  // ESC 键关闭 - 需求: 4.9
+  // 包装 HTML 内容为完整文档 - 需求: 1.1, 1.2, 1.3, 1.4
+  const wrappedHtml = useMemo(() => wrapHtmlContent(html), [html]);
+
+  // ESC 键关闭 - 需求: 4.1
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose();
@@ -40,17 +45,21 @@ export function HtmlPreviewModal({ html, isOpen, onClose }: HtmlPreviewModalProp
 
   if (!isOpen) return null;
 
-  return (
+  // 使用 Portal 将模态框渲染到 body，避免父元素 transform 影响 fixed 定位
+  return createPortal(
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={onClose}
     >
-      {/* 毛玻璃背景 - 需求: 4.7 */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-      
-      {/* 模态框内容 */}
+      {/* 毛玻璃背景 - 需求: 2.1 */}
       <div 
-        className="relative w-[90vw] h-[85vh] max-w-6xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[12px]"
+        style={{ WebkitBackdropFilter: 'blur(12px)' }}
+      />
+      
+      {/* 模态框内容 - 需求: 2.2, 2.3, 3.1, 3.2 */}
+      <div 
+        className="relative w-[80vw] h-[80vh] max-w-[1200px] max-h-[800px] bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 头部 */}
@@ -72,17 +81,18 @@ export function HtmlPreviewModal({ html, isOpen, onClose }: HtmlPreviewModalProp
           </button>
         </div>
         
-        {/* iframe 预览区域 - 需求: 4.6, 4.10 */}
+        {/* iframe 预览区域 - 需求: 1.2, 1.3, 5.1, 5.2, 5.3, 5.4 */}
         <div className="w-full h-[calc(100%-52px)] bg-white">
           <iframe
-            srcDoc={html}
+            srcDoc={wrappedHtml}
             sandbox="allow-scripts allow-same-origin"
             className="w-full h-full border-0"
             title="HTML 预览"
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

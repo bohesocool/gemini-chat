@@ -6,12 +6,13 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { Attachment, ImageGenerationConfig } from '../types/models';
+import type { Attachment, ImageGenerationConfig, ThinkingLevel, ModelCapabilities } from '../types/models';
 import { validateFile, fileToBase64, getFileMimeType, isImageFile, formatFileSize } from '../services/file';
 import { useReducedMotion } from './motion';
 import { durationValues, easings, touchTargets } from '../design/tokens';
-import { getModelCapabilities } from '../types/models';
+import { useModelStore } from '../stores/model';
 import { ImageConfigToolbar } from './MessageInput/ImageConfigToolbar';
+import { StatusIndicators } from './MessageInput/StatusIndicators';
 
 interface MessageInputProps {
   /** 发送消息回调 */
@@ -42,6 +43,24 @@ interface MessageInputProps {
   imageConfig?: ImageGenerationConfig;
   /** 图片配置变更回调 - 需求: 1.1, 1.2 */
   onImageConfigChange?: (config: Partial<ImageGenerationConfig>) => void;
+  /** 是否启用流式输出 - 需求: 4.1 */
+  streamingEnabled?: boolean;
+  /** 切换流式输出回调 - 需求: 4.1 */
+  onStreamingToggle?: () => void;
+  /** 是否显示思维链 - 需求: 4.2 */
+  includeThoughts?: boolean;
+  /** 切换思维链回调 - 需求: 4.2 */
+  onThoughtsToggle?: () => void;
+  /** 思考程度 - 需求: 4.3 */
+  thinkingLevel?: ThinkingLevel;
+  /** 思考程度变更回调 - 需求: 4.3 */
+  onThinkingLevelChange?: (level: ThinkingLevel) => void;
+  /** 思考预算 - 需求: 4.3 */
+  thinkingBudget?: number;
+  /** 思考预算变更回调 - 需求: 4.3 */
+  onThinkingBudgetChange?: (budget: number) => void;
+  /** 模型能力 - 需求: 4.6 */
+  modelCapabilities?: ModelCapabilities;
 }
 
 // 输入框高度限制常量（用于属性测试）
@@ -86,6 +105,15 @@ export function MessageInput({
   currentModel,
   imageConfig,
   onImageConfigChange,
+  streamingEnabled = true,
+  onStreamingToggle,
+  includeThoughts,
+  onThoughtsToggle,
+  thinkingLevel,
+  onThinkingLevelChange,
+  thinkingBudget,
+  onThinkingBudgetChange,
+  modelCapabilities,
 }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -98,6 +126,10 @@ export function MessageInput({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  
+  // 获取模型 store 的 getEffectiveCapabilities 方法
+  // 需求: 4.1, 4.2, 4.3, 4.4, 4.5 (model-redirect-enhancement)
+  const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
 
   // 当进入编辑模式时，填充编辑内容并聚焦 - 需求: 3.3
   useEffect(() => {
@@ -131,12 +163,24 @@ export function MessageInput({
   }, [error]);
 
   // 判断是否显示图片配置工具栏 - 需求: 1.1, 1.2, 1.3, 1.4
+  // 使用有效能力（考虑重定向）判断是否显示图片配置
+  // 需求: 4.1, 4.2, 4.3, 4.4, 4.5 (model-redirect-enhancement)
   const showImageConfig = (() => {
     if (!currentModel || !imageConfig || !onImageConfigChange) {
       return false;
     }
-    const capabilities = getModelCapabilities(currentModel);
+    // 使用 getEffectiveCapabilities 获取有效能力（处理重定向链）
+    const capabilities = getEffectiveCapabilities(currentModel);
     return capabilities.supportsImageGeneration === true;
+  })();
+
+  // 获取是否支持图片分辨率设置 - 需求: 3.1, 3.4
+  const supportsImageSize = (() => {
+    if (!currentModel) {
+      return true;
+    }
+    const capabilities = getEffectiveCapabilities(currentModel);
+    return capabilities.supportsImageSize !== false;
   })();
 
 
@@ -494,6 +538,27 @@ export function MessageInput({
               <ImageConfigToolbar
                 config={imageConfig}
                 onChange={onImageConfigChange}
+                disabled={isDisabled}
+                supportsImageSize={supportsImageSize}
+              />
+            </>
+          )}
+
+          {/* 状态指示器 - 需求: 4.1, 4.2, 4.3, 4.6 */}
+          {modelCapabilities && (
+            <>
+              {/* 分隔线 */}
+              <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+              <StatusIndicators
+                streamingEnabled={streamingEnabled}
+                onStreamingToggle={onStreamingToggle}
+                includeThoughts={includeThoughts}
+                onThoughtsToggle={onThoughtsToggle}
+                thinkingLevel={thinkingLevel}
+                onThinkingLevelChange={onThinkingLevelChange}
+                thinkingBudget={thinkingBudget}
+                onThinkingBudgetChange={onThinkingBudgetChange}
+                capabilities={modelCapabilities}
                 disabled={isDisabled}
               />
             </>

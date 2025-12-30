@@ -11,10 +11,33 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import type { Components } from 'react-markdown';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
-import { markdownCache } from '../services/markdownCache';
 
 // 引入 KaTeX 样式
 import 'katex/dist/katex.min.css';
+
+// 引入代码高亮主题 - 使用 github-dark 主题，适合深色背景
+import 'highlight.js/styles/github-dark.css';
+
+/**
+ * 从 React children 中提取纯文本内容
+ * @param children - React 节点
+ * @returns 纯文本字符串
+ */
+function extractTextFromChildren(children: React.ReactNode): string {
+  if (typeof children === 'string') {
+    return children;
+  }
+  if (typeof children === 'number') {
+    return String(children);
+  }
+  if (Array.isArray(children)) {
+    return children.map(extractTextFromChildren).join('');
+  }
+  if (React.isValidElement(children) && children.props?.children) {
+    return extractTextFromChildren(children.props.children);
+  }
+  return '';
+}
 
 interface MarkdownRendererProps {
   /** Markdown 内容 */
@@ -49,8 +72,11 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
   const componentsWithPreview: Components = useMemo(() => ({
     ...markdownComponents,
     // 代码块 - 需求: 4.1, 4.2, 4.3, 4.4, 4.5
-    code({ className, children, ...props }) {
-      const isInline = !className;
+    code({ className, children, node, ...props }) {
+      // 判断是否为行内代码：检查父元素是否为 pre
+      // node.position 存在且 className 不包含 language- 前缀时为行内代码
+      const hasLanguageClass = className && /language-\w+/.test(className);
+      const isInline = !hasLanguageClass;
       
       // 需求: 3.7 - 优化行内代码样式，添加背景色和圆角
       if (isInline) {
@@ -67,8 +93,8 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
       // 提取语言和代码内容
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
-      const isHtml = language.toLowerCase() === 'html';
-      const codeText = String(children).replace(/\n$/, '');
+      const isHtml = language?.toLowerCase() === 'html';
+      const codeText = extractTextFromChildren(children).replace(/\n$/, '');
 
       return (
         <CodeBlock 
@@ -82,17 +108,10 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     },
   }), [handleOpenPreview]);
 
-  // 使用 useMemo 缓存渲染结果
-  // 需求: 2.1 - 使用缓存避免重复解析
+  // 渲染 Markdown 内容
+  // 注意：不缓存渲染结果，因为缓存会导致事件处理函数失效
   const renderedContent = useMemo(() => {
-    // 尝试从缓存获取
-    const cached = markdownCache.get(content);
-    if (cached) {
-      return cached;
-    }
-
-    // 渲染新内容
-    const rendered = (
+    return (
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeHighlight, rehypeKatex]}
@@ -101,13 +120,6 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         {content}
       </ReactMarkdown>
     );
-
-    // 存入缓存（仅缓存较长的内容，短内容不值得缓存）
-    if (content.length > 100) {
-      markdownCache.set(content, rendered);
-    }
-
-    return rendered;
   }, [content, componentsWithPreview]);
 
   return (
@@ -148,10 +160,10 @@ function CodeBlock({
   const language = match ? match[1] : '';
   
   // 检测是否为 HTML 代码块
-  const isHtml = language.toLowerCase() === 'html';
+  const isHtml = language?.toLowerCase() === 'html';
   
-  // 获取代码文本
-  const codeText = String(children).replace(/\n$/, '');
+  // 获取代码文本 - 使用辅助函数正确提取文本
+  const codeText = extractTextFromChildren(children).replace(/\n$/, '');
 
   const handleCopy = useCallback(async () => {
     try {

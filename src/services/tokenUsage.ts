@@ -110,8 +110,15 @@ export function isValidTokenUsage(tokenUsage: TokenUsage | null | undefined): bo
     }
   }
 
-  // 验证 totalTokens = promptTokens + completionTokens
-  return tokenUsage.totalTokens === tokenUsage.promptTokens + tokenUsage.completionTokens;
+  // 验证 totalTokens >= promptTokens + completionTokens
+  // 注意：API 返回的 totalTokenCount 可能包含 thoughtsTokens，所以使用 >= 而不是 ===
+  // 同时也允许 totalTokens 等于 promptTokens + completionTokens（不含思维链的情况）
+  const baseTotal = tokenUsage.promptTokens + tokenUsage.completionTokens;
+  const thoughtsTokens = tokenUsage.thoughtsTokens ?? 0;
+  
+  // totalTokens 应该等于 baseTotal 或 baseTotal + thoughtsTokens
+  return tokenUsage.totalTokens === baseTotal || 
+         tokenUsage.totalTokens === baseTotal + thoughtsTokens;
 }
 
 /**

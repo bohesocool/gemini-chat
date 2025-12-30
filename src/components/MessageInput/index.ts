@@ -7,3 +7,5 @@ export type { DropdownOption, DropdownButtonProps } from './DropdownButton';
 
 export { ImageConfigToolbar } from './ImageConfigToolbar';
 export type { ImageConfigToolbarProps } from './ImageConfigToolbar';
+
+export { StatusIndicators } from './StatusIndicators';

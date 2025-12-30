@@ -13,7 +13,8 @@ import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
 import { useModelStore } from '../../stores/model';
 import { useSettingsStore } from '../../stores/settings';
 import { getEnabledModels } from '../../services/model';
-import { useModelCapabilities, ThinkingLevelSelector, ThinkingBudgetSlider, ImageConfigPanel } from '../ModelParams';
+import { useModelCapabilities, ThinkingLevelSelector, ThinkingBudgetSlider, ImageConfigPanel, MediaResolutionSelector } from '../ModelParams';
+import type { MediaResolution } from '../../types/models';
 import { useReducedMotion } from '../motion';
 import { durationValues, easings } from '../../design/tokens';
 import type { ModelAdvancedConfig } from '../../types/models';
@@ -276,6 +277,13 @@ export function ChatConfigPanel({
   const supportsThoughtSummary = capabilities.supportsThoughtSummary === true;
   const includeThoughts = config.advancedConfig?.includeThoughts ?? false;
 
+  // 获取媒体分辨率支持状态 - Requirements: 4.1, 4.8
+  const supportsMediaResolution = capabilities.supportsMediaResolution === true;
+  const currentMediaResolution = config.advancedConfig?.mediaResolution;
+
+  // 获取图片分辨率支持状态 - Requirements: 3.1, 3.4
+  const supportsImageSize = capabilities.supportsImageSize !== false;
+
   // 处理图片配置变更
   const handleImageConfigChange = useCallback((imageConfig: Partial<ImageGenerationConfig>) => {
     onConfigChange({
@@ -285,6 +293,16 @@ export function ChatConfigPanel({
           ...config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG,
           ...imageConfig,
         },
+      },
+    });
+  }, [config.advancedConfig, onConfigChange]);
+
+  // 处理媒体分辨率变更 - Requirements: 4.1, 4.4, 4.5, 4.6, 4.7
+  const handleMediaResolutionChange = useCallback((resolution: MediaResolution | undefined) => {
+    onConfigChange({
+      advancedConfig: {
+        ...config.advancedConfig,
+        mediaResolution: resolution,
       },
     });
   }, [config.advancedConfig, onConfigChange]);
@@ -409,11 +427,21 @@ export function ChatConfigPanel({
             onChange={(enabled) => onConfigChange({ streamingEnabled: enabled })}
           />
 
-          {/* 图片参数配置 */}
+          {/* 图片参数配置 - Requirements: 3.4 */}
           {capabilities.supportsImageGeneration && (
             <ImageConfigPanel
               config={config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG}
               onChange={handleImageConfigChange}
+              variant="full"
+              supportsImageSize={supportsImageSize}
+            />
+          )}
+
+          {/* 媒体分辨率配置 - Requirements: 4.1, 4.3, 4.4, 4.5, 4.6, 4.7 */}
+          {supportsMediaResolution && (
+            <MediaResolutionSelector
+              value={currentMediaResolution}
+              onChange={handleMediaResolutionChange}
               variant="full"
             />
           )}
@@ -453,9 +481,9 @@ export function ChatConfigPanel({
               />
               <ParameterSlider
                 label="最大输出长度"
-                value={config.generationConfig.maxOutputTokens ?? 2048}
+                value={config.generationConfig.maxOutputTokens ?? capabilities.maxOutputTokens ?? 8192}
                 min={256}
-                max={8192}
+                max={capabilities.maxOutputTokens ?? 8192}
                 step={256}
                 onChange={(v) => handleGenerationConfigChange('maxOutputTokens', v)}
                 formatValue={(v) => `${v} tokens`}

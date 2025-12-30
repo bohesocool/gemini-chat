@@ -540,10 +540,9 @@ function CurrentModelInfo({ currentModel, models }: CurrentModelInfoProps) {
 // 获取媒体分辨率的显示标签
 function getMediaResolutionLabel(resolution: string): string {
   const labels: Record<string, string> = {
-    'media_resolution_low': '低',
-    'media_resolution_medium': '中',
-    'media_resolution_high': '高',
-    'media_resolution_ultra_high': '超高',
+    'MEDIA_RESOLUTION_LOW': '低',
+    'MEDIA_RESOLUTION_MEDIUM': '中',
+    'MEDIA_RESOLUTION_HIGH': '高',
   };
   return labels[resolution] || resolution;
 }

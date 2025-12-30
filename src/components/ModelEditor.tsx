@@ -1,15 +1,20 @@
 /**
  * 模型编辑器组件
- * 需求: 2.2, 2.3, 3.1, 4.1, 4.2
+ * 需求: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 2.1, 2.2, 2.3, 3.1, 4.1, 4.2
  * 
  * 功能：
  * - 模型基本信息编辑（ID、名称、描述）
  * - 重定向目标选择
- * - 高级参数配置（thinking_level、media_resolution）
+ * - 高级参数配置（thinking_level、thinking_budget、media_resolution、image_config）
+ * - 重定向模型能力继承
+ * - 显示名称自动同步
  */
 
-import { useState, useEffect } from 'react';
-import type { ModelConfig, ThinkingLevel, MediaResolution } from '../types/models';
+import { useState, useEffect, useMemo } from 'react';
+import type { ModelConfig, MediaResolution, ModelCapabilities } from '../types/models';
+import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../types/models';
+import { getEffectiveCapabilities, detectModelCapabilities } from '../services/model';
+import { ThinkingLevelSelector, ThinkingBudgetSlider, ImageConfigPanel } from './ModelParams';
 
 // ============ 类型定义 ============
 
@@ -28,16 +33,10 @@ interface ModelEditorProps {
 
 // ============ 常量定义 ============
 
-const THINKING_LEVELS: { value: ThinkingLevel; label: string; description: string }[] = [
-  { value: 'low', label: '低', description: '快速响应，较少思考' },
-  { value: 'high', label: '高', description: '深度思考，更准确的回答' },
-];
-
 const MEDIA_RESOLUTIONS: { value: MediaResolution; label: string; description: string }[] = [
-  { value: 'media_resolution_low', label: '低', description: '快速处理，较低质量' },
-  { value: 'media_resolution_medium', label: '中', description: '平衡速度和质量' },
-  { value: 'media_resolution_high', label: '高', description: '高质量处理' },
-  { value: 'media_resolution_ultra_high', label: '超高', description: '最高质量，处理较慢' },
+  { value: 'MEDIA_RESOLUTION_LOW', label: '低', description: '快速处理，较低质量' },
+  { value: 'MEDIA_RESOLUTION_MEDIUM', label: '中', description: '平衡速度和质量' },
+  { value: 'MEDIA_RESOLUTION_HIGH', label: '高', description: '高质量处理' },
 ];
 
 // ============ 主组件 ============
@@ -63,6 +62,9 @@ export function ModelEditor({
   // 验证错误
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // 跟踪显示名称是否被手动编辑 - 需求: 2.2
+  const [nameManuallyEdited, setNameManuallyEdited] = useState(false);
+
   // 初始化表单数据
   useEffect(() => {
     if (model) {
@@ -70,8 +72,38 @@ export function ModelEditor({
         ...model,
         advancedConfig: model.advancedConfig || {},
       });
+      // 编辑现有模型时，认为名称已被手动设置
+      setNameManuallyEdited(true);
     }
   }, [model]);
+
+  // 模型 ID 变化时自动同步显示名称 - 需求: 2.1
+  useEffect(() => {
+    if (isNew && !nameManuallyEdited && formData.id) {
+      setFormData(prev => ({ ...prev, name: prev.id }));
+    }
+  }, [formData.id, isNew, nameManuallyEdited]);
+
+  // 获取有效能力（考虑重定向）- 需求: 1.1, 1.7, 1.8
+  const effectiveCapabilities: ModelCapabilities = useMemo(() => {
+    if (formData.redirectTo) {
+      // 有重定向时，使用 getEffectiveCapabilities 获取目标模型的能力
+      return getEffectiveCapabilities(formData.redirectTo, allModels);
+    }
+    // 无重定向时，使用自身能力或根据模型 ID 检测
+    return formData.capabilities || detectModelCapabilities(formData.id);
+  }, [formData.redirectTo, formData.capabilities, formData.id, allModels]);
+
+  // 根据有效能力决定显示哪些配置选项 - 需求: 1.2, 1.3, 1.4, 1.5, 1.6
+  const showThinkingLevel = effectiveCapabilities.thinkingConfigType === 'level';
+  const showThinkingBudget = effectiveCapabilities.thinkingConfigType === 'budget';
+  const showIncludeThoughts = effectiveCapabilities.supportsThoughtSummary === true;
+  const showImageConfig = effectiveCapabilities.supportsImageGeneration === true;
+  const showMediaResolution = effectiveCapabilities.supportsMediaResolution === true;
+  const supportsImageSize = effectiveCapabilities.supportsImageSize !== false;  // 需求: 3.1, 3.4
+
+  // 是否显示高级参数区域
+  const showAdvancedParams = showThinkingLevel || showThinkingBudget || showIncludeThoughts || showImageConfig || showMediaResolution;
 
   // 更新表单字段
   const updateField = <K extends keyof ModelConfig>(
@@ -101,6 +133,24 @@ export function ModelEditor({
         [field]: value,
       },
     }));
+  };
+
+  // 处理显示名称变化 - 需求: 2.2
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    updateField('name', newName);
+    // 标记为手动编辑
+    setNameManuallyEdited(true);
+  };
+
+  // 处理模型 ID 变化 - 需求: 2.3
+  const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newId = e.target.value;
+    updateField('id', newId);
+    // 如果 ID 被清空且名称未被手动编辑，清空名称
+    if (!newId && !nameManuallyEdited) {
+      setFormData(prev => ({ ...prev, name: '' }));
+    }
   };
 
   // 验证表单
@@ -167,8 +217,17 @@ export function ModelEditor({
         if (!cleanedData.advancedConfig.thinkingLevel) {
           delete cleanedData.advancedConfig.thinkingLevel;
         }
+        if (cleanedData.advancedConfig.thinkingBudget === undefined) {
+          delete cleanedData.advancedConfig.thinkingBudget;
+        }
         if (!cleanedData.advancedConfig.mediaResolution) {
           delete cleanedData.advancedConfig.mediaResolution;
+        }
+        if (cleanedData.advancedConfig.includeThoughts === undefined) {
+          delete cleanedData.advancedConfig.includeThoughts;
+        }
+        if (!cleanedData.advancedConfig.imageConfig) {
+          delete cleanedData.advancedConfig.imageConfig;
         }
         if (Object.keys(cleanedData.advancedConfig).length === 0) {
           delete cleanedData.advancedConfig;
@@ -182,9 +241,8 @@ export function ModelEditor({
   // 可用于重定向的模型（排除自身）
   const redirectTargets = allModels.filter(m => m.id !== formData.id);
 
-  // 检查模型是否支持高级参数
-  const supportsThinking = formData.capabilities?.supportsThinking ?? false;
-  const supportsMediaResolution = formData.capabilities?.supportsMediaResolution ?? false;
+  // 获取重定向目标模型的 ID（用于 ThinkingLevelSelector）
+  const effectiveModelId = formData.redirectTo || formData.id;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -200,7 +258,7 @@ export function ModelEditor({
           <input
             type="text"
             value={formData.id}
-            onChange={(e) => updateField('id', e.target.value)}
+            onChange={handleIdChange}
             disabled={!isNew}
             placeholder="例如: gemini-custom-model"
             className={`w-full px-3 py-2 rounded-lg border 
@@ -223,7 +281,7 @@ export function ModelEditor({
           <input
             type="text"
             value={formData.name}
-            onChange={(e) => updateField('name', e.target.value)}
+            onChange={handleNameChange}
             placeholder="例如: 自定义 Gemini 模型"
             className={`w-full px-3 py-2 rounded-lg border 
               ${errors.name ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}
@@ -258,7 +316,7 @@ export function ModelEditor({
       <div className="space-y-4">
         <h4 className="font-medium text-slate-900 dark:text-slate-100">重定向设置</h4>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          设置重定向后，此模型将使用目标模型的参数配置
+          设置重定向后，此模型将继承目标模型的能力配置
         </p>
         
         <div>
@@ -287,61 +345,81 @@ export function ModelEditor({
         </div>
       </div>
 
-      {/* 高级参数配置 - 仅在未设置重定向时显示 */}
-      {!formData.redirectTo && (supportsThinking || supportsMediaResolution) && (
+      {/* 高级参数配置 - 根据有效能力显示 */}
+      {showAdvancedParams && (
         <div className="space-y-4">
-          <h4 className="font-medium text-slate-900 dark:text-slate-100">高级参数</h4>
+          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+            高级参数
+            {formData.redirectTo && (
+              <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+                (继承自 {formData.redirectTo})
+              </span>
+            )}
+          </h4>
           
-          {/* Thinking Level */}
-          {supportsThinking && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                思考深度 (Thinking Level)
-              </label>
-              <div className="space-y-2">
-                {THINKING_LEVELS.map(level => (
-                  <label
-                    key={level.value}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
-                      ${formData.advancedConfig?.thinkingLevel === level.value
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                      }`}
-                  >
-                    <input
-                      type="radio"
-                      name="thinkingLevel"
-                      value={level.value}
-                      checked={formData.advancedConfig?.thinkingLevel === level.value}
-                      onChange={() => updateAdvancedConfig('thinkingLevel', level.value)}
-                      className="h-4 w-4 text-blue-500 focus:ring-blue-500"
-                    />
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
-                        {level.label}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {level.description}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-                {/* 清除选择 */}
-                {formData.advancedConfig?.thinkingLevel && (
-                  <button
-                    type="button"
-                    onClick={() => updateAdvancedConfig('thinkingLevel', undefined)}
-                    className="text-xs text-blue-500 hover:text-blue-600"
-                  >
-                    清除选择
-                  </button>
-                )}
+          {/* Thinking Level - 需求: 1.2 */}
+          {showThinkingLevel && (
+            <ThinkingLevelSelector
+              value={formData.advancedConfig?.thinkingLevel || 'low'}
+              onChange={(level) => updateAdvancedConfig('thinkingLevel', level)}
+              modelId={effectiveModelId}
+              variant="full"
+            />
+          )}
+
+          {/* Thinking Budget - 需求: 1.3 */}
+          {showThinkingBudget && effectiveCapabilities.thinkingBudgetConfig && (
+            <ThinkingBudgetSlider
+              value={formData.advancedConfig?.thinkingBudget ?? effectiveCapabilities.thinkingBudgetConfig.defaultValue}
+              config={effectiveCapabilities.thinkingBudgetConfig}
+              onChange={(budget) => updateAdvancedConfig('thinkingBudget', budget)}
+              variant="full"
+            />
+          )}
+
+          {/* Include Thoughts - 需求: 1.4 */}
+          {showIncludeThoughts && (
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  显示思维链
+                </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  在回复中显示模型的思考过程
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => updateAdvancedConfig('includeThoughts', !formData.advancedConfig?.includeThoughts)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  ${formData.advancedConfig?.includeThoughts 
+                    ? 'bg-blue-500' 
+                    : 'bg-slate-300 dark:bg-slate-600'
+                  }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                    ${formData.advancedConfig?.includeThoughts ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
             </div>
           )}
 
-          {/* Media Resolution */}
-          {supportsMediaResolution && (
+          {/* Image Config - 需求: 1.5 */}
+          {showImageConfig && (
+            <ImageConfigPanel
+              config={formData.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG}
+              onChange={(config) => updateAdvancedConfig('imageConfig', {
+                ...(formData.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG),
+                ...config,
+              })}
+              variant="full"
+              supportsImageSize={supportsImageSize}
+            />
+          )}
+
+          {/* Media Resolution - 需求: 1.6 */}
+          {showMediaResolution && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 媒体分辨率 (Media Resolution)
@@ -371,9 +449,9 @@ export function ModelEditor({
 
       {/* 重定向提示 */}
       {formData.redirectTo && (
-        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            已设置重定向，高级参数将使用目标模型 "{formData.redirectTo}" 的配置
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            已设置重定向到 "{formData.redirectTo}"，高级参数配置将基于目标模型的能力
           </p>
         </div>
       )}

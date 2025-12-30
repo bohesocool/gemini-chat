@@ -12,10 +12,34 @@ import type {
   ThinkingConfig,
   ImageConfig,
 } from '../types';
-import type { ApiConfig, ModelAdvancedConfig, MediaResolution } from '../types/models';
-import { getModelCapabilities } from '../types/models';
+import type { ApiConfig, ModelAdvancedConfig, MediaResolution, ModelCapabilities } from '../types/models';
+import { getModelCapabilities as getModelCapabilitiesFromPreset, DEFAULT_IMAGE_GENERATION_CONFIG } from '../types/models';
+import { useModelStore } from '../stores/model';
 import { apiLogger } from './logger';
 import { useDebugStore, createRequestRecord, generateRequestId } from '../stores/debug';
+
+// ============ 模型能力辅助函数 ============
+
+/**
+ * 获取模型的有效能力（处理重定向）
+ * 需求: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6
+ * 
+ * 此函数会检查模型是否有重定向设置，如果有则返回目标模型的能力。
+ * 这确保了自定义模型（重定向到图片生成模型）能正确获取图片生成能力。
+ * 
+ * @param modelId - 模型 ID
+ * @returns 模型能力配置
+ */
+function getModelCapabilities(modelId: string): ModelCapabilities {
+  // 尝试从 model store 获取有效能力（处理重定向）
+  try {
+    const modelStore = useModelStore.getState();
+    return modelStore.getEffectiveCapabilities(modelId);
+  } catch {
+    // 如果 store 不可用，回退到预设能力
+    return getModelCapabilitiesFromPreset(modelId);
+  }
+}
 
 // ============ 调试记录辅助函数 ============
 
@@ -267,7 +291,7 @@ export function buildRequestBody(
   webSearchEnabled?: boolean
 ): GeminiRequest {
   const request: GeminiRequest = {
-    contents: applyMediaResolution(contents, advancedConfig?.mediaResolution),
+    contents,
   };
 
   // 添加生成配置（如果提供且有有效值）
@@ -330,13 +354,7 @@ export function buildRequestBody(
     request.generationConfig.thinkingConfig = buildThinkingConfig(advancedConfig.thinkingLevel);
   }
 
-  // 添加图片生成配置（如果提供）
-  // 需求: 2.5
-  if (advancedConfig?.imageConfig) {
-    request.imageConfig = buildImageConfig(advancedConfig.imageConfig);
-  }
-
-  // 为画图模型添加 responseModalities 配置，支持连续对话
+  // 为画图模型添加 responseModalities 配置
   // 需求: 2.6 - 画图模型连续对话支持
   if (modelId) {
     const capabilities = getModelCapabilities(modelId);
@@ -348,6 +366,40 @@ export function buildRequestBody(
       // 添加 responseModalities 以支持文本和图片输出
       request.generationConfig.responseModalities = ['TEXT', 'IMAGE'];
     }
+  }
+
+  // 添加图片生成配置到 generationConfig 内部
+  // 需求: 2.5, 9.1, 9.2, 9.3 - imageConfig 必须放在 generationConfig 内部
+  // 对于图片生成模型，必须始终包含 aspectRatio 参数
+  // imageSize 参数仅在模型支持时才添加（需求: 3.1, 3.2, 3.3, 3.4）
+  if (modelId) {
+    const capabilities = getModelCapabilities(modelId);
+    if (capabilities.supportsImageGeneration) {
+      if (!request.generationConfig) {
+        request.generationConfig = {};
+      }
+      // 使用用户配置或默认配置
+      const imageConfig = advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG;
+      // 根据模型能力决定是否包含 imageSize
+      const supportsImageSize = capabilities.supportsImageSize !== false;
+      request.generationConfig.imageConfig = buildImageConfig(imageConfig, supportsImageSize);
+    }
+  } else if (advancedConfig?.imageConfig) {
+    // 向后兼容：如果没有提供 modelId 但有 imageConfig，仍然添加（包含 imageSize）
+    if (!request.generationConfig) {
+      request.generationConfig = {};
+    }
+    request.generationConfig.imageConfig = buildImageConfig(advancedConfig.imageConfig, true);
+  }
+
+  // 添加媒体分辨率配置到 generationConfig
+  // 需求: 4.4, 4.5, 4.6, 4.7
+  // 当值为 undefined 时不添加参数，当值为具体选项时设置对应的 API 参数值
+  if (advancedConfig?.mediaResolution) {
+    if (!request.generationConfig) {
+      request.generationConfig = {};
+    }
+    request.generationConfig.mediaResolution = advancedConfig.mediaResolution;
   }
 
   // 添加联网搜索工具配置
@@ -379,17 +431,14 @@ export function buildThinkingConfigForModel(
   const capabilities = getModelCapabilities(modelId);
   const configType = capabilities.thinkingConfigType;
   
-  // 如果模型不支持思考配置，返回 undefined
-  if (!configType || configType === 'none') {
-    return undefined;
-  }
-  
   const config: ThinkingConfig = {};
+  let hasConfig = false;
   
   // 根据配置类型设置参数
   if (configType === 'level') {
     // Gemini 3 系列使用 thinkingLevel
     config.thinkingLevel = advancedConfig?.thinkingLevel || 'high';
+    hasConfig = true;
   } else if (configType === 'budget') {
     // Gemini 2.5 系列使用 thinkingBudget
     const budgetConfig = capabilities.thinkingBudgetConfig;
@@ -397,15 +446,21 @@ export function buildThinkingConfigForModel(
       // 使用用户设置的值，或使用默认值
       const budget = advancedConfig?.thinkingBudget ?? budgetConfig.defaultValue;
       config.thinkingBudget = budget;
+      hasConfig = true;
     }
   }
   
   // 添加 includeThoughts 参数（如果模型支持思维链）
+  // 需求: 3.1, 3.2, 3.3 - 画图模型思维链支持
+  // 对于支持 supportsThoughtSummary 的模型（如 gemini-3-pro-image-preview），
+  // 即使 thinkingConfigType 为 'none'，也应该能够启用 includeThoughts
   if (capabilities.supportsThoughtSummary && advancedConfig?.includeThoughts) {
     config.includeThoughts = true;
+    hasConfig = true;
   }
   
-  return config;
+  // 如果没有任何配置，返回 undefined
+  return hasConfig ? config : undefined;
 }
 
 /**
@@ -424,12 +479,23 @@ export function buildThinkingConfig(thinkingLevel: 'minimal' | 'low' | 'medium' 
 
 /**
  * 构建图片生成配置
- * 需求: 2.5
+ * 需求: 2.5, 3.1, 3.2, 3.3, 3.4
  * 
  * @param config - 图片生成配置
+ * @param includeImageSize - 是否包含 imageSize 参数（默认 true）
  * @returns 图片 API 配置对象
  */
-export function buildImageConfig(config: import('../types/models').ImageGenerationConfig): ImageConfig {
+export function buildImageConfig(
+  config: import('../types/models').ImageGenerationConfig,
+  includeImageSize: boolean = true
+): ImageConfig {
+  // 如果模型不支持 imageSize，则不包含该参数
+  if (!includeImageSize) {
+    return {
+      aspectRatio: config.aspectRatio,
+    };
+  }
+  
   return {
     aspectRatio: config.aspectRatio,
     imageSize: config.imageSize,
@@ -446,6 +512,10 @@ export interface ThoughtExtractionResult {
   thought: string;
   /** 思维链签名（用于画图模型连续对话） */
   thoughtSignature?: string;
+  /** 思维链中的图片（不进入图片库，仅在思维链区域显示） */
+  thoughtImages?: ImageExtractionResult[];
+  /** 正式回复中的图片（进入图片库） */
+  images?: ImageExtractionResult[];
 }
 
 /**
@@ -454,9 +524,10 @@ export interface ThoughtExtractionResult {
  * 
  * 遍历 response.parts，检查 thought 布尔值，
  * 将思维链内容和普通回复内容分离，同时提取 thoughtSignature
+ * 思维链中的图片和正式回复中的图片分开存储
  * 
  * @param chunk - 流式响应块
- * @returns 包含文本、思维链和签名的对象，如果没有内容则返回 null
+ * @returns 包含文本、思维链、签名和图片的对象，如果没有内容则返回 null
  */
 export function extractThoughtSummary(chunk: StreamChunk): ThoughtExtractionResult | null {
   if (!chunk.candidates || chunk.candidates.length === 0) {
@@ -471,6 +542,8 @@ export function extractThoughtSummary(chunk: StreamChunk): ThoughtExtractionResu
   let text = '';
   let thought = '';
   let thoughtSignature: string | undefined;
+  const thoughtImages: ImageExtractionResult[] = [];
+  const images: ImageExtractionResult[] = [];
   
   for (const part of candidate.content.parts) {
     // 提取 thoughtSignature（用于画图模型连续对话）
@@ -479,20 +552,42 @@ export function extractThoughtSummary(chunk: StreamChunk): ThoughtExtractionResu
     }
     
     // 检查是否为思维链部分（包含 thought: true）
-    if ('thought' in part && part.thought === true && 'text' in part) {
+    const isThoughtPart = 'thought' in part && part.thought === true;
+    
+    if (isThoughtPart && 'text' in part) {
       thought += part.text;
     } else if ('text' in part) {
       // 普通文本部分
       text += part.text;
     }
+    
+    // 提取图片数据，根据是否在思维链中分别存储
+    if ('inlineData' in part && part.inlineData) {
+      const { mimeType, data } = part.inlineData;
+      if (mimeType.startsWith('image/')) {
+        if (isThoughtPart) {
+          // 思维链中的图片
+          thoughtImages.push({ mimeType, data });
+        } else {
+          // 正式回复中的图片
+          images.push({ mimeType, data });
+        }
+      }
+    }
   }
   
   // 如果没有任何内容，返回 null
-  if (!text && !thought && !thoughtSignature) {
+  if (!text && !thought && !thoughtSignature && thoughtImages.length === 0 && images.length === 0) {
     return null;
   }
   
-  return { text, thought, thoughtSignature };
+  return { 
+    text, 
+    thought, 
+    thoughtSignature,
+    thoughtImages: thoughtImages.length > 0 ? thoughtImages : undefined,
+    images: images.length > 0 ? images : undefined,
+  };
 }
 
 /**
@@ -563,7 +658,9 @@ export function extractTokenUsage(chunk: StreamChunk): import('../types/models')
 
 /**
  * 为内容应用媒体分辨率设置
- * 需求: 4.4
+ * 
+ * @deprecated 媒体分辨率现在通过 generationConfig.mediaResolution 设置，
+ * 不再需要在内容的 inlineData 中添加。此函数保留用于向后兼容。
  * 
  * @param contents - 消息内容数组
  * @param mediaResolution - 媒体分辨率设置
@@ -614,6 +711,24 @@ export class GeminiApiError extends Error {
 }
 
 /**
+ * 解包 API 响应数据
+ * 某些 API 端点返回 {"response": {...}, "traceId": "..."} 格式
+ * 此函数将其解包为标准的 StreamChunk 格式
+ * 
+ * @param data - 原始响应数据
+ * @returns 解包后的 StreamChunk
+ */
+function unwrapResponseData(data: unknown): StreamChunk {
+  if (data && typeof data === 'object' && 'response' in data) {
+    const wrapped = data as { response: StreamChunk };
+    if (wrapped.response && typeof wrapped.response === 'object') {
+      return wrapped.response;
+    }
+  }
+  return data as StreamChunk;
+}
+
+/**
  * 解析 SSE 流中的数据
  * @param line - SSE 数据行
  * @returns 解析后的 StreamChunk 或 null
@@ -629,7 +744,9 @@ function parseSSELine(line: string): StreamChunk | null {
   }
   
   try {
-    return JSON.parse(jsonStr) as StreamChunk;
+    const parsed = JSON.parse(jsonStr);
+    // 使用 unwrapResponseData 处理响应被包装的情况
+    return unwrapResponseData(parsed);
   } catch {
     return null;
   }
@@ -709,9 +826,9 @@ export async function sendMessage(
     throw new GeminiApiError('API 密钥不能为空');
   }
 
-  // 构建请求
+  // 构建请求，传入模型 ID 以正确构建画图模型配置
   const url = buildRequestUrl(config, true);
-  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig);
+  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model);
 
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
@@ -942,7 +1059,7 @@ export async function sendMessageWithThoughts(
   signal?: AbortSignal,
   webSearchEnabled?: boolean,
   onThoughtChunk?: (thought: string) => void
-): Promise<{ text: string; thoughtSummary?: string; thoughtSignature?: string; images?: ImageExtractionResult[]; duration?: number; ttfb?: number; tokenUsage?: import('../types/models').MessageTokenUsage }> {
+): Promise<{ text: string; thoughtSummary?: string; thoughtSignature?: string; images?: ImageExtractionResult[]; thoughtImages?: ImageExtractionResult[]; duration?: number; ttfb?: number; tokenUsage?: import('../types/models').MessageTokenUsage }> {
   // 需求: 2.2 - 输出请求日志
   apiLogger.info('发送流式消息请求（含思维链）', { model: config.model, messageCount: contents.length, webSearchEnabled });
 
@@ -977,7 +1094,12 @@ export async function sendMessageWithThoughts(
   let fullText = '';
   let fullThought = '';
   let lastThoughtSignature: string | undefined; // 用于画图模型连续对话
-  const allImages: ImageExtractionResult[] = [];
+  const allImages: ImageExtractionResult[] = []; // 正式回复中的图片（进入图片库）
+  const allThoughtImages: ImageExtractionResult[] = []; // 思维链中的图片（不进入图片库）
+  // 用于图片去重的 Set，存储已添加图片的 base64 数据哈希
+  // 修复: 开启思维链时 API 可能在多个 chunk 中返回相同图片，需要去重
+  const addedImageHashes = new Set<string>();
+  const addedThoughtImageHashes = new Set<string>();
   let ttfb: number | undefined;
   let lastTokenUsage: import('../types/models').MessageTokenUsage | null = null; // 用于存储最后一个 chunk 的 Token 使用量
   // 收集所有原始响应块，用于调试面板显示完整的上游响应
@@ -1074,7 +1196,7 @@ export async function sendMessageWithThoughts(
         if (chunk) {
           // 收集原始响应块用于调试
           rawResponseChunks.push(chunk);
-          // 使用 extractThoughtSummary 分离文本和思维链
+          // 使用 extractThoughtSummary 分离文本、思维链和图片
           const extracted = extractThoughtSummary(chunk);
           if (extracted) {
             if (extracted.text) {
@@ -1090,11 +1212,26 @@ export async function sendMessageWithThoughts(
             if (extracted.thoughtSignature) {
               lastThoughtSignature = extracted.thoughtSignature;
             }
-          }
-          // 提取图片数据 - 需求: 2.7
-          const images = extractImagesFromChunk(chunk);
-          if (images.length > 0) {
-            allImages.push(...images);
+            // 提取思维链中的图片（不进入图片库，仅在思维链区域显示）
+            if (extracted.thoughtImages) {
+              for (const img of extracted.thoughtImages) {
+                const imageHash = `${img.mimeType}:${img.data.substring(0, 100)}`;
+                if (!addedThoughtImageHashes.has(imageHash)) {
+                  addedThoughtImageHashes.add(imageHash);
+                  allThoughtImages.push(img);
+                }
+              }
+            }
+            // 提取正式回复中的图片（进入图片库）
+            if (extracted.images) {
+              for (const img of extracted.images) {
+                const imageHash = `${img.mimeType}:${img.data.substring(0, 100)}`;
+                if (!addedImageHashes.has(imageHash)) {
+                  addedImageHashes.add(imageHash);
+                  allImages.push(img);
+                }
+              }
+            }
           }
           // 需求: 1.2 - 从每个 chunk 提取 Token 使用量（最后一个有效的会被保留）
           const tokenUsage = extractTokenUsage(chunk);
@@ -1126,11 +1263,26 @@ export async function sendMessageWithThoughts(
           if (extracted.thoughtSignature) {
             lastThoughtSignature = extracted.thoughtSignature;
           }
-        }
-        // 提取图片数据 - 需求: 2.7
-        const images = extractImagesFromChunk(chunk);
-        if (images.length > 0) {
-          allImages.push(...images);
+          // 提取思维链中的图片（不进入图片库，仅在思维链区域显示）
+          if (extracted.thoughtImages) {
+            for (const img of extracted.thoughtImages) {
+              const imageHash = `${img.mimeType}:${img.data.substring(0, 100)}`;
+              if (!addedThoughtImageHashes.has(imageHash)) {
+                addedThoughtImageHashes.add(imageHash);
+                allThoughtImages.push(img);
+              }
+            }
+          }
+          // 提取正式回复中的图片（进入图片库）
+          if (extracted.images) {
+            for (const img of extracted.images) {
+              const imageHash = `${img.mimeType}:${img.data.substring(0, 100)}`;
+              if (!addedImageHashes.has(imageHash)) {
+                addedImageHashes.add(imageHash);
+                allImages.push(img);
+              }
+            }
+          }
         }
         // 需求: 1.2 - 从最后一个 chunk 提取 Token 使用量
         const tokenUsage = extractTokenUsage(chunk);
@@ -1144,6 +1296,7 @@ export async function sendMessageWithThoughts(
       responseLength: fullText.length, 
       hasThought: !!fullThought,
       imageCount: allImages.length,
+      thoughtImageCount: allThoughtImages.length,
       hasTokenUsage: !!lastTokenUsage,
     });
 
@@ -1161,6 +1314,7 @@ export async function sendMessageWithThoughts(
       thoughtSummary: fullThought || undefined,
       thoughtSignature: lastThoughtSignature,
       images: allImages.length > 0 ? allImages : undefined,
+      thoughtImages: allThoughtImages.length > 0 ? allThoughtImages : undefined,
       duration,
       ttfb,
       tokenUsage: lastTokenUsage || undefined,
@@ -1258,9 +1412,9 @@ export async function sendMessageNonStreaming(
     throw new GeminiApiError('API 密钥不能为空');
   }
 
-  // 构建请求（非流式）
+  // 构建请求（非流式），传入模型 ID 以正确构建画图模型配置
   const url = buildRequestUrl(config, false);
-  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig);
+  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model);
 
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
@@ -1310,14 +1464,15 @@ export async function sendMessageNonStreaming(
       throw new GeminiApiError(errorMessage, response.status);
     }
 
-    // 解析非流式响应
-    const responseData = await response.json() as StreamChunk;
+    // 解析非流式响应，使用 unwrapResponseData 处理响应被包装的情况
+    const rawResponseData = await response.json();
+    const responseData = unwrapResponseData(rawResponseData);
     
     if (!responseData.candidates || responseData.candidates.length === 0) {
       apiLogger.warn('API 响应无候选内容');
       // 需求: 6.3 - 记录成功，保存完整的原始响应
       if (debugInfo) {
-        completeDebugRecord(debugInfo.requestId, debugInfo.startTime, 200, responseData, ttfb);
+        completeDebugRecord(debugInfo.requestId, debugInfo.startTime, 200, rawResponseData, ttfb);
       }
       return '';
     }
@@ -1327,7 +1482,7 @@ export async function sendMessageNonStreaming(
       apiLogger.warn('API 响应内容为空');
       // 需求: 6.3 - 记录成功，保存完整的原始响应
       if (debugInfo) {
-        completeDebugRecord(debugInfo.requestId, debugInfo.startTime, 200, responseData, ttfb);
+        completeDebugRecord(debugInfo.requestId, debugInfo.startTime, 200, rawResponseData, ttfb);
       }
       return '';
     }
@@ -1345,6 +1500,193 @@ export async function sendMessageNonStreaming(
     }
     
     return result;
+  } catch (error) {
+    // 需求: 2.4 - 输出错误日志
+    if (error instanceof GeminiApiError) {
+      apiLogger.error('Gemini API 错误', { type: error.errorType, message: error.message });
+      // 需求: 6.3 - 记录失败（如果还没记录）
+      if (debugInfo) {
+        failDebugRecord(debugInfo.requestId, debugInfo.startTime, error.message, error.statusCode);
+      }
+      throw error;
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      apiLogger.error('网络连接失败', { message: error.message });
+      if (debugInfo) {
+        failDebugRecord(debugInfo.requestId, debugInfo.startTime, '网络连接失败');
+      }
+      throw new GeminiApiError('网络连接失败，请检查网络设置', undefined, 'NETWORK_ERROR');
+    }
+    
+    apiLogger.error('未知错误', { error: error instanceof Error ? error.message : '未知错误' });
+    if (debugInfo) {
+      failDebugRecord(debugInfo.requestId, debugInfo.startTime, error instanceof Error ? error.message : '未知错误');
+    }
+    throw new GeminiApiError(
+      error instanceof Error ? error.message : '未知错误',
+      undefined,
+      'UNKNOWN_ERROR'
+    );
+  }
+}
+
+/**
+ * 非流式响应结果接口
+ * 需求: 1.1, 1.2, 1.3, 1.4, 1.5
+ */
+export interface NonStreamingResult {
+  /** 响应文本 */
+  text: string;
+  /** 思维链摘要 */
+  thoughtSummary?: string;
+  /** 思维链签名（用于画图模型连续对话） */
+  thoughtSignature?: string;
+  /** 正式回复中的图片（进入图片库） */
+  images?: ImageExtractionResult[];
+  /** 思维链中的图片（不进入图片库，仅在思维链区域显示） */
+  thoughtImages?: ImageExtractionResult[];
+  /** 请求总耗时（毫秒） */
+  duration?: number;
+  /** 首字节时间（毫秒） */
+  ttfb?: number;
+  /** Token 使用量 */
+  tokenUsage?: import('../types/models').MessageTokenUsage;
+}
+
+/**
+ * 发送消息到 Gemini API（非流式响应，支持思维链和完整数据返回）
+ * 需求: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4
+ * 
+ * @param contents - 消息内容数组
+ * @param config - API 配置
+ * @param generationConfig - 生成配置（可选）
+ * @param safetySettings - 安全设置（可选）
+ * @param systemInstruction - 系统指令（可选）
+ * @param advancedConfig - 高级参数配置（可选）
+ * @param webSearchEnabled - 是否启用联网搜索（可选）
+ * @returns 包含文本、思维链、Token 使用量等的完整结果对象
+ */
+export async function sendMessageNonStreamingWithThoughts(
+  contents: GeminiContent[],
+  config: ApiConfig,
+  generationConfig?: GenerationConfig,
+  safetySettings?: SafetySetting[],
+  systemInstruction?: string,
+  advancedConfig?: ModelAdvancedConfig,
+  webSearchEnabled?: boolean
+): Promise<NonStreamingResult> {
+  // 需求: 2.2 - 输出请求日志
+  apiLogger.info('发送非流式消息请求（含思维链）', { model: config.model, messageCount: contents.length, webSearchEnabled });
+
+  // 验证 API 配置
+  const validation = validateApiEndpoint(config.endpoint);
+  if (!validation.valid) {
+    apiLogger.error('API 端点验证失败', { error: validation.error });
+    throw new GeminiApiError(validation.error || 'API 端点无效');
+  }
+  
+  if (!config.apiKey || config.apiKey.trim() === '') {
+    apiLogger.error('API 密钥为空');
+    throw new GeminiApiError('API 密钥不能为空');
+  }
+
+  // 构建请求（非流式），传入模型 ID 以正确构建思考配置，以及联网搜索配置
+  // 需求: 2.1, 2.2, 2.3, 2.4 - 正确传递 modelId 和 webSearchEnabled 参数
+  const url = buildRequestUrl(config, false);
+  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled);
+
+  // 需求: 2.3 - 输出 API 调用日志
+  apiLogger.debug('API 请求参数', {
+    model: config.model,
+    temperature: generationConfig?.temperature,
+    maxOutputTokens: generationConfig?.maxOutputTokens,
+    thinkingLevel: advancedConfig?.thinkingLevel,
+    includeThoughts: advancedConfig?.includeThoughts,
+  });
+
+  // 需求: 6.3 - 开始记录调试信息
+  const debugInfo = startDebugRecord(url, 'POST', body);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    // 需求: 1.3 - 记录首字节时间
+    const ttfb = debugInfo ? Date.now() - debugInfo.startTime : undefined;
+
+    // 处理 HTTP 错误
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `API 请求失败: ${response.status}`;
+      
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error?.message) {
+          errorMessage = errorJson.error.message;
+        }
+      } catch {
+        // 使用默认错误消息
+      }
+
+      // 需求: 2.4 - 输出错误日志
+      apiLogger.error('API 请求失败', { status: response.status, message: errorMessage });
+
+      // 需求: 6.3 - 记录失败，同时保存原始响应内容
+      if (debugInfo) {
+        failDebugRecord(debugInfo.requestId, debugInfo.startTime, errorMessage, response.status, errorText);
+      }
+
+      // 直接使用原始错误消息，让用户看到上游返回的具体错误
+      throw new GeminiApiError(errorMessage, response.status);
+    }
+
+    // 解析非流式响应，使用 unwrapResponseData 处理响应被包装的情况
+    const rawResponseData = await response.json();
+    const responseData = unwrapResponseData(rawResponseData);
+    
+    // 需求: 1.2 - 计算总耗时
+    const duration = debugInfo ? Date.now() - debugInfo.startTime : undefined;
+
+    // 需求: 1.4, 1.5 - 使用 extractThoughtSummary 提取思维链内容、签名和图片
+    const extracted = extractThoughtSummary(responseData);
+    const text = extracted?.text || '';
+    const thoughtSummary = extracted?.thought || undefined;
+    const thoughtSignature = extracted?.thoughtSignature;
+    const thoughtImages = extracted?.thoughtImages; // 思维链中的图片
+    const images = extracted?.images; // 正式回复中的图片
+
+    // 需求: 1.1 - 提取 Token 使用量
+    const tokenUsage = extractTokenUsage(responseData) || undefined;
+
+    apiLogger.info('非流式消息请求完成（含思维链）', { 
+      responseLength: text.length,
+      hasThought: !!thoughtSummary,
+      imageCount: images?.length || 0,
+      thoughtImageCount: thoughtImages?.length || 0,
+      hasTokenUsage: !!tokenUsage,
+    });
+    
+    // 需求: 6.3 - 记录成功，保存完整的原始响应数据
+    if (debugInfo) {
+      completeDebugRecord(debugInfo.requestId, debugInfo.startTime, 200, rawResponseData, ttfb);
+    }
+    
+    return {
+      text,
+      thoughtSummary,
+      thoughtSignature,
+      images: images && images.length > 0 ? images : undefined,
+      thoughtImages: thoughtImages && thoughtImages.length > 0 ? thoughtImages : undefined,
+      duration,
+      ttfb,
+      tokenUsage,
+    };
   } catch (error) {
     // 需求: 2.4 - 输出错误日志
     if (error instanceof GeminiApiError) {

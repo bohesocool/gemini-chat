@@ -73,6 +73,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsThinking: false,
     supportsMediaResolution: false,
     supportsImageGeneration: true,
+    supportsImageSize: true,  // 需求: 3.4 - 支持分辨率设置
     maxInputTokens: 65536,
     maxOutputTokens: 32768,
     // 思考配置 - 需求: 5.4
@@ -130,6 +131,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsThinking: false,
     supportsMediaResolution: false,
     supportsImageGeneration: true,
+    supportsImageSize: false,  // 需求: 3.1 - 不支持分辨率设置
     maxInputTokens: 65536,
     maxOutputTokens: 32768,
     // 思考配置
@@ -492,6 +494,150 @@ export interface RedirectResult {
   redirectChain: string[];
   /** 是否检测到循环 */
   hasCircularRedirect: boolean;
+}
+
+/**
+ * 能力解析结果
+ */
+export interface CapabilitiesResult {
+  /** 最终生效的能力配置 */
+  capabilities: ModelCapabilities;
+  /** 重定向链路径（用于调试） */
+  redirectChain: string[];
+  /** 是否检测到循环 */
+  hasCircularRedirect: boolean;
+}
+
+/**
+ * 获取模型的有效能力配置（处理重定向）
+ * 需求: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6
+ * 
+ * 功能说明：
+ * - 如果模型没有设置 redirectTo，返回模型自身的能力
+ * - 如果模型设置了 redirectTo，返回目标模型的能力
+ * - 支持重定向链（A -> B -> C），最终返回 C 的能力
+ * - 检测并防止循环重定向（A -> B -> A），返回空能力并输出警告
+ * - 如果重定向目标不存在，返回模型自身的能力
+ * 
+ * @param modelId - 要查询的模型 ID
+ * @param models - 所有模型配置列表
+ * @returns 有效的模型能力配置
+ */
+export function getEffectiveCapabilities(
+  modelId: string,
+  models: ModelConfig[]
+): ModelCapabilities {
+  const result = resolveCapabilitiesChain(modelId, models);
+  return result.capabilities;
+}
+
+/**
+ * 解析重定向链并返回详细的能力结果
+ * 需求: 3.2, 3.3, 3.4, 3.5, 3.6
+ * 
+ * @param modelId - 要查询的模型 ID
+ * @param models - 所有模型配置列表
+ * @returns 能力解析结果，包含能力配置、链路径和循环检测
+ */
+export function resolveCapabilitiesChain(
+  modelId: string,
+  models: ModelConfig[]
+): CapabilitiesResult {
+  // 空输入处理 - 需求: 3.6 边界情况
+  if (!modelId || !models || models.length === 0) {
+    return {
+      capabilities: {},
+      redirectChain: [],
+      hasCircularRedirect: false,
+    };
+  }
+
+  // 创建模型 ID 到配置的映射，便于快速查找
+  const modelMap = new Map<string, ModelConfig>();
+  for (const model of models) {
+    modelMap.set(model.id, model);
+  }
+
+  // 查找起始模型
+  const startModel = modelMap.get(modelId);
+  if (!startModel) {
+    // 模型不存在，返回空能力
+    return {
+      capabilities: {},
+      redirectChain: [],
+      hasCircularRedirect: false,
+    };
+  }
+
+  // 如果没有设置重定向，返回自身能力 - 需求: 3.2
+  if (!startModel.redirectTo) {
+    return {
+      capabilities: startModel.capabilities || detectModelCapabilities(modelId),
+      redirectChain: [modelId],
+      hasCircularRedirect: false,
+    };
+  }
+
+  // 追踪重定向链，检测循环 - 需求: 3.4, 3.5
+  const visited = new Set<string>();
+  const redirectChain: string[] = [];
+  let currentId: string | undefined = modelId;
+
+  while (currentId) {
+    // 检测循环 - 需求: 3.5
+    if (visited.has(currentId)) {
+      console.warn(`检测到循环重定向: ${redirectChain.join(' -> ')} -> ${currentId}`);
+      return {
+        capabilities: {},
+        redirectChain,
+        hasCircularRedirect: true,
+      };
+    }
+
+    visited.add(currentId);
+    redirectChain.push(currentId);
+
+    const currentModel = modelMap.get(currentId);
+    if (!currentModel) {
+      // 目标模型不存在 - 需求: 3.6
+      // 返回链中最后一个有效模型的能力
+      const lastValidId = redirectChain.length >= 2 ? redirectChain[redirectChain.length - 2] : undefined;
+      if (lastValidId) {
+        const lastValidModel = modelMap.get(lastValidId);
+        if (lastValidModel) {
+          return {
+            capabilities: lastValidModel.capabilities || detectModelCapabilities(lastValidId),
+            redirectChain,
+            hasCircularRedirect: false,
+          };
+        }
+      }
+      return {
+        capabilities: {},
+        redirectChain,
+        hasCircularRedirect: false,
+      };
+    }
+
+    // 如果当前模型没有重定向，返回其能力 - 需求: 3.3
+    if (!currentModel.redirectTo) {
+      return {
+        capabilities: currentModel.capabilities || detectModelCapabilities(currentId),
+        redirectChain,
+        hasCircularRedirect: false,
+      };
+    }
+
+    // 继续追踪重定向链 - 需求: 3.4
+    currentId = currentModel.redirectTo;
+  }
+
+  // 不应该到达这里，但为了类型安全返回空能力
+  return {
+    capabilities: {},
+    redirectChain,
+    hasCircularRedirect: false,
+  };
 }
 
 /**

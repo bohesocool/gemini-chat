@@ -42,13 +42,13 @@ export interface ThoughtSignaturePart {
 
 /**
  * 图片生成 API 配置
- * 需求: 2.5
+ * 需求: 2.5, 3.1
  */
 export interface ImageConfig {
   /** 图片宽高比 */
   aspectRatio: string;
-  /** 图片分辨率 */
-  imageSize: string;
+  /** 图片分辨率（可选，gemini-2.5-flash-image 不支持） */
+  imageSize?: string;
 }
 
 // ============ 工具相关类型 ============
@@ -70,15 +70,13 @@ export type GeminiTool = GoogleSearchTool;
 
 /**
  * Gemini API 请求体
- * 注意: thinkingConfig 已移至 generationConfig 内部
+ * 注意: thinkingConfig 和 imageConfig 已移至 generationConfig 内部
  */
 export interface GeminiRequest {
   contents: GeminiContent[];
   generationConfig?: GenerationConfig;
   safetySettings?: SafetySetting[];
   systemInstruction?: GeminiContent;
-  /** 图片生成配置（Gemini 3 Pro Image） */
-  imageConfig?: ImageConfig;
   /** 工具配置（如 Google 搜索） */
   tools?: GeminiTool[];
 }
@@ -115,8 +113,8 @@ export interface GeminiInlineDataPart {
 
 /**
  * 生成配置参数
- * 需求: 2.1
- * 注意: thinkingConfig 必须放在 generationConfig 内部
+ * 需求: 2.1, 4.4, 4.5, 4.6, 4.7
+ * 注意: thinkingConfig 和 imageConfig 必须放在 generationConfig 内部
  */
 export interface GenerationConfig {
   /** 温度参数，控制随机性，范围 0-2，默认 1 */
@@ -133,6 +131,10 @@ export interface GenerationConfig {
   responseModalities?: ('TEXT' | 'IMAGE')[];
   /** 思考配置（必须放在 generationConfig 内部） */
   thinkingConfig?: ThinkingConfig;
+  /** 图片生成配置（必须放在 generationConfig 内部） */
+  imageConfig?: ImageConfig;
+  /** 媒体分辨率（用于控制输入媒体的处理分辨率） - 需求: 4.4, 4.5, 4.6, 4.7 */
+  mediaResolution?: import('../types/models').MediaResolution;
 }
 
 // ============ 安全设置相关类型 ============

@@ -1,11 +1,13 @@
 /**
  * 思考程度选择器组件
  * 用于选择 Gemini 3 Pro 的思考程度（low/high）
- * Requirements: 1.1, 1.2, 6.4
+ * Requirements: 1.1, 1.2, 1.3, 6.4
  */
 
-import React from 'react';
-import type { ThinkingLevel } from '../../types/models';
+import React, { useMemo } from 'react';
+import type { ThinkingLevel, ModelCapabilities } from '../../types/models';
+import { getModelCapabilities } from '../../types/models';
+import { useModelStore } from '../../stores/model';
 
 /**
  * 思考程度选择器属性
@@ -56,14 +58,48 @@ const THINKING_LEVEL_OPTIONS: Array<{
 ];
 
 /**
- * 根据模型 ID 获取支持的思考等级选项
- * gemini-3-flash-preview 支持全部四个等级
- * 其他模型只支持 low/high
+ * 根据模型能力配置获取支持的思考等级选项
+ * 需求: 1.1, 1.2, 1.3
+ * 
+ * 根据 supportedThinkingLevels 返回正确的选项。
+ * 
+ * - gemini-3-pro-preview: 只支持 low/high
+ * - gemini-3-flash-preview: 支持 minimal/low/medium/high
+ * - 其他模型: 默认返回 low/high
+ * 
+ * @param capabilities 模型能力配置（已处理重定向）
  */
-function getOptionsForModel(modelId?: string): typeof THINKING_LEVEL_OPTIONS {
-  if (modelId?.includes('gemini-3-flash')) {
-    return THINKING_LEVEL_OPTIONS;
+function getOptionsFromCapabilities(capabilities: ModelCapabilities): typeof THINKING_LEVEL_OPTIONS {
+  // 如果模型配置了 supportedThinkingLevels，则根据配置过滤选项
+  if (capabilities.supportedThinkingLevels && capabilities.supportedThinkingLevels.length > 0) {
+    return THINKING_LEVEL_OPTIONS.filter(
+      opt => capabilities.supportedThinkingLevels!.includes(opt.value)
+    );
   }
+  
+  // 默认只返回 low 和 high
+  return THINKING_LEVEL_OPTIONS.filter(opt => opt.value === 'low' || opt.value === 'high');
+}
+
+/**
+ * 根据模型 ID 获取支持的思考等级选项（不处理重定向）
+ * 需求: 1.1, 1.2, 1.3
+ * 
+ * 使用 getModelCapabilities 获取模型能力配置，
+ * 根据 supportedThinkingLevels 返回正确的选项。
+ * 
+ * 注意：此函数不处理模型重定向，仅用于测试或不需要重定向的场景。
+ * 在组件中应使用 getOptionsFromCapabilities 配合 useModelStore.getEffectiveCapabilities。
+ * 
+ * @param modelId 模型 ID
+ */
+export function getOptionsForModel(modelId?: string): typeof THINKING_LEVEL_OPTIONS {
+  if (modelId) {
+    // 使用 getModelCapabilities 获取模型能力配置
+    const capabilities = getModelCapabilities(modelId);
+    return getOptionsFromCapabilities(capabilities);
+  }
+  
   // 默认只返回 low 和 high
   return THINKING_LEVEL_OPTIONS.filter(opt => opt.value === 'low' || opt.value === 'high');
 }
@@ -71,6 +107,10 @@ function getOptionsForModel(modelId?: string): typeof THINKING_LEVEL_OPTIONS {
 /**
  * 思考程度选择器组件
  * 支持 full 和 compact 两种显示模式
+ * 
+ * 需求: 1.1, 1.2, 1.3
+ * - 使用 useModelStore.getEffectiveCapabilities 处理模型重定向
+ * - 根据有效模型的 supportedThinkingLevels 显示正确的选项
  */
 export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
   value,
@@ -79,7 +119,18 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
   variant = 'full',
   modelId,
 }) => {
-  const options = getOptionsForModel(modelId);
+  // 使用 store 的 getEffectiveCapabilities 方法来处理重定向 - 需求: 1.3
+  const getEffectiveCapabilities = useModelStore((state) => state.getEffectiveCapabilities);
+  
+  // 获取有效的模型能力配置（处理重定向）
+  const options = useMemo(() => {
+    if (modelId) {
+      const capabilities = getEffectiveCapabilities(modelId);
+      return getOptionsFromCapabilities(capabilities);
+    }
+    // 默认只返回 low 和 high
+    return THINKING_LEVEL_OPTIONS.filter(opt => opt.value === 'low' || opt.value === 'high');
+  }, [modelId, getEffectiveCapabilities]);
   // 紧凑模式：使用简单的按钮组
   if (variant === 'compact') {
     return (

@@ -2,19 +2,23 @@
  * 内联配置面板组件
  * 在聊天窗口内直接访问和修改该窗口的配置
  * 
- * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 10.5, 2.1, 2.2, 3.1, 3.2, 3.3
+ * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 10.5, 2.1, 2.2, 3.1, 3.2, 3.3, 1.1, 1.2, 1.7, 1.8
  */
 
 import { useState, useEffect, useRef } from 'react';
 import type { ChatWindowConfig } from '../../types/chatWindow';
 import type { ModelConfig, ThinkingLevel, ModelAdvancedConfig } from '../../types/models';
-import { getModelCapabilities } from '../../types/models';
 import { useModelStore } from '../../stores/model';
 import { getEnabledModels } from '../../services/model';
 import { useReducedMotion } from '../motion';
 import { durationValues, easings, touchTargets } from '../../design/tokens';
 import { ThinkingLevelSelector } from '../ModelParams/ThinkingLevelSelector';
 import { ThinkingBudgetSlider } from '../ModelParams/ThinkingBudgetSlider';
+import { ImageConfigPanel } from '../ModelParams/ImageConfigPanel';
+import { MediaResolutionSelector } from '../ModelParams/MediaResolutionSelector';
+import { useModelCapabilities } from '../ModelParams';
+import type { ImageGenerationConfig, MediaResolution } from '../../types/models';
+import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
 
 // ============ 类型定义 ============
 
@@ -193,9 +197,8 @@ export function InlineConfigPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelHeight, setPanelHeight] = useState(0);
 
-  // 获取当前模型信息
+  // 获取当前模型名称
   // 需求 2.1: 使用模型的原始 ID 作为主要显示名称
-  const currentModelInfo = models.find((m) => m.id === config.model);
   const modelName = config.model;
 
   // 计算面板高度用于动画
@@ -250,8 +253,23 @@ export function InlineConfigPanel({
     handleAdvancedConfigChange({ includeThoughts: enabled });
   };
 
-  // 获取当前模型的能力配置 - Requirements: 2.1, 2.2, 3.1
-  const modelCapabilities = getModelCapabilities(config.model);
+  // 处理图片配置变更 - Requirements: 1.5
+  const handleImageConfigChange = (imageConfig: Partial<ImageGenerationConfig>) => {
+    handleAdvancedConfigChange({
+      imageConfig: {
+        ...config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG,
+        ...imageConfig,
+      },
+    });
+  };
+
+  // 处理媒体分辨率变更 - Requirements: 4.2, 4.4, 4.5, 4.6, 4.7
+  const handleMediaResolutionChange = (resolution: MediaResolution | undefined) => {
+    handleAdvancedConfigChange({ mediaResolution: resolution });
+  };
+
+  // 获取当前模型的能力配置（处理重定向） - Requirements: 2.1, 2.2, 3.1, 1.1, 1.2, 1.7, 1.8
+  const modelCapabilities = useModelCapabilities(config.model);
   const thinkingConfigType = modelCapabilities.thinkingConfigType || 'none';
   const thinkingBudgetConfig = modelCapabilities.thinkingBudgetConfig;
 
@@ -265,6 +283,13 @@ export function InlineConfigPanel({
   // 获取思维链支持状态 - Requirements: 4.1, 5.2, 5.3
   const supportsThoughtSummary = modelCapabilities.supportsThoughtSummary === true;
   const includeThoughts = config.advancedConfig?.includeThoughts ?? false;
+
+  // 获取媒体分辨率支持状态 - Requirements: 4.2, 4.8
+  const supportsMediaResolution = modelCapabilities.supportsMediaResolution === true;
+  const currentMediaResolution = config.advancedConfig?.mediaResolution;
+
+  // 获取图片分辨率支持状态 - Requirements: 3.1, 3.4
+  const supportsImageSize = modelCapabilities.supportsImageSize !== false;
 
   const transitionStyle = reducedMotion
     ? {}
@@ -375,12 +400,12 @@ export function InlineConfigPanel({
               description="候选词数量"
             />
 
-            {/* Max Output Tokens */}
+            {/* Max Output Tokens - Requirements: 2.10 */}
             <ParameterSlider
               label="最大输出长度"
-              value={config.generationConfig.maxOutputTokens ?? 2048}
+              value={config.generationConfig.maxOutputTokens ?? modelCapabilities.maxOutputTokens ?? 8192}
               min={256}
-              max={8192}
+              max={modelCapabilities.maxOutputTokens ?? 8192}
               step={256}
               onChange={(v) => handleGenerationConfigChange('maxOutputTokens', v)}
               formatValue={(v) => `${v} tokens`}
@@ -439,6 +464,25 @@ export function InlineConfigPanel({
                 />
               </button>
             </div>
+          )}
+
+          {/* 图片生成配置 - Requirements: 1.5, 1.6, 3.4 */}
+          {modelCapabilities.supportsImageGeneration && (
+            <ImageConfigPanel
+              config={config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG}
+              onChange={handleImageConfigChange}
+              variant="full"
+              supportsImageSize={supportsImageSize}
+            />
+          )}
+
+          {/* 媒体分辨率配置 - Requirements: 4.2, 4.3, 4.4, 4.5, 4.6, 4.7 */}
+          {supportsMediaResolution && (
+            <MediaResolutionSelector
+              value={currentMediaResolution}
+              onChange={handleMediaResolutionChange}
+              variant="full"
+            />
           )}
 
           {/* 系统指令 */}

@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { ModelConfig, ModelAdvancedConfig } from '../types/models';
+import type { ModelConfig, ModelAdvancedConfig, ModelCapabilities } from '../types/models';
 import { GEMINI_MODELS } from '../types/models';
 import {
   saveModelConfigs,
@@ -15,6 +15,7 @@ import {
   fetchModels,
   mergeModels,
   getEffectiveConfig,
+  getEffectiveCapabilities,
   detectModelCapabilities,
   setNewModelsDisabled,
 } from '../services/model';
@@ -66,6 +67,8 @@ interface ModelActions {
   // 工具方法
   /** 获取模型的有效配置（处理重定向） */
   getEffectiveConfig: (modelId: string) => ModelAdvancedConfig;
+  /** 获取模型的有效能力（处理重定向） */
+  getEffectiveCapabilities: (modelId: string) => ModelCapabilities;
   /** 根据 ID 获取模型 */
   getModelById: (modelId: string) => ModelConfig | undefined;
   /** 重置为默认模型列表 */
@@ -317,6 +320,13 @@ export const useModelStore = create<ModelStore>((set, get) => ({
   getEffectiveConfig: (modelId: string) => {
     const models = get().models;
     return getEffectiveConfig(modelId, models);
+  },
+
+  // 获取模型的有效能力（处理重定向）
+  // 需求: 3.1
+  getEffectiveCapabilities: (modelId: string) => {
+    const models = get().models;
+    return getEffectiveCapabilities(modelId, models);
   },
 
   // 根据 ID 获取模型

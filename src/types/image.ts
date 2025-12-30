@@ -2,6 +2,8 @@
  * 图片历史记录相关类型定义
  */
 
+import type { ImageAspectRatio, ImageSize } from './models';
+
 /**
  * 生成的图片接口
  * 用于存储 AI 生成的图片历史记录
@@ -21,6 +23,10 @@ export interface GeneratedImage {
   messageId?: string;
   /** 图片描述/生成提示词 */
   prompt?: string;
+  /** 图片宽高比 - 需求: 5.4 */
+  aspectRatio?: ImageAspectRatio;
+  /** 图片分辨率 - 需求: 5.4 */
+  imageSize?: ImageSize;
 }
 
 /**
@@ -64,6 +70,8 @@ export function createGeneratedImage(
     windowId?: string;
     messageId?: string;
     prompt?: string;
+    aspectRatio?: ImageAspectRatio;
+    imageSize?: ImageSize;
   }
 ): GeneratedImage {
   return {
@@ -74,5 +82,7 @@ export function createGeneratedImage(
     windowId: options?.windowId,
     messageId: options?.messageId,
     prompt: options?.prompt,
+    aspectRatio: options?.aspectRatio,
+    imageSize: options?.imageSize,
   };
 }

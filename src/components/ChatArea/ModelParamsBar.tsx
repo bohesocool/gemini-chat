@@ -55,6 +55,9 @@ export function ModelParamsBar({ modelId, advancedConfig, onConfigChange }: Mode
     return null;
   }
 
+  // 获取图片分辨率支持状态 - Requirements: 3.1, 3.4
+  const supportsImageSize = capabilities.supportsImageSize !== false;
+
   return (
     <div className="
       flex items-center justify-between px-4 py-2
@@ -79,6 +82,7 @@ export function ModelParamsBar({ modelId, advancedConfig, onConfigChange }: Mode
             config={advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG}
             onChange={handleImageConfigChange}
             variant="compact"
+            supportsImageSize={supportsImageSize}
           />
         )}
       </div>

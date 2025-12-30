@@ -170,7 +170,10 @@ function MessageItem({ message, renderContent, isLast, reducedMotion }: MessageI
         
         {/* 思维链卡片 - Requirements: 4.3, 6.1 */}
         {!isUser && message.thoughtSummary && (
-          <ThoughtSummaryCard content={message.thoughtSummary} defaultExpanded={true} />
+          <ThoughtSummaryCard 
+            content={message.thoughtSummary}
+            images={message.thoughtImages}
+          />
         )}
         
         {/* 消息内容 - Requirements: 8.1, 8.2, 8.3 */}

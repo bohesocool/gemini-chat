@@ -10,6 +10,7 @@ export { ModelParamsBar } from './ModelParamsBar';
 export { ChatConfigPanel } from './ChatConfigPanel';
 export { ThoughtSummaryCard } from './ThoughtSummaryCard';
 export { MessageDetailModal } from './MessageDetailModal';
+export { GeneratedImageGrid } from './GeneratedImageGrid';
 
 export type { ChatAreaProps } from './ChatArea';
 export type { ChatHeaderProps } from './ChatHeader';
@@ -19,3 +20,4 @@ export type { ModelParamsBarProps } from './ModelParamsBar';
 export type { ChatConfigPanelProps } from './ChatConfigPanel';
 export type { ThoughtSummaryCardProps } from './ThoughtSummaryCard';
 export type { MessageDetailModalProps } from './MessageDetailModal';
+export type { GeneratedImageGridProps } from './GeneratedImageGrid';

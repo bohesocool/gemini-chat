@@ -108,9 +108,9 @@
   --brand-dark: #166534;
 
   /* 消息气泡颜色 */
-  /* Requirements: 7.7 - 消息气泡使用柔和的背景色 */
-  --message-user-bg: #22c55e;
-  --message-user-text: #ffffff;
+  /* Requirements: 7.7, 1.1, 1.2, 1.3, 1.4 - 消息气泡使用柔和的背景色 */
+  --message-user-bg: #86efac;  /* 更柔和的薄荷绿背景 */
+  --message-user-text: #166534; /* 深绿色文字保证对比度 */
   --message-ai-bg: #f4f4f5;
   --message-ai-text: #18181b;
 
@@ -257,9 +257,9 @@
   --brand-dark: #dcfce7;
 
   /* 消息气泡颜色 */
-  /* Requirements: 7.7 - 消息气泡使用柔和的背景色 */
-  --message-user-bg: #16a34a;
-  --message-user-text: #ffffff;
+  /* Requirements: 7.7, 1.1, 1.2, 1.3, 1.4 - 消息气泡使用柔和的背景色 */
+  --message-user-bg: #166534;  /* 柔和的深绿色背景 */
+  --message-user-text: #dcfce7; /* 浅绿色文字 */
   --message-ai-bg: #27272a;
   --message-ai-text: #fafafa;
 

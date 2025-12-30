@@ -291,6 +291,7 @@ function AdvancedConfigGroup() {
   const modelConfig = getModelById(currentModel);
   const capabilities = modelConfig?.capabilities;
   const supportsImageGeneration = capabilities?.supportsImageGeneration ?? false;
+  const supportsImageSize = capabilities?.supportsImageSize !== false;  // 需求: 3.1, 3.4
   
   // 获取思考配置类型 - Requirements: 2.1, 2.2, 3.1
   const thinkingConfigType = capabilities?.thinkingConfigType || 'none';
@@ -426,6 +427,7 @@ function AdvancedConfigGroup() {
             config={advancedConfig?.imageConfig ?? { aspectRatio: '1:1', imageSize: '1K' }}
             onChange={handleImageConfigChange}
             variant="compact"
+            supportsImageSize={supportsImageSize}
           />
         </div>
       )}

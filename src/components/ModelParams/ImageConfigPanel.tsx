@@ -19,6 +19,10 @@ export interface ImageConfigPanelProps {
   disabled?: boolean;
   /** 显示模式：完整或紧凑 */
   variant?: 'full' | 'compact';
+  /** 是否支持图片分辨率设置（默认为 true）
+   * Requirements: 3.1, 3.2, 3.3, 3.4
+   */
+  supportsImageSize?: boolean;
 }
 
 /**
@@ -64,6 +68,7 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
   onChange,
   disabled = false,
   variant = 'full',
+  supportsImageSize = true,
 }) => {
   // 紧凑模式：使用简单的按钮组
   if (variant === 'compact') {
@@ -95,31 +100,33 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
           </div>
         </div>
 
-        {/* 分辨率选择 */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-[var(--text-secondary)]">清晰度:</span>
-          <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
-            {IMAGE_SIZE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                disabled={disabled}
-                onClick={() => onChange({ imageSize: option.value })}
-                className={`
-                  px-2 py-0.5 text-xs font-medium transition-colors
-                  ${config.imageSize === option.value
-                    ? 'bg-[var(--color-primary-500)] text-white'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
-                  }
-                  ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                `}
-                title={option.description}
-              >
-                {option.label}
-              </button>
-            ))}
+        {/* 分辨率选择 - 仅当 supportsImageSize 为 true 时显示 */}
+        {supportsImageSize && (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-[var(--text-secondary)]">清晰度:</span>
+            <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
+              {IMAGE_SIZE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onChange({ imageSize: option.value })}
+                  className={`
+                    px-2 py-0.5 text-xs font-medium transition-colors
+                    ${config.imageSize === option.value
+                      ? 'bg-[var(--color-primary-500)] text-white'
+                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                    }
+                    ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                  `}
+                  title={option.description}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -167,47 +174,49 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
         </div>
       </div>
 
-      {/* 分辨率选择 */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-[var(--text-primary)]">
-          图片分辨率
-        </label>
-        <div className="flex gap-2">
-          {IMAGE_SIZE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange({ imageSize: option.value })}
-              className={`
-                flex-1 px-3 py-2 rounded-lg border-2 transition-all
-                ${config.imageSize === option.value
-                  ? 'border-[var(--color-primary-500)] bg-[var(--color-primary-50)] dark:bg-[var(--color-primary-900)]'
-                  : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] hover:border-[var(--border-secondary)]'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-              `}
-            >
-              <div className="text-center">
-                <div
-                  className={`
-                    text-sm font-medium
-                    ${config.imageSize === option.value
-                      ? 'text-[var(--color-primary-600)] dark:text-[var(--color-primary-400)]'
-                      : 'text-[var(--text-primary)]'
-                    }
-                  `}
-                >
-                  {option.label}
+      {/* 分辨率选择 - 仅当 supportsImageSize 为 true 时显示 */}
+      {supportsImageSize && (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[var(--text-primary)]">
+            图片分辨率
+          </label>
+          <div className="flex gap-2">
+            {IMAGE_SIZE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange({ imageSize: option.value })}
+                className={`
+                  flex-1 px-3 py-2 rounded-lg border-2 transition-all
+                  ${config.imageSize === option.value
+                    ? 'border-[var(--color-primary-500)] bg-[var(--color-primary-50)] dark:bg-[var(--color-primary-900)]'
+                    : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] hover:border-[var(--border-secondary)]'
+                  }
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                <div className="text-center">
+                  <div
+                    className={`
+                      text-sm font-medium
+                      ${config.imageSize === option.value
+                        ? 'text-[var(--color-primary-600)] dark:text-[var(--color-primary-400)]'
+                        : 'text-[var(--text-primary)]'
+                      }
+                    `}
+                  >
+                    {option.label}
+                  </div>
+                  <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                    {option.description}
+                  </div>
                 </div>
-                <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                  {option.description}
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

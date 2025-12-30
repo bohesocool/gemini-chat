@@ -44,6 +44,18 @@ export interface MessageTokenUsage {
 }
 
 /**
+ * 生成的图片数据
+ * 用于存储 AI 模型生成的图片（如 Gemini 3 Pro Image、Gemini 2.5 Flash Image）
+ * 需求: 2.1, 4.1
+ */
+export interface GeneratedImage {
+  /** 图片 MIME 类型（如 image/jpeg, image/png） */
+  mimeType: string;
+  /** Base64 编码的图片数据 */
+  data: string;
+}
+
+/**
  * 消息模型
  * 需求: 5.1, 4.3, 7.2
  */
@@ -62,12 +74,18 @@ export interface Message {
   thoughtSummary?: string;
   /** 思维链签名（用于画图模型连续对话） - 需求: 2.6 */
   thoughtSignature?: string;
+  /** 思维链中的图片（可选） - 不进入图片库，仅在思维链区域显示 */
+  thoughtImages?: GeneratedImage[];
   /** Token 使用量（可选） - 需求: 7.2 */
   tokenUsage?: MessageTokenUsage;
   /** 请求耗时（毫秒，可选） - 需求: 8.4 */
   duration?: number;
   /** 首字节时间（毫秒，可选） - 需求: 8.3 */
   ttfb?: number;
+  /** 错误信息（可选） - 用于持久化消息发送/重新生成失败的错误状态 */
+  error?: string;
+  /** 生成的图片列表（可选） - AI 模型生成的图片 - 需求: 2.1 */
+  generatedImages?: GeneratedImage[];
 }
 
 /**
@@ -190,13 +208,13 @@ export interface ThinkingBudgetConfig {
 
 /**
  * 媒体分辨率级别
- * 需求: 4.2
+ * 需求: 4.2, 4.5, 4.6, 4.7
+ * 使用 API 实际参数值格式
  */
 export type MediaResolution =
-  | 'media_resolution_low'
-  | 'media_resolution_medium'
-  | 'media_resolution_high'
-  | 'media_resolution_ultra_high';
+  | 'MEDIA_RESOLUTION_LOW'
+  | 'MEDIA_RESOLUTION_MEDIUM'
+  | 'MEDIA_RESOLUTION_HIGH';
 
 /**
  * 图片宽高比
@@ -240,12 +258,16 @@ export interface ModelCapabilities {
   supportsMediaResolution?: boolean;
   /** 是否支持图像生成 */
   supportsImageGeneration?: boolean;
+  /** 是否支持图片分辨率设置（仅图片生成模型） - 需求: 3.1 */
+  supportsImageSize?: boolean;
   /** 最大输入 token 数 */
   maxInputTokens?: number;
   /** 最大输出 token 数 */
   maxOutputTokens?: number;
   /** 思考配置类型 - 需求: 2.1, 3.1 */
   thinkingConfigType?: ThinkingConfigType;
+  /** 支持的思考等级列表（仅 thinkingConfigType 为 'level' 时有效） - 需求: 1.1, 1.2 */
+  supportedThinkingLevels?: ThinkingLevel[];
   /** 思考预算配置（仅 budget 类型） - 需求: 3.1, 3.2, 3.3 */
   thinkingBudgetConfig?: ThinkingBudgetConfig;
   /** 是否支持思维链 - 需求: 5.1 */
@@ -311,9 +333,10 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 64000,
-    // 思考配置 - 需求: 2.1, 5.4
+    maxOutputTokens: 65536,  // 需求: 2.1
+    // 思考配置 - 需求: 2.1, 5.4, 1.1
     thinkingConfigType: 'level',
+    supportedThinkingLevels: ['low', 'high'],  // 需求: 1.1
     supportsThoughtSummary: true,
   },
   'gemini-3-flash-preview': {
@@ -321,17 +344,19 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 64000,
-    // 思考配置 - 支持 minimal/low/medium/high 四个等级
+    maxOutputTokens: 65536,  // 需求: 2.3
+    // 思考配置 - 支持 minimal/low/medium/high 四个等级 - 需求: 1.2
     thinkingConfigType: 'level',
+    supportedThinkingLevels: ['minimal', 'low', 'medium', 'high'],  // 需求: 1.2
     supportsThoughtSummary: true,
   },
   'gemini-3-pro-image-preview': {
     supportsThinking: false,
     supportsImageGeneration: true,
     supportsMediaResolution: false,
+    supportsImageSize: true,  // 需求: 3.4
     maxInputTokens: 65000,
-    maxOutputTokens: 32000,
+    maxOutputTokens: 32768,  // 需求: 2.2
     // 思考配置 - 需求: 5.4
     thinkingConfigType: 'none',
     supportsThoughtSummary: true,
@@ -341,7 +366,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 64000,
+    maxOutputTokens: 65536,  // 需求: 2.5
     // 思考配置 - 需求: 3.1, 5.4
     thinkingConfigType: 'budget',
     thinkingBudgetConfig: {
@@ -357,7 +382,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 64000,
+    maxOutputTokens: 65536,  // 需求: 2.6
     // 思考配置 - 需求: 3.2, 5.4
     thinkingConfigType: 'budget',
     thinkingBudgetConfig: {
@@ -373,7 +398,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 64000,
+    maxOutputTokens: 65536,  // 需求: 2.7
     // 思考配置 - 需求: 3.3
     thinkingConfigType: 'budget',
     thinkingBudgetConfig: {
@@ -388,8 +413,9 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsThinking: false,
     supportsImageGeneration: true,
     supportsMediaResolution: false,
+    supportsImageSize: false,  // 需求: 3.1 - 不支持分辨率设置
     maxInputTokens: 65000,
-    maxOutputTokens: 32000,
+    maxOutputTokens: 32768,  // 需求: 2.4
     // 思考配置
     thinkingConfigType: 'none',
     supportsThoughtSummary: false,
@@ -399,7 +425,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 8192,  // 需求: 2.8
     // 思考配置
     thinkingConfigType: 'none',
     supportsThoughtSummary: false,
@@ -409,7 +435,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsImageGeneration: false,
     supportsMediaResolution: true,
     maxInputTokens: 1000000,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 8192,  // 需求: 2.9
     // 思考配置
     thinkingConfigType: 'none',
     supportsThoughtSummary: false,

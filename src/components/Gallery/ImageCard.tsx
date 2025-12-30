@@ -1,7 +1,7 @@
 /**
  * 图片卡片组件
  * 显示单张图片的缩略图和日期信息
- * 需求: 4.1, 5.1
+ * 需求: 4.1, 5.1, 5.2, 5.3
  * 需求: 1.4, 3.4 (响应式布局和动画优化)
  */
 
@@ -41,7 +41,7 @@ function ImagePlaceholderIcon({ className }: { className?: string }) {
 
 /**
  * 图片卡片组件
- * 显示图片缩略图、日期信息，支持悬停效果
+ * 显示图片缩略图、日期信息、规格信息，支持悬停效果
  */
 export const ImageCard = memo(function ImageCard({
   image,
@@ -74,6 +74,9 @@ export const ImageCard = memo(function ImageCard({
   const roundedClasses = viewMode === 'large' 
     ? 'rounded-lg sm:rounded-xl' 
     : 'rounded-md sm:rounded-lg';
+
+  // 是否有规格信息 - 需求: 5.1, 5.2
+  const hasSpecs = image.aspectRatio || image.imageSize;
 
   return (
     <button
@@ -120,14 +123,36 @@ export const ImageCard = memo(function ImageCard({
         />
       )}
 
-      {/* 悬停遮罩 - 需求: 5.1 */}
+      {/* 规格标签 - 需求: 5.1, 5.2 */}
+      {hasSpecs && (
+        <div className="absolute top-2 left-2 flex gap-1">
+          {image.aspectRatio && (
+            <span className="px-1.5 py-0.5 bg-black/50 backdrop-blur-sm rounded text-xs text-white font-medium">
+              {image.aspectRatio}
+            </span>
+          )}
+          {image.imageSize && (
+            <span className="px-1.5 py-0.5 bg-black/50 backdrop-blur-sm rounded text-xs text-white font-medium">
+              {image.imageSize}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 悬停遮罩 - 需求: 5.1, 5.3 */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
-      {/* 日期标签 - 需求: 4.1, 1.4 响应式布局 */}
+      {/* 日期和规格信息 - 需求: 4.1, 1.4, 5.3 响应式布局 */}
       <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <p className="text-xs sm:text-sm font-medium text-white truncate">
           {dateText}
         </p>
+        {/* 悬停时显示完整规格信息 - 需求: 5.3 */}
+        {hasSpecs && (
+          <p className="text-[10px] sm:text-xs text-white/80 mt-0.5">
+            {[image.aspectRatio, image.imageSize].filter(Boolean).join(' · ')}
+          </p>
+        )}
         {image.prompt && viewMode === 'large' && (
           <p className="text-[10px] sm:text-xs text-white/80 truncate mt-0.5">
             {image.prompt}
