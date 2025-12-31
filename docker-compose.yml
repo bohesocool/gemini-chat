@@ -5,15 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: bohesocool/autoceya:latest
+    image: bohesocool/gemini-chat:latest
     container_name: gemini-chat
     ports:
-      - "5173:80"  # 统一端口
+      - "5173:80"
     restart: unless-stopped
     environment:
-      # 存储类型配置：indexeddb（默认）| sqlite | mysql
-      - STORAGE_TYPE=indexeddb
-      # MySQL DSN 连接字符串（仅当 STORAGE_TYPE=mysql 时使用）
-      # - SQL_DSN=root:password@tcp(ip:3306)/gemini
-      # API 密钥配置（可选）
-      # - VITE_API_KEY=${VITE_API_KEY}
+      # 登录密码（可选，不设置则使用默认密码 adminiadmin）
+      - VITE_AUTH_PASSWORD=
