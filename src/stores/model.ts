@@ -19,6 +19,7 @@ import {
   detectModelCapabilities,
   setNewModelsDisabled,
 } from '../services/model';
+import { storeLogger } from '../services/logger';
 
 // ============ Store 状态接口 ============
 
@@ -119,7 +120,10 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error('加载模型配置失败:', error);
+      // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+      storeLogger.error('加载模型配置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
       set({
         error: error instanceof Error ? error.message : '加载模型配置失败',
         initialized: true,
@@ -153,7 +157,10 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       // 持久化保存
       await saveModelConfigs(mergedModels);
     } catch (error) {
-      console.error('获取模型列表失败:', error);
+      // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+      storeLogger.error('获取模型列表失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
       // 需求 1.5: 获取失败时显示错误信息并保留现有模型列表
       set({
         error: error instanceof Error ? error.message : '获取模型列表失败',
@@ -345,7 +352,10 @@ export const useModelStore = create<ModelStore>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error('重置模型配置失败:', error);
+      // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+      storeLogger.error('重置模型配置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
       set({
         error: error instanceof Error ? error.message : '重置模型配置失败',
         isLoading: false,

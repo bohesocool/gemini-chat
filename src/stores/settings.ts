@@ -9,6 +9,7 @@ import type { GenerationConfig, SafetySetting } from '../types/gemini';
 import { DEFAULT_APP_SETTINGS } from '../types/models';
 import { saveSettings, getSettings } from '../services/storage';
 import { testConnection as testApiConnection, normalizeApiEndpoint } from '../services/gemini';
+import { storeLogger } from '../services/logger';
 
 // ============ Store 状态接口 ============
 
@@ -174,7 +175,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error('加载设置失败:', error);
+      // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+      storeLogger.error('加载设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
       set({ initialized: true, isLoading: false });
     }
   },
@@ -193,25 +197,45 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     }
     set(updates);
     // 异步持久化
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化 API 配置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 设置 API 端点
   setApiEndpoint: (endpoint: string) => {
     set({ apiEndpoint: endpoint, connectionStatus: 'idle', connectionError: null });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化 API 端点失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 设置 API 密钥
   setApiKey: (apiKey: string) => {
     set({ apiKey, connectionStatus: 'idle', connectionError: null });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化 API 密钥失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 设置当前模型
   setCurrentModel: (model: string) => {
     set({ currentModel: model });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化当前模型失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 更新生成配置
@@ -219,45 +243,80 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     const currentConfig = get().generationConfig;
     const newConfig = { ...currentConfig, ...config };
     set({ generationConfig: newConfig });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化生成配置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 更新安全设置
   updateSafetySettings: (settings: SafetySetting[]) => {
     set({ safetySettings: [...settings] });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化安全设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 更新系统指令
   updateSystemInstruction: (instruction: string) => {
     set({ systemInstruction: instruction });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化系统指令失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 设置主题
   setTheme: (theme: ThemeMode) => {
     set({ theme });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化主题设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 切换侧边栏
   toggleSidebar: () => {
     const current = get().sidebarCollapsed;
     set({ sidebarCollapsed: !current });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化侧边栏状态失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 设置侧边栏折叠状态
   setSidebarCollapsed: (collapsed: boolean) => {
     set({ sidebarCollapsed: collapsed });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化侧边栏折叠状态失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 设置流式输出开关
   // Requirements: 10.5 - 流式设置持久化存储
   setStreamingEnabled: (enabled: boolean) => {
     set({ streamingEnabled: enabled });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化流式输出设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 
   // 测试连接
@@ -328,6 +387,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       connectionStatus: 'idle',
       connectionError: null,
     });
-    persistSettings(get()).catch(console.error);
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化默认设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
   },
 }));

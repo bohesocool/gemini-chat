@@ -4,6 +4,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { TIMEOUTS, UI_LIMITS } from '../constants';
 
 // ============ 类型定义 ============
 
@@ -32,8 +33,8 @@ export interface MarkdownCacheConfig {
 // ============ 默认配置 ============
 
 const DEFAULT_CONFIG: MarkdownCacheConfig = {
-  maxEntries: 100,
-  ttl: 5 * 60 * 1000, // 5 分钟
+  maxEntries: UI_LIMITS.MAX_CACHE_ENTRIES,
+  ttl: TIMEOUTS.CACHE_TTL,
 };
 
 // ============ LRU 缓存实现 ============
@@ -228,7 +229,7 @@ class MarkdownCacheService {
     // 每分钟清理一次
     this.cleanupTimer = setInterval(() => {
       this.cleanupExpired();
-    }, 60 * 1000);
+    }, TIMEOUTS.CLEANUP_INTERVAL);
   }
 
   /**

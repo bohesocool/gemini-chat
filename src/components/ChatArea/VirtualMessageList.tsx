@@ -10,7 +10,7 @@ import { useReducedMotion } from '../motion';
 import { ThoughtSummaryCard } from './ThoughtSummaryCard';
 import { MessageActions } from './MessageActions';
 import { InlineMessageEditor } from './InlineMessageEditor';
-import { GeneratedImageGrid } from './GeneratedImageGrid';
+import { ImageGrid } from '../shared/ImageGrid';
 import { ImagePreviewModal } from '../ImagePreviewModal';
 
 // ============ 类型定义 ============
@@ -473,7 +473,7 @@ function StreamingMessage({
         <MessageBubble isUser={false}>
           {/* 流式图片显示 - 需求 5.1 */}
           {streamingImages.length > 0 && (
-            <GeneratedImageGrid 
+            <ImageGrid 
               images={streamingImages}
               onImageClick={handleImageClick}
             />
@@ -700,7 +700,7 @@ const MessageItem = memo(function MessageItem({
             <MessageBubble isUser={isUser} isRegenerating={isRegenerating}>
               {/* 生成的图片显示 - 需求 2.2, 2.3, 5.1 */}
               {displayImages.length > 0 && (
-                <GeneratedImageGrid 
+                <ImageGrid 
                   images={displayImages}
                   onImageClick={handleImageClick}
                 />
