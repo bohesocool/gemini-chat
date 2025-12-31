@@ -81,7 +81,7 @@ export {
 // 鉴权相关类型
 export type { AuthState, AuthConfig } from './auth';
 
-export { DEFAULT_PASSWORD, AUTH_CONFIG_KEY } from './auth';
+export { FALLBACK_PASSWORD, AUTH_CONFIG_KEY, getDefaultPassword, isEnvPassword, getEnvPassword } from './auth';
 
 // 图片历史记录相关类型
 export type {
