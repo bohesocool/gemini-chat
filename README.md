@@ -110,25 +110,40 @@ npm run preview
 
 ## Docker 部署
 
-### 使用预构建镜像（推荐）
+### 方式一：直接拉取镜像运行（推荐）
+
+最简单的部署方式，无需克隆代码：
 
 ```bash
+# 拉取镜像
 docker pull bohesocool/gemini-chat:latest
-docker run -d -p 5173:80 --name gemini-chat bohesocool/gemini-chat:latest
+
+# 运行容器（使用默认密码 adminiadmin）
+docker run -d \
+  -p 5173:80 \
+  --name gemini-chat \
+  bohesocool/gemini-chat:latest
+
+# 或者设置自定义密码
+docker run -d \
+  -p 5173:80 \
+  -e VITE_AUTH_PASSWORD=your_password \
+  --name gemini-chat \
+  bohesocool/gemini-chat:latest
 ```
 
-### 使用环境变量设置密码
+### 方式二：使用 Docker Compose
+
+适合需要自定义配置或本地构建的场景：
 
 ```bash
-# 通过环境变量设置自定义密码
-docker run -d -p 5173:80 -e VITE_AUTH_PASSWORD=your_password --name gemini-chat bohesocool/gemini-chat:latest
-```
+# 克隆项目
+git clone https://github.com/bohesocool/gemini-chat.git
+cd gemini-chat
 
-如果不设置 `VITE_AUTH_PASSWORD` 环境变量，将使用默认密码 `adminiadmin`，首次登录后会提示修改密码。
+# （可选）编辑 docker-compose.yml 设置密码
+# 修改 VITE_AUTH_PASSWORD 环境变量
 
-### 使用 Docker Compose
-
-```bash
 # 启动服务
 docker-compose up -d
 
@@ -139,17 +154,37 @@ docker-compose logs -f
 docker-compose down
 ```
 
-服务将在 http://localhost:5173 启动。
-
 ### 手动构建镜像
 
+如果需要自定义构建：
+
 ```bash
+# 克隆项目
+git clone https://github.com/bohesocool/gemini-chat.git
+cd gemini-chat
+
 # 构建镜像
 docker build -t gemini-chat .
 
 # 运行容器
-docker run -d -p 5173:80 --name gemini-chat gemini-chat
+docker run -d \
+  -p 5173:80 \
+  -e VITE_AUTH_PASSWORD=your_password \
+  --name gemini-chat \
+  gemini-chat
 ```
+
+### 密码说明
+
+- 如果不设置 `VITE_AUTH_PASSWORD` 环境变量，将使用默认密码 `adminiadmin`
+- 首次使用默认密码登录后会提示修改密码
+- 设置了自定义密码后，不会强制要求修改
+
+### 访问应用
+
+部署完成后访问 http://localhost:5173 即可使用。
+
+> **提示**: 应用同时支持 HTTP 和 HTTPS 环境部署。
 
 ---
 

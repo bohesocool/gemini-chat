@@ -16,20 +16,77 @@ import {
 } from './jwt';
 
 /**
+ * 检查 crypto.subtle 是否可用
+ * crypto.subtle 只在安全上下文（HTTPS 或 localhost）中可用
+ */
+function isCryptoSubtleAvailable(): boolean {
+  return typeof crypto !== 'undefined' && 
+         typeof crypto.subtle !== 'undefined' && 
+         typeof crypto.subtle.digest === 'function';
+}
+
+/**
+ * 纯 JavaScript 实现的简单哈希函数
+ * 当 crypto.subtle 不可用时使用（非 HTTPS 环境）
+ * 注意：这不是加密安全的哈希，仅用于本地应用的简单密码验证
+ * 
+ * @param str - 要哈希的字符串
+ * @returns 哈希后的字符串
+ */
+function simpleHash(str: string): string {
+  let hash = 0;
+  const prime = 31;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash + char) | 0;
+    hash = Math.imul(hash, prime) | 0;
+  }
+  // 转换为正数并返回十六进制字符串
+  const positiveHash = hash >>> 0;
+  // 添加额外的混淆以增加哈希长度
+  const hash2 = simpleHashRound(str + positiveHash.toString());
+  return positiveHash.toString(16).padStart(8, '0') + hash2.toString(16).padStart(8, '0');
+}
+
+/**
+ * 辅助哈希轮次
+ */
+function simpleHashRound(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+  }
+  return hash >>> 0;
+}
+
+/**
  * 简单的密码哈希函数
  * 使用 SHA-256 算法对密码进行哈希
+ * 当 crypto.subtle 不可用时（非 HTTPS 环境），使用简单的 JavaScript 哈希
  * 注意：这是一个简化实现，生产环境应使用更安全的方案如 bcrypt
  * 
  * @param password - 原始密码
  * @returns 哈希后的密码字符串
  */
 export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
+  // 检查 crypto.subtle 是否可用
+  if (!isCryptoSubtleAvailable()) {
+    logger.warn('crypto.subtle 不可用（非安全上下文），使用简单哈希');
+    return simpleHash(password);
+  }
+  
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  } catch (error) {
+    // 如果 crypto.subtle 调用失败，回退到简单哈希
+    logger.warn('crypto.subtle 调用失败，回退到简单哈希', error);
+    return simpleHash(password);
+  }
 }
 
 /**
