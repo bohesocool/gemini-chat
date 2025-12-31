@@ -82,31 +82,85 @@ export function base64UrlDecode(str: string): string {
 }
 
 /**
+ * 检查 crypto.subtle 是否可用
+ * crypto.subtle 只在安全上下文（HTTPS 或 localhost）中可用
+ */
+function isCryptoSubtleAvailable(): boolean {
+  return typeof crypto !== 'undefined' && 
+         typeof crypto.subtle !== 'undefined' && 
+         typeof crypto.subtle.importKey === 'function';
+}
+
+/**
+ * 简单的 HMAC 实现（纯 JavaScript）
+ * 当 crypto.subtle 不可用时使用
+ * 注意：这不是加密安全的实现，仅用于本地应用
+ * 
+ * @param message - 要签名的消息
+ * @param secret - 密钥
+ * @returns 签名字符串
+ */
+function simpleHmac(message: string, secret: string): string {
+  // 简单的哈希混合实现
+  let hash = 0;
+  const combined = secret + message + secret;
+  
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i);
+    hash = ((hash << 5) - hash + char) | 0;
+    hash = Math.imul(hash, 31) | 0;
+  }
+  
+  // 第二轮哈希增加复杂度
+  let hash2 = 5381;
+  for (let i = 0; i < combined.length; i++) {
+    hash2 = ((hash2 << 5) + hash2) ^ combined.charCodeAt(i);
+  }
+  
+  const result = (hash >>> 0).toString(16).padStart(8, '0') + 
+                 (hash2 >>> 0).toString(16).padStart(8, '0');
+  return result;
+}
+
+/**
  * 简单的 HMAC-SHA256 签名
  * 使用 Web Crypto API 进行签名
+ * 当 crypto.subtle 不可用时（非 HTTPS 环境），使用简单的 JavaScript 实现
  * 
  * @param message - 要签名的消息
  * @param secret - 密钥
  * @returns 签名字符串
  */
 async function hmacSha256(message: string, secret: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(message);
+  // 检查 crypto.subtle 是否可用
+  if (!isCryptoSubtleAvailable()) {
+    logger.warn('crypto.subtle 不可用（非安全上下文），使用简单 HMAC');
+    return base64UrlEncode(simpleHmac(message, secret));
+  }
   
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  const signature = await crypto.subtle.sign('HMAC', key, messageData);
-  const signatureArray = Array.from(new Uint8Array(signature));
-  const signatureHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
-  return base64UrlEncode(signatureHex);
+  try {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    const messageData = encoder.encode(message);
+    
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signature = await crypto.subtle.sign('HMAC', key, messageData);
+    const signatureArray = Array.from(new Uint8Array(signature));
+    const signatureHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    return base64UrlEncode(signatureHex);
+  } catch (error) {
+    // 如果 crypto.subtle 调用失败，回退到简单实现
+    logger.warn('crypto.subtle 调用失败，回退到简单 HMAC', error);
+    return base64UrlEncode(simpleHmac(message, secret));
+  }
 }
 
 
