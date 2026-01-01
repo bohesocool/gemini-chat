@@ -1,11 +1,13 @@
 /**
  * 消息操作按钮组件
  * 需求: 3.1, 4.1, 7.2, 8.4 - 编辑、复制、重新生成、查看详情按钮
+ * 需求: 3.1, 3.2 - 书签功能
  */
 
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useEffect } from 'react';
 import type { Message } from '../../types/models';
 import { MessageDetailModal } from './MessageDetailModal';
+import { useBookmarkStore } from '../../stores/bookmark';
 
 // ============ 类型定义 ============
 
@@ -27,6 +29,12 @@ export interface MessageActionsProps {
   onCopy?: () => void;
   /** 是否正在重新生成 */
   isRegenerating?: boolean;
+  /** 窗口 ID（用于书签） */
+  windowId?: string;
+  /** 子话题 ID（用于书签） */
+  subTopicId?: string;
+  /** 窗口标题（用于书签） */
+  windowTitle?: string;
 }
 
 // ============ 主组件 ============
@@ -47,9 +55,30 @@ export function MessageActions({
   onDelete,
   onCopy,
   isRegenerating = false,
+  windowId,
+  subTopicId,
+  windowTitle,
 }: MessageActionsProps) {
   const [copied, setCopied] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  
+  // 书签状态
+  const { isBookmarked, toggleBookmark, initialized, loadBookmarks } = useBookmarkStore();
+  const [isBookmarkedState, setIsBookmarkedState] = useState(false);
+
+  // 初始化加载书签
+  useEffect(() => {
+    if (!initialized) {
+      loadBookmarks();
+    }
+  }, [initialized, loadBookmarks]);
+
+  // 更新书签状态
+  useEffect(() => {
+    if (message.id) {
+      setIsBookmarkedState(isBookmarked(message.id));
+    }
+  }, [message.id, isBookmarked, initialized]);
 
   // 处理复制
   const handleCopy = useCallback(async () => {
@@ -64,6 +93,22 @@ export function MessageActions({
       console.error('复制失败:', err);
     }
   }, [message.content, onCopy]);
+
+  // 处理书签切换
+  const handleToggleBookmark = useCallback(async () => {
+    if (!message.id || !windowId || !subTopicId) return;
+    
+    const result = await toggleBookmark({
+      messageId: message.id,
+      windowId,
+      subTopicId,
+      messagePreview: (message.content || '').substring(0, 100),
+      messageRole: isUserMessage ? 'user' : 'model',
+      windowTitle: windowTitle || '未命名对话',
+    });
+    
+    setIsBookmarkedState(result);
+  }, [message.id, message.content, windowId, subTopicId, windowTitle, isUserMessage, toggleBookmark]);
 
   // 打开详情弹窗
   const handleShowDetail = useCallback(() => {
@@ -93,6 +138,19 @@ export function MessageActions({
             <CopyIcon className="w-3.5 h-3.5" />
           )}
         </ActionButton>
+
+        {/* 书签按钮 - 需求: 3.1, 3.2 */}
+        {windowId && subTopicId && (
+          <ActionButton
+            onClick={handleToggleBookmark}
+            title={isBookmarkedState ? '取消收藏' : '收藏'}
+          >
+            <BookmarkIcon 
+              className="w-3.5 h-3.5" 
+              filled={isBookmarkedState}
+            />
+          </ActionButton>
+        )}
 
         {/* 用户消息：编辑按钮 */}
         {isUserMessage && onEdit && (
@@ -247,6 +305,26 @@ function DeleteIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+      />
+    </svg>
+  );
+}
+
+function BookmarkIcon({ className, filled }: { className?: string; filled?: boolean }) {
+  if (filled) {
+    return (
+      <svg className={`${className} text-primary-500`} fill="currentColor" viewBox="0 0 24 24">
+        <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
       />
     </svg>
   );

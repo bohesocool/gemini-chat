@@ -147,6 +147,15 @@ export interface ChatWindowActions {
     subTopicId: string,
     messageId: string
   ) => Promise<void>;
+  
+  // 消息内容更新操作（仅保存，不重新发送）
+  /** 仅更新消息内容，不截断后续消息，不重新发送 */
+  updateMessageContent: (
+    windowId: string,
+    subTopicId: string,
+    messageId: string,
+    newContent: string
+  ) => Promise<void>;
 }
 
 // ============ Store 类型 ============

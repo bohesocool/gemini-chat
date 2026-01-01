@@ -59,6 +59,12 @@ export interface VirtualMessageListProps {
   regeneratingMessageId?: string | null;
   /** 图片点击回调 - 需求 2.4: 点击图片打开预览 */
   onImageClick?: (images: GeneratedImage[], index: number) => void;
+  /** 窗口 ID（用于书签） - 需求 3.1 */
+  windowId?: string;
+  /** 子话题 ID（用于书签） - 需求 3.1 */
+  subTopicId?: string;
+  /** 窗口标题（用于书签） - 需求 3.1 */
+  windowTitle?: string;
 }
 
 // ============ 默认配置 ============
@@ -95,6 +101,9 @@ export function VirtualMessageList({
   config: userConfig,
   regeneratingMessageId = null,
   onImageClick,
+  windowId,
+  subTopicId,
+  windowTitle,
 }: VirtualMessageListProps) {
   const config = { ...DEFAULT_CONFIG, ...userConfig };
   const parentRef = useRef<HTMLDivElement>(null);
@@ -269,6 +278,9 @@ export function VirtualMessageList({
                     onRetry={onRetry}
                     onDismissError={onDismissError}
                     onImageClick={onImageClick || handleImagePreview}
+                    windowId={windowId}
+                    subTopicId={subTopicId}
+                    windowTitle={windowTitle}
                   />
                 ) : null}
               </div>
@@ -550,6 +562,12 @@ interface MessageItemProps {
   onDismissError?: (messageId: string) => void;
   /** 图片点击回调 - 需求 2.4 */
   onImageClick?: (images: GeneratedImage[], index: number) => void;
+  /** 窗口 ID（用于书签） - 需求 3.1 */
+  windowId?: string;
+  /** 子话题 ID（用于书签） - 需求 3.1 */
+  subTopicId?: string;
+  /** 窗口标题（用于书签） - 需求 3.1 */
+  windowTitle?: string;
 }
 
 const MessageItem = memo(function MessageItem({ 
@@ -567,6 +585,9 @@ const MessageItem = memo(function MessageItem({
   onRetry,
   onDismissError,
   onImageClick,
+  windowId,
+  subTopicId,
+  windowTitle,
 }: MessageItemProps) {
   const isUser = message.role === 'user';
   const [showTimestamp, setShowTimestamp] = useState(false);
@@ -762,6 +783,9 @@ const MessageItem = memo(function MessageItem({
                   onEdit={isUser ? handleEdit : undefined}
                   onRegenerate={!isUser ? handleRegenerate : undefined}
                   onDelete={handleDelete}
+                  windowId={windowId}
+                  subTopicId={subTopicId}
+                  windowTitle={windowTitle}
                 />
               )}
             </div>

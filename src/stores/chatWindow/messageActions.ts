@@ -1374,4 +1374,83 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       });
     }
   },
+
+  // 仅更新消息内容，不截断后续消息，不重新发送
+  // 用于"仅保存"功能
+  updateMessageContent: async (
+    windowId: string,
+    subTopicId: string,
+    messageId: string,
+    newContent: string
+  ) => {
+    const state = get();
+    const window = state.windows.find((w) => w.id === windowId);
+    
+    if (!window) {
+      set({ error: '窗口不存在' });
+      return;
+    }
+
+    const subTopic = window.subTopics.find((st) => st.id === subTopicId);
+    if (!subTopic) {
+      set({ error: '子话题不存在' });
+      return;
+    }
+
+    // 找到要更新的消息索引
+    const messageIndex = subTopic.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) {
+      set({ error: '消息不存在' });
+      return;
+    }
+
+    const originalMessage = subTopic.messages[messageIndex];
+    if (!originalMessage || originalMessage.role !== 'user') {
+      set({ error: '只能编辑用户消息' });
+      return;
+    }
+
+    // 仅更新消息内容，保留其他属性
+    const updatedMessage: Message = {
+      ...originalMessage,
+      content: newContent,
+    };
+
+    const updatedMessages = [...subTopic.messages];
+    updatedMessages[messageIndex] = updatedMessage;
+
+    const updatedSubTopic: SubTopic = {
+      ...subTopic,
+      messages: updatedMessages,
+      updatedAt: Date.now(),
+    };
+
+    const updatedSubTopics = window.subTopics.map((st) =>
+      st.id === subTopicId ? updatedSubTopic : st
+    );
+
+    const updatedWindow: ChatWindow = {
+      ...window,
+      subTopics: updatedSubTopics,
+      updatedAt: Date.now(),
+    };
+
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === windowId ? updatedWindow : w
+      ),
+    }));
+
+    // 异步保存到存储
+    try {
+      await saveChatWindow(updatedWindow);
+    } catch (error) {
+      storeLogger.error('更新消息内容失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+        windowId,
+        subTopicId,
+        messageId,
+      });
+    }
+  },
 });

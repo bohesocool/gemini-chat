@@ -22,6 +22,7 @@ const THINKING_LEVEL_LABELS: Record<ThinkingLevel, string> = {
 
 /**
  * 状态指示器组件属性
+ * 需求: 2.1, 3.3
  */
 interface StatusIndicatorsProps {
   /** 是否启用流式输出 */
@@ -44,6 +45,8 @@ interface StatusIndicatorsProps {
   capabilities: ModelCapabilities;
   /** 是否禁用 */
   disabled?: boolean;
+  /** 支持的思考等级列表 - 需求: 2.1, 3.3 */
+  supportedThinkingLevels?: ThinkingLevel[];
 }
 
 /**
@@ -98,35 +101,99 @@ const StatusBadge = memo(function StatusBadge({
 });
 
 /**
- * 思考程度选择器组件
+ * 思考程度选择器组件属性
+ * 需求: 2.1, 2.2, 2.3, 2.4
  */
 interface ThinkingLevelSelectorProps {
   level: ThinkingLevel;
   onChange?: (level: ThinkingLevel) => void;
   disabled?: boolean;
+  /** 支持的思考等级列表 - 需求: 2.1, 2.2 */
+  supportedLevels?: ThinkingLevel[];
 }
 
+/**
+ * 默认支持的思考等级（当未指定时使用）
+ * 需求: 2.4, 3.4
+ */
+const DEFAULT_SUPPORTED_LEVELS: ThinkingLevel[] = ['low', 'high'];
+
+/**
+ * 获取有效的思考等级
+ * 如果当前等级不在支持列表中，返回第一个支持的等级
+ * 需求: 2.4
+ * 
+ * @param currentLevel 当前思考等级
+ * @param supportedLevels 支持的思考等级列表
+ * @returns 有效的思考等级
+ */
+export function getEffectiveThinkingLevel(
+  currentLevel: ThinkingLevel,
+  supportedLevels: ThinkingLevel[]
+): ThinkingLevel {
+  if (supportedLevels.length === 0) {
+    return currentLevel;
+  }
+  if (supportedLevels.includes(currentLevel)) {
+    return currentLevel;
+  }
+  // 安全访问第一个元素，由于上面已检查 length > 0，这里一定有值
+  return supportedLevels[0] as ThinkingLevel;
+}
+
+/**
+ * 获取下一个思考等级（循环切换）
+ * 只在支持的等级间切换
+ * 需求: 2.3
+ * 
+ * @param currentLevel 当前思考等级
+ * @param supportedLevels 支持的思考等级列表
+ * @returns 下一个思考等级
+ */
+export function getNextThinkingLevel(
+  currentLevel: ThinkingLevel,
+  supportedLevels: ThinkingLevel[]
+): ThinkingLevel {
+  if (supportedLevels.length === 0) {
+    return currentLevel;
+  }
+  const currentIndex = supportedLevels.indexOf(currentLevel);
+  // 如果当前等级不在列表中，返回第一个
+  if (currentIndex === -1) {
+    return supportedLevels[0] as ThinkingLevel;
+  }
+  // 循环切换到下一个
+  const nextIndex = (currentIndex + 1) % supportedLevels.length;
+  return supportedLevels[nextIndex] as ThinkingLevel;
+}
+
+/**
+ * 思考程度选择器组件
+ * 根据模型支持的等级显示和切换
+ * 需求: 2.1, 2.2, 2.3, 2.4
+ */
 const ThinkingLevelSelector = memo(function ThinkingLevelSelector({
   level,
   onChange,
   disabled = false,
+  supportedLevels = DEFAULT_SUPPORTED_LEVELS,
 }: ThinkingLevelSelectorProps) {
   const reducedMotion = useReducedMotion();
   const transitionStyle = reducedMotion
     ? {}
     : { transition: `all ${durationValues.fast}ms ${easings.easeOut}` };
 
-  const levels: ThinkingLevel[] = ['minimal', 'low', 'medium', 'high'];
-  const currentIndex = levels.indexOf(level);
+  // 使用支持的等级列表 - 需求: 2.2
+  const effectiveLevels = supportedLevels.length > 0 ? supportedLevels : DEFAULT_SUPPORTED_LEVELS;
+  
+  // 获取有效的当前等级（处理当前等级不在支持列表中的情况）- 需求: 2.4
+  const effectiveLevel = getEffectiveThinkingLevel(level, effectiveLevels);
 
   const handleClick = () => {
     if (disabled || !onChange) return;
-    // 循环切换到下一个级别
-    const nextIndex = (currentIndex + 1) % levels.length;
-    const nextLevel = levels[nextIndex];
-    if (nextLevel) {
-      onChange(nextLevel);
-    }
+    // 循环切换到下一个支持的级别 - 需求: 2.3
+    const nextLevel = getNextThinkingLevel(effectiveLevel, effectiveLevels);
+    onChange(nextLevel);
   };
 
   return (
@@ -145,9 +212,9 @@ const ThinkingLevelSelector = memo(function ThinkingLevelSelector({
         disabled:opacity-50 disabled:cursor-not-allowed
       `}
       style={transitionStyle}
-      title={`思考程度: ${THINKING_LEVEL_LABELS[level]}（点击切换）`}
+      title={`思考程度: ${THINKING_LEVEL_LABELS[effectiveLevel]}（点击切换）`}
     >
-      思考: {THINKING_LEVEL_LABELS[level]}
+      思考: {THINKING_LEVEL_LABELS[effectiveLevel]}
     </button>
   );
 });
@@ -213,6 +280,7 @@ const ThinkingBudgetBadge = memo(function ThinkingBudgetBadge({
  * - 4.2: 显示思维链状态（仅支持的模型）
  * - 4.3: 显示思考程度（仅支持的模型）
  * - 4.6: 只显示模型支持的功能
+ * - 2.1, 2.2, 2.3, 2.4: 思考等级过滤和回退
  */
 export const StatusIndicators = memo(function StatusIndicators({
   streamingEnabled,
@@ -225,6 +293,7 @@ export const StatusIndicators = memo(function StatusIndicators({
   onThinkingBudgetChange,
   capabilities,
   disabled = false,
+  supportedThinkingLevels,
 }: StatusIndicatorsProps) {
   // 判断是否显示各个指示器
   const showThoughtsToggle = capabilities.supportsThoughtSummary === true;
@@ -253,12 +322,13 @@ export const StatusIndicators = memo(function StatusIndicators({
         />
       )}
 
-      {/* 思考程度指示器 - Requirements: 4.3, 4.6 */}
+      {/* 思考程度指示器 - Requirements: 4.3, 4.6, 2.1, 2.2, 2.3, 2.4 */}
       {showThinkingLevel && thinkingLevel !== undefined && (
         <ThinkingLevelSelector
           level={thinkingLevel}
           onChange={onThinkingLevelChange}
           disabled={disabled}
+          supportedLevels={supportedThinkingLevels}
         />
       )}
 

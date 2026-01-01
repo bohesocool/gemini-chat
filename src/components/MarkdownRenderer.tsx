@@ -18,12 +18,15 @@ import 'katex/dist/katex.min.css';
 // 引入代码高亮主题 - 使用 github-dark 主题，适合深色背景
 import 'highlight.js/styles/github-dark.css';
 
+/** 代码折叠阈值（超过此行数默认折叠） */
+export const CODE_FOLD_THRESHOLD = 15;
+
 /**
  * 从 React children 中提取纯文本内容
  * @param children - React 节点
  * @returns 纯文本字符串
  */
-function extractTextFromChildren(children: React.ReactNode): string {
+export function extractTextFromChildren(children: React.ReactNode): string {
   if (typeof children === 'string') {
     return children;
   }
@@ -139,8 +142,8 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
 }
 
 /**
- * 代码块组件（带复制按钮和语言标签）
- * 需求: 4.1, 4.2, 4.3, 4.4
+ * 代码块组件（带复制按钮、语言标签和折叠功能）
+ * 需求: 2.1, 2.2, 2.3, 2.4, 2.5
  */
 interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
@@ -154,6 +157,7 @@ function CodeBlock({
   ...props
 }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   // 提取语言名称
   const match = /language-(\w+)/.exec(className || '');
@@ -164,6 +168,12 @@ function CodeBlock({
   
   // 获取代码文本 - 使用辅助函数正确提取文本
   const codeText = extractTextFromChildren(children).replace(/\n$/, '');
+  
+  // 计算行数
+  const lineCount = codeText.split('\n').length;
+  
+  // 是否需要折叠（超过阈值且未展开）
+  const shouldFold = lineCount > CODE_FOLD_THRESHOLD && !isExpanded;
 
   const handleCopy = useCallback(async () => {
     try {
@@ -175,6 +185,10 @@ function CodeBlock({
     }
   }, [codeText]);
 
+  const handleToggleExpand = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
+
   return (
     <div className="relative">
       {/* 代码块头部 - 语言标签和操作按钮 */}
@@ -184,6 +198,10 @@ function CodeBlock({
           <CodeIcon className="w-4 h-4 text-slate-400" />
           <span className="text-xs font-medium text-slate-300 uppercase tracking-wide">
             {language || 'code'}
+          </span>
+          {/* 行数指示 */}
+          <span className="text-xs text-slate-500">
+            {lineCount} 行
           </span>
         </div>
         
@@ -201,7 +219,7 @@ function CodeBlock({
             </button>
           )}
           
-          {/* 复制按钮 */}
+          {/* 复制按钮 - 需求 2.1, 2.2 */}
           <button
             onClick={handleCopy}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-200 text-xs font-medium ${
@@ -226,10 +244,38 @@ function CodeBlock({
         </div>
       </div>
       
-      {/* 代码内容 */}
-      <code className={className} {...props}>
-        {children}
-      </code>
+      {/* 代码内容 - 需求 2.4, 2.5: 支持折叠 */}
+      <div className={`relative ${shouldFold ? 'max-h-[360px] overflow-hidden' : ''}`}>
+        <code className={className} {...props}>
+          {children}
+        </code>
+        
+        {/* 折叠遮罩和展开按钮 - 需求 2.4, 2.5 */}
+        {shouldFold && (
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-900 to-transparent flex items-end justify-center pb-2">
+            <button
+              onClick={handleToggleExpand}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors shadow-lg"
+            >
+              <ExpandIcon className="w-4 h-4" />
+              <span>展开 ({lineCount} 行)</span>
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* 收起按钮（展开后显示） - 需求 2.5 */}
+      {lineCount > CODE_FOLD_THRESHOLD && isExpanded && (
+        <div className="flex justify-center py-2 bg-slate-800 dark:bg-slate-900 border-t border-slate-700 dark:border-slate-600 rounded-b-lg">
+          <button
+            onClick={handleToggleExpand}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors"
+          >
+            <CollapseIcon className="w-4 h-4" />
+            <span>收起</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -495,6 +541,32 @@ function PreviewIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+      />
+    </svg>
+  );
+}
+
+function ExpandIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  );
+}
+
+function CollapseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 15l7-7 7 7"
       />
     </svg>
   );

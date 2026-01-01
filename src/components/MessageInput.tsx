@@ -7,6 +7,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Attachment, ImageGenerationConfig, ThinkingLevel, ModelCapabilities } from '../types/models';
+import { SUPPORTED_IMAGE_TYPES } from '../types/models';
 import { validateFile, fileToBase64, getFileMimeType, isImageFile, formatFileSize } from '../services/file';
 import { useReducedMotion } from './motion';
 import { durationValues, easings, touchTargets } from '../design/tokens';
@@ -67,6 +68,43 @@ interface MessageInputProps {
 export const INPUT_MIN_ROWS = 1;
 export const INPUT_MAX_ROWS = 6;
 export const LINE_HEIGHT_PX = 24; // 每行高度（像素）
+
+/**
+ * 根据 MIME 类型获取文件扩展名
+ * 用于生成粘贴图片的文件名
+ * 
+ * @param mimeType 图片的 MIME 类型
+ * @returns 对应的文件扩展名（不含点号）
+ */
+export function getExtensionFromMimeType(mimeType: string): string {
+  const mimeToExtension: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  };
+  // 使用 Object.prototype.hasOwnProperty.call 避免原型链污染问题
+  if (Object.prototype.hasOwnProperty.call(mimeToExtension, mimeType)) {
+    return mimeToExtension[mimeType]!;
+  }
+  return 'png';
+}
+
+/**
+ * 生成粘贴图片的默认文件名
+ * 格式: pasted-image-{timestamp}.{extension}
+ * 
+ * Requirements: 4.4
+ * 
+ * @param mimeType 图片的 MIME 类型
+ * @param timestamp 可选的时间戳，默认使用当前时间
+ * @returns 生成的文件名
+ */
+export function generatePastedImageFilename(mimeType: string, timestamp?: number): string {
+  const ts = timestamp ?? Date.now();
+  const extension = getExtensionFromMimeType(mimeType);
+  return `pasted-image-${ts}.${extension}`;
+}
 
 /**
  * 计算输入框应有的高度
@@ -221,6 +259,39 @@ export function MessageInput({
       setAttachments((prev) => [...prev, ...newAttachments]);
     }
   }, []);
+
+  /**
+   * 处理粘贴事件，从剪贴板提取图片
+   * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
+   */
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+
+    // 遍历剪贴板项目，提取图片
+    for (const item of items) {
+      // 检查是否为支持的图片类型
+      if (item.kind === 'file' && SUPPORTED_IMAGE_TYPES.includes(item.type)) {
+        const file = item.getAsFile();
+        if (file) {
+          // 生成带时间戳的默认文件名
+          const filename = generatePastedImageFilename(item.type);
+          // 创建带有新文件名的 File 对象
+          const renamedFile = new File([file], filename, { type: file.type });
+          imageFiles.push(renamedFile);
+        }
+      }
+    }
+
+    // 如果有图片，阻止默认粘贴行为并处理图片
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      await handleFiles(imageFiles);
+    }
+    // 如果没有图片，允许默认的文本粘贴行为
+  }, [handleFiles]);
 
   const handleImageClick = () => {
     imageInputRef.current?.click();
@@ -416,13 +487,14 @@ export function MessageInput({
           </div>
         )}
 
-        {/* 文本输入框 - Requirements: 9.1, 9.2 */}
+        {/* 文本输入框 - Requirements: 9.1, 9.2, 4.1, 4.2, 4.3, 4.4 */}
         <div className="flex-1 min-w-0 relative">
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
@@ -544,7 +616,7 @@ export function MessageInput({
             </>
           )}
 
-          {/* 状态指示器 - 需求: 4.1, 4.2, 4.3, 4.6 */}
+          {/* 状态指示器 - 需求: 4.1, 4.2, 4.3, 4.6, 2.1, 3.3 */}
           {modelCapabilities && (
             <>
               {/* 分隔线 */}
@@ -560,6 +632,7 @@ export function MessageInput({
                 onThinkingBudgetChange={onThinkingBudgetChange}
                 capabilities={modelCapabilities}
                 disabled={isDisabled}
+                supportedThinkingLevels={modelCapabilities.supportedThinkingLevels}
               />
             </>
           )}

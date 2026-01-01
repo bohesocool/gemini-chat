@@ -105,19 +105,14 @@ export function InlineMessageEditor({
 
   // 处理保存并重新发送
   const handleSaveAndResend = useCallback(() => {
-    // 需求 3.4: 内容相同时直接退出
-    if (isContentUnchanged(content)) {
-      onCancel();
-      return;
-    }
-
     // 需求 3.3: 验证内容
     if (!validateContent(content)) {
       return;
     }
 
+    // 即使内容相同也允许重新发送（用户可能想重试）
     onSaveAndResend(content);
-  }, [content, isContentUnchanged, validateContent, onSaveAndResend, onCancel]);
+  }, [content, validateContent, onSaveAndResend]);
 
   // 需求 3.1, 3.2: 键盘快捷键处理
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {

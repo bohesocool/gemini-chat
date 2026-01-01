@@ -56,8 +56,9 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsMediaResolution: true,
     maxInputTokens: 1048576,
     maxOutputTokens: 65536,
-    // 思考配置 - 需求: 2.1, 5.4
+    // 思考配置 - 需求: 2.1, 5.4, 1.1
     thinkingConfigType: 'level',
+    supportedThinkingLevels: ['low', 'high'],  // 需求: 1.1 - 只支持 low/high 两个等级
     supportsThoughtSummary: true,
   },
   'gemini-3-flash-preview': {
@@ -65,8 +66,9 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportsMediaResolution: true,
     maxInputTokens: 1048576,
     maxOutputTokens: 65536,
-    // 思考配置 - 支持 minimal/low/medium/high 四个等级
+    // 思考配置 - 支持 minimal/low/medium/high 四个等级 - 需求: 1.2
     thinkingConfigType: 'level',
+    supportedThinkingLevels: ['minimal', 'low', 'medium', 'high'],  // 需求: 1.2 - 支持全部四个等级
     supportsThoughtSummary: true,
   },
   'gemini-3-pro-image-preview': {

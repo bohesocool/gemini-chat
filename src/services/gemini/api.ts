@@ -290,6 +290,9 @@ export async function sendMessageWithThoughts(
     thinkingLevel: advancedConfig?.thinkingLevel,
   });
 
+  // 需求: 8.1 - 独立记录请求开始时间（不依赖调试模式）
+  const requestStartTime = Date.now();
+  
   // 需求: 6.3 - 开始记录调试信息
   const debugInfo = startDebugRecord(url, 'POST', body);
 
@@ -318,10 +321,8 @@ export async function sendMessageWithThoughts(
       signal, // 传递 AbortSignal 用于取消请求
     });
 
-    // 记录首字节时间 - 需求: 8.2
-    if (debugInfo) {
-      ttfb = Date.now() - debugInfo.startTime;
-    }
+    // 需求: 8.3 - 记录首字节时间（独立于调试模式）
+    ttfb = Date.now() - requestStartTime;
 
     // 处理 HTTP 错误
     if (!response.ok) {
@@ -504,8 +505,8 @@ export async function sendMessageWithThoughts(
     });
 
     // 需求: 6.3 - 记录成功
-    // 需求: 8.2 - 计算总耗时
-    const duration = debugInfo ? Date.now() - debugInfo.startTime : undefined;
+    // 需求: 8.2 - 计算总耗时（独立于调试模式）
+    const duration = Date.now() - requestStartTime;
     
     if (debugInfo) {
       // 保存完整的原始响应数据，而不是处理后的简化内容
@@ -786,6 +787,9 @@ export async function sendMessageNonStreamingWithThoughts(
     includeThoughts: advancedConfig?.includeThoughts,
   });
 
+  // 需求: 8.1 - 独立记录请求开始时间（不依赖调试模式）
+  const requestStartTime = Date.now();
+  
   // 需求: 6.3 - 开始记录调试信息
   const debugInfo = startDebugRecord(url, 'POST', body);
 
@@ -798,8 +802,8 @@ export async function sendMessageNonStreamingWithThoughts(
       body: JSON.stringify(body),
     });
 
-    // 需求: 1.3 - 记录首字节时间
-    const ttfb = debugInfo ? Date.now() - debugInfo.startTime : undefined;
+    // 需求: 8.3 - 记录首字节时间（独立于调试模式）
+    const ttfb = Date.now() - requestStartTime;
 
     // 处理 HTTP 错误
     if (!response.ok) {
@@ -831,8 +835,8 @@ export async function sendMessageNonStreamingWithThoughts(
     const rawResponseData = await response.json();
     const responseData = unwrapResponseData(rawResponseData);
     
-    // 需求: 1.2 - 计算总耗时
-    const duration = debugInfo ? Date.now() - debugInfo.startTime : undefined;
+    // 需求: 8.2 - 计算总耗时（独立于调试模式）
+    const duration = Date.now() - requestStartTime;
 
     // 需求: 1.4, 1.5 - 使用 extractThoughtSummary 提取思维链内容、签名和图片
     const extracted = extractThoughtSummary(responseData);

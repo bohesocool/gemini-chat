@@ -11,6 +11,9 @@
 
 import React, { useEffect, useState, useRef, useCallback, createContext, useContext } from 'react';
 import { useSettingsStore } from '../stores/settings';
+import { useChatWindowStore } from '../stores/chatWindow';
+import { useTemplateStore } from '../stores/template';
+import type { PromptTemplate, CreateTemplateInput, UpdateTemplateInput } from '../stores/template';
 import { breakpointValues } from '../design/tokens';
 import type { ThemeMode } from '../types/models';
 import { SettingsModal } from './Settings/SettingsModal';
@@ -26,15 +29,26 @@ import {
 import { DebugPanel } from './Debug';
 import { FullscreenGallery } from './Gallery/FullscreenGallery';
 import { ImagePreviewModal } from './ImagePreviewModal';
+import { TemplateDetailView } from './Sidebar/TemplateDetailView';
+import { TemplateEditorModal } from './Sidebar/TemplateEditorModal';
+import { BookmarkDetailView } from './Sidebar/BookmarkDetailView';
+import { useBookmarkStore } from '../stores/bookmark';
+import type { Bookmark } from '../stores/bookmark';
 import type { GeneratedImage } from '../types';
 
 /** 侧边栏视图类型 */
-export type SidebarView = 'assistants' | 'settings' | 'images';
+export type SidebarView = 'assistants' | 'settings' | 'images' | 'templates' | 'bookmarks';
 
 /** 侧边栏上下文 */
 interface SidebarContextType {
   currentView: SidebarView;
   setCurrentView: (view: SidebarView) => void;
+  /** 选中的模板 ID */
+  selectedTemplateId: string | null;
+  setSelectedTemplateId: (id: string | null) => void;
+  /** 选中的书签 ID */
+  selectedBookmarkId: string | null;
+  setSelectedBookmarkId: (id: string | null) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | null>(null);
@@ -180,8 +194,16 @@ function renderSettingsContent(tabId: SettingsTabId): React.ReactNode {
  */
 export function Layout({ sidebar, children }: LayoutProps) {
   const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed, theme, setTheme } = useSettingsStore();
+  const { createWindow, selectWindow, selectSubTopic } = useChatWindowStore();
+  const { currentModel, systemInstruction } = useSettingsStore();
+  const { updateTemplate, deleteTemplate, addTemplate } = useTemplateStore();
+  const { removeBookmark } = useBookmarkStore();
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() => getEffectiveTheme(theme));
   const [currentView, setCurrentView] = useState<SidebarView>('assistants');
+  // 选中的模板 ID - 需求: 2.3
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  // 选中的书签 ID - 需求: 3.3
+  const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
   // 设置模态框状态
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   // 调试面板状态
@@ -189,6 +211,11 @@ export function Layout({ sidebar, children }: LayoutProps) {
   const [isDebugPanelOpen, setIsDebugPanelOpen] = useState(false);
   // 图片预览状态 - 需求: 5.2
   const [previewImage, setPreviewImage] = useState<GeneratedImage | null>(null);
+  // 模板编辑器状态 - 需求: 2.5
+  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
+  // 删除确认状态
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   // 触摸手势处理
@@ -252,9 +279,24 @@ export function Layout({ sidebar, children }: LayoutProps) {
   }, [setSidebarCollapsed]);
 
   // 点击图片库按钮
-  // 需求: 2.1
+  // 需求: 2.1, 4.1, 4.2 - 图片库视图时自动折叠侧边栏
   const handleImagesClick = useCallback(() => {
     setCurrentView('images');
+    // 图片库视图时自动折叠侧边栏，让图片库占据更多空间
+    setSidebarCollapsed(true);
+  }, [setSidebarCollapsed]);
+
+  // 点击模板按钮
+  // 需求: 5.1
+  const handleTemplatesClick = useCallback(() => {
+    setCurrentView('templates');
+    setSidebarCollapsed(false);
+  }, [setSidebarCollapsed]);
+
+  // 点击书签按钮
+  // 需求: 3.3
+  const handleBookmarksClick = useCallback(() => {
+    setCurrentView('bookmarks');
     setSidebarCollapsed(false);
   }, [setSidebarCollapsed]);
 
@@ -294,11 +336,86 @@ export function Layout({ sidebar, children }: LayoutProps) {
     setPreviewImage(null);
   }, []);
 
+  // ============ 模板操作回调 - 需求: 2.5, 2.6, 2.7 ============
+
+  // 编辑模板
+  const handleEditTemplate = useCallback((template: PromptTemplate) => {
+    setEditingTemplate(template);
+    setIsTemplateEditorOpen(true);
+  }, []);
+
+  // 删除模板
+  const handleDeleteTemplate = useCallback(async (templateId: string) => {
+    await deleteTemplate(templateId);
+    // 如果删除的是当前选中的模板，清除选中状态
+    if (selectedTemplateId === templateId) {
+      setSelectedTemplateId(null);
+    }
+    setDeletingTemplateId(null);
+  }, [deleteTemplate, selectedTemplateId]);
+
+  // 使用模板创建新对话 - 需求: 2.7
+  const handleUseTemplate = useCallback((template: PromptTemplate) => {
+    createWindow({
+      model: currentModel,
+      systemInstruction: template.systemInstruction,
+    });
+    // 切换到助手视图
+    setCurrentView('assistants');
+  }, [createWindow, currentModel]);
+
+  // 保存模板（新建或编辑）
+  const handleSaveTemplate = useCallback(async (data: CreateTemplateInput | { id: string; updates: UpdateTemplateInput }) => {
+    if ('id' in data) {
+      // 编辑模式
+      await updateTemplate(data.id, data.updates);
+    } else {
+      // 新建模式
+      await addTemplate(data);
+    }
+    setIsTemplateEditorOpen(false);
+    setEditingTemplate(null);
+  }, [updateTemplate, addTemplate]);
+
+  // 关闭模板编辑器
+  const handleCloseTemplateEditor = useCallback(() => {
+    setIsTemplateEditorOpen(false);
+    setEditingTemplate(null);
+  }, []);
+
+  // ============ 书签操作回调 - 需求: 3.6, 3.7 ============
+
+  // 导航到原消息 - 需求: 3.6
+  const handleNavigateToBookmark = useCallback((bookmark: Bookmark) => {
+    // 先选择窗口
+    selectWindow(bookmark.windowId);
+    // 再选择子话题
+    selectSubTopic(bookmark.windowId, bookmark.subTopicId);
+    // 切换到助手视图
+    setCurrentView('assistants');
+    // 清除选中的书签
+    setSelectedBookmarkId(null);
+  }, [selectWindow, selectSubTopic]);
+
+  // 删除书签 - 需求: 3.7
+  const handleDeleteBookmark = useCallback(async (messageId: string) => {
+    await removeBookmark(messageId);
+    // 清除选中状态
+    setSelectedBookmarkId(null);
+  }, [removeBookmark]);
+
   return (
-    <SidebarContext.Provider value={{ currentView, setCurrentView }}>
+    <SidebarContext.Provider value={{ 
+      currentView, 
+      setCurrentView,
+      selectedTemplateId,
+      setSelectedTemplateId,
+      selectedBookmarkId,
+      setSelectedBookmarkId
+    }}>
       <div className="flex h-screen overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300">
-        {/* 移动端遮罩层 */}
-        {!sidebarCollapsed && isMobile && (
+        {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
+        {!sidebarCollapsed && isMobile && currentView !== 'images' && (
           <div
             className="fixed inset-0 z-20 bg-black/50 transition-opacity duration-300"
             onClick={toggleSidebar}
@@ -315,13 +432,25 @@ export function Layout({ sidebar, children }: LayoutProps) {
             </div>
           </div>
 
-          {/* 导航图标 - 助手和图片库 */}
+          {/* 导航图标 - 助手、模板、书签和图片库 */}
           <div className="flex-1 flex flex-col items-center py-3 gap-2">
             <NavIconButton
               icon={<ChatIcon />}
               label="助手"
               isActive={currentView === 'assistants' && !sidebarCollapsed}
               onClick={handleAssistantsClick}
+            />
+            <NavIconButton
+              icon={<TemplateNavIcon />}
+              label="模板"
+              isActive={currentView === 'templates' && !sidebarCollapsed}
+              onClick={handleTemplatesClick}
+            />
+            <NavIconButton
+              icon={<BookmarkNavIcon />}
+              label="书签"
+              isActive={currentView === 'bookmarks' && !sidebarCollapsed}
+              onClick={handleBookmarksClick}
             />
             <NavIconButton
               icon={<ImageGalleryIcon />}
@@ -354,12 +483,12 @@ export function Layout({ sidebar, children }: LayoutProps) {
           </div>
         </nav>
 
-        {/* 侧边栏内容区 */}
+        {/* 侧边栏内容区 - 需求: 4.2 图片库视图时隐藏侧边栏 */}
         <aside
           className={`
             fixed inset-y-0 left-12 z-30 w-64 transform transition-all duration-300 ease-out
             md:relative md:left-0 md:translate-x-0
-            ${sidebarCollapsed ? '-translate-x-full md:w-0 md:overflow-hidden' : 'translate-x-0'}
+            ${sidebarCollapsed || currentView === 'images' ? '-translate-x-full md:w-0 md:overflow-hidden' : 'translate-x-0'}
             bg-neutral-50 dark:bg-neutral-800 border-r border-neutral-200 dark:border-neutral-700
           `}
         >
@@ -368,12 +497,27 @@ export function Layout({ sidebar, children }: LayoutProps) {
           </div>
         </aside>
 
-        {/* 主内容区 - 需求: 2.1, 2.2 */}
+        {/* 主内容区 - 需求: 2.1, 2.2, 2.3, 3.3 */}
         <main className="flex flex-1 flex-col overflow-hidden transition-colors duration-300">
           {currentView === 'images' ? (
             <FullscreenGallery
               onBackToChat={handleBackToChat}
               onImageClick={handleImageClick}
+            />
+          ) : currentView === 'templates' ? (
+            /* 模板详情视图 - 需求: 2.3 */
+            <TemplateDetailView
+              selectedTemplateId={selectedTemplateId}
+              onEdit={handleEditTemplate}
+              onDelete={handleDeleteTemplate}
+              onUseTemplate={handleUseTemplate}
+            />
+          ) : currentView === 'bookmarks' ? (
+            /* 书签详情视图 - 需求: 3.3 */
+            <BookmarkDetailView
+              selectedBookmarkId={selectedBookmarkId}
+              onNavigate={handleNavigateToBookmark}
+              onDelete={handleDeleteBookmark}
             />
           ) : (
             children
@@ -398,6 +542,14 @@ export function Layout({ sidebar, children }: LayoutProps) {
           image={previewImage}
           isOpen={previewImage !== null}
           onClose={handleCloseImagePreview}
+        />
+
+        {/* 模板编辑器模态框 - 需求: 2.5, 2.8 */}
+        <TemplateEditorModal
+          isOpen={isTemplateEditorOpen}
+          onClose={handleCloseTemplateEditor}
+          template={editingTemplate}
+          onSave={handleSaveTemplate}
         />
       </div>
     </SidebarContext.Provider>
@@ -476,6 +628,32 @@ function ImageGalleryIcon() {
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+}
+
+/**
+ * 模板导航图标
+ * 需求: 5.1
+ */
+function TemplateNavIcon() {
+  return (
+    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+}
+
+/**
+ * 书签导航图标
+ * 需求: 3.3
+ */
+function BookmarkNavIcon() {
+  return (
+    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
     </svg>
   );
 }

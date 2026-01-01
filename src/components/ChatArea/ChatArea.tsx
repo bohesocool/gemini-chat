@@ -2,7 +2,7 @@
  * 聊天区域主组件
  * 集成顶部工具栏、子话题标签、消息列表和输入
  * 
- * Requirements: 4.1, 5.1, 5.2, 5.3, 5.4, 6.1, 7.5
+ * Requirements: 4.1, 5.1, 5.2, 5.3, 5.4, 6.1, 7.5, 1.1, 1.2, 1.3
  */
 
 import { useState, useCallback } from 'react';
@@ -63,12 +63,16 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     updateMessageError,
     retryUserMessage,
     deleteMessage,
+    updateMessageContent,
   } = useChatWindowStore();
 
   const { apiEndpoint, apiKey } = useSettingsStore();
 
   // 获取模型能力 - 需求: 4.6
   const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
+  
+  // 获取模型列表 - 需求: 1.2
+  const models = useModelStore(state => state.models);
 
   // 获取全局设置用于解析流式设置
   const getFullSettings = useSettingsStore(state => state.getFullSettings);
@@ -147,6 +151,15 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     (config: Partial<ChatWindowConfig>) => {
       if (!currentWindowId) return;
       updateWindowConfig(currentWindowId, config);
+    },
+    [currentWindowId, updateWindowConfig]
+  );
+
+  // 处理模型变更 - 需求: 1.3
+  const handleModelChange = useCallback(
+    (modelId: string) => {
+      if (!currentWindowId) return;
+      updateWindowConfig(currentWindowId, { model: modelId });
     },
     [currentWindowId, updateWindowConfig]
   );
@@ -257,15 +270,16 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
 
       const subTopicId = currentWindow.activeSubTopicId;
       
-      // 更新消息内容
-      await editMessage(currentWindowId, subTopicId, messageId, newContent);
-      
-      // 如果需要重新发送，触发重新生成
       if (resend) {
-        await regenerateMessage(currentWindowId, subTopicId, messageId);
+        // 保存并重新发送：editMessage 内部会截断消息并调用 sendMessage
+        // 不需要再调用 regenerateMessage，因为 editMessage 已经处理了重新发送
+        await editMessage(currentWindowId, subTopicId, messageId, newContent);
+      } else {
+        // 仅保存：只更新消息内容，不重新发送
+        await updateMessageContent(currentWindowId, subTopicId, messageId, newContent);
       }
     },
-    [currentWindowId, currentWindow, editMessage, regenerateMessage]
+    [currentWindowId, currentWindow, editMessage, updateMessageContent]
   );
 
   // 处理重试（消息级别错误后重新发送）
@@ -324,11 +338,15 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
 
   return (
     <div className="flex-1 flex flex-col bg-white dark:bg-neutral-900 overflow-hidden">
-      {/* 顶部工具栏（简化版） - Requirements: 6.1, 6.2, 6.3 */}
+      {/* 顶部工具栏（简化版） - Requirements: 6.1, 6.2, 6.3, 1.1, 1.2, 1.3 */}
       <ChatHeader
         windowId={currentWindow.id}
         title={currentWindow.title}
         onOpenConfig={handleOpenConfig}
+        currentModel={currentWindow.config.model}
+        models={models}
+        onModelChange={handleModelChange}
+        messages={currentSubTopic?.messages || []}
       />
 
       {/* 子话题标签栏 - Requirements: 5.1 */}
@@ -356,6 +374,9 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         onEditMessage={handleEditMessage}
         onDeleteMessage={handleDeleteMessage}
         regeneratingMessageId={regeneratingMessageId}
+        windowId={currentWindow.id}
+        subTopicId={currentSubTopic?.id}
+        windowTitle={currentWindow.title}
       />
 
       {/* 消息输入 - Requirements: 5.1, 5.4, 联网搜索, 图片配置, 状态指示器 */}
