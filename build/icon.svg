@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Gemini Chat 应用图标 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4285F4"/>
+      <stop offset="100%" style="stop-color:#34A853"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景圆角矩形 -->
+  <rect x="16" y="16" width="224" height="224" rx="48" fill="url(#bgGradient)"/>
+  
+  <!-- 聊天气泡图标 -->
+  <path d="M80 88 h96 a16 16 0 0 1 16 16 v64 a16 16 0 0 1 -16 16 h-56 l-24 24 v-24 h-16 a16 16 0 0 1 -16 -16 v-64 a16 16 0 0 1 16 -16 z" 
+        fill="white" 
+        opacity="0.95"/>
+  
+  <!-- Gemini 双星标志 -->
+  <circle cx="108" cy="136" r="12" fill="#4285F4"/>
+  <circle cx="148" cy="136" r="12" fill="#34A853"/>
+</svg>

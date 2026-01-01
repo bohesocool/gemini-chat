@@ -108,6 +108,14 @@ npm run preview
 
 ---
 
+## Electron 桌面应用
+
+### 下载安装包
+
+你也可以直接从 [GitHub Releases](https://github.com/bohesocool/gemini-chat/releases) 下载最新版本的 Windows 安装包。
+
+---
+
 ## Docker 部署
 
 ### 方式一：直接拉取镜像运行（推荐）

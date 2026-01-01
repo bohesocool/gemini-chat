@@ -1,0 +1,41 @@
+# electron-builder 配置文件
+# 用于构建 Windows exe 安装包
+
+# 应用基本信息
+appId: com.gemini.chat
+productName: Gemini Chat
+
+# 输出目录配置
+directories:
+  output: release
+  buildResources: build
+
+# 包含的文件
+files:
+  - dist/**/*
+  - electron/**/*.cjs
+
+# Windows 平台配置
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  # 禁用代码签名（本地开发时不需要）
+  signAndEditExecutable: false
+
+# NSIS 安装包配置
+nsis:
+  # 非一键安装，允许用户选择安装目录
+  oneClick: false
+  # 允许更改安装目录
+  allowToChangeInstallationDirectory: true
+  # 创建桌面快捷方式
+  createDesktopShortcut: true
+  # 创建开始菜单快捷方式
+  createStartMenuShortcut: true
+  # 安装包名称
+  artifactName: "${productName}-Setup-${version}.${ext}"
+  # 卸载时显示的名称
+  uninstallDisplayName: "${productName}"

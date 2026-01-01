@@ -1,0 +1,18 @@
+{
+  "types": [
+    { "type": "feat", "section": "✨ 新功能 (Features)" },
+    { "type": "fix", "section": "🐛 Bug 修复 (Bug Fixes)" },
+    { "type": "refactor", "section": "♻️ 代码重构 (Code Refactoring)" },
+    { "type": "perf", "section": "⚡ 性能优化 (Performance)" },
+    { "type": "style", "section": "💄 样式调整 (Styles)" },
+    { "type": "docs", "section": "📝 文档更新 (Documentation)" },
+    { "type": "test", "section": "✅ 测试 (Tests)" },
+    { "type": "build", "section": "📦 构建系统 (Build System)" },
+    { "type": "ci", "section": "👷 CI/CD (Continuous Integration)" },
+    { "type": "chore", "section": "🔧 其他更改 (Chores)", "hidden": false }
+  ],
+  "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}",
+  "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}",
+  "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}",
+  "userUrlFormat": "{{host}}/{{user}}"
+}

@@ -1,1 +1,19 @@
+# 依赖
 node_modules
+
+# 构建产物
+release/
+*.tsbuildinfo
+
+# 环境变量
+.env
+.env.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db

@@ -1,0 +1,70 @@
+name: Release Electron App
+
+# 当推送 v* 格式的标签时触发构建
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    # 使用 Windows 环境构建
+    runs-on: windows-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      # 检出代码，获取完整历史用于生成 changelog
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      # 设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      # 安装依赖
+      - name: Install dependencies
+        run: npm ci
+      
+      # 构建 Vite 应用
+      - name: Build Vite app
+        run: npm run build
+      
+      # 构建 Electron 安装包
+      - name: Build Electron app
+        run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # 生成 Release Notes（基于 Conventional Commits）
+      # 使用 .versionrc 配置文件按类型分组显示
+      - name: Generate Release Notes
+        id: changelog
+        uses: conventional-changelog/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output-file: false
+          skip-commit: true
+          skip-version-file: true
+          skip-git-pull: true
+          config-file-path: .versionrc
+      
+      # 创建 GitHub Release 并上传 Assets
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/latest.yml
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
