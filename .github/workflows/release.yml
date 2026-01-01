@@ -42,24 +42,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      # 生成 Release Notes（基于 Conventional Commits）
-      # 使用 .versionrc 配置文件按类型分组显示
-      - name: Generate Release Notes
-        id: changelog
-        uses: conventional-changelog/conventional-changelog-action@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          output-file: false
-          skip-commit: true
-          skip-version-file: true
-          skip-git-pull: true
-          config-file-path: .versionrc
-      
       # 创建 GitHub Release 并上传 Assets
+      # 使用 GitHub 自动生成的 Release Notes
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ steps.changelog.outputs.changelog }}
+          generate_release_notes: true
           files: |
             release/*.exe
             release/*.exe.blockmap
