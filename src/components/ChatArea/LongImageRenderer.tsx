@@ -328,7 +328,7 @@ function ThoughtContent({ thoughtSummary, colors }: ThoughtContentProps) {
 
 /** AI 生成图片网格组件 Props */
 interface GeneratedImagesGridProps {
-  images: import('../../types').GeneratedImage[];
+  images: import('../../types/models').GeneratedImage[];
   colors: ThemeColors;
 }
 

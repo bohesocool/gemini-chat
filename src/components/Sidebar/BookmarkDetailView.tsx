@@ -9,7 +9,7 @@
  * - 空状态提示
  */
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useBookmarkStore } from '../../stores/bookmark';
 import type { Bookmark } from '../../stores/bookmark';
 import { MarkdownRenderer } from '../MarkdownRenderer';

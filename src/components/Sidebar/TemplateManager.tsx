@@ -6,7 +6,7 @@
  * 点击卡片选中模板，在主内容区显示详情
  */
 
-import React, { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useTemplateStore } from '../../stores/template';
 import { useSidebarView } from '../Layout';
 import type { PromptTemplate, CreateTemplateInput, UpdateTemplateInput } from '../../stores/template';

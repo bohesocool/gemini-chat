@@ -8,9 +8,9 @@
  * - 空状态提示
  */
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTemplateStore } from '../../stores/template';
-import type { PromptTemplate, CreateTemplateInput } from '../../stores/template';
+import type { PromptTemplate } from '../../stores/template';
 
 export interface TemplateDetailViewProps {
   /** 选中的模板 ID */

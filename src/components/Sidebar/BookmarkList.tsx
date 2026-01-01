@@ -3,7 +3,7 @@
  * 需求: 3.2, 3.9 - 简洁列表，点击选中，高亮显示
  */
 
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useBookmarkStore } from '../../stores/bookmark';
 import { useSidebarView } from '../Layout';
 import type { Bookmark } from '../../stores/bookmark';

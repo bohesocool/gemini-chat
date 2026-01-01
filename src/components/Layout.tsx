@@ -195,7 +195,7 @@ function renderSettingsContent(tabId: SettingsTabId): React.ReactNode {
 export function Layout({ sidebar, children }: LayoutProps) {
   const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed, theme, setTheme } = useSettingsStore();
   const { createWindow, selectWindow, selectSubTopic } = useChatWindowStore();
-  const { currentModel, systemInstruction } = useSettingsStore();
+  const { currentModel } = useSettingsStore();
   const { updateTemplate, deleteTemplate, addTemplate } = useTemplateStore();
   const { removeBookmark } = useBookmarkStore();
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() => getEffectiveTheme(theme));
@@ -214,8 +214,6 @@ export function Layout({ sidebar, children }: LayoutProps) {
   // 模板编辑器状态 - 需求: 2.5
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
-  // 删除确认状态
-  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   // 触摸手势处理
@@ -351,7 +349,6 @@ export function Layout({ sidebar, children }: LayoutProps) {
     if (selectedTemplateId === templateId) {
       setSelectedTemplateId(null);
     }
-    setDeletingTemplateId(null);
   }, [deleteTemplate, selectedTemplateId]);
 
   // 使用模板创建新对话 - 需求: 2.7
