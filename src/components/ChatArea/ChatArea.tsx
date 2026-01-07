@@ -17,6 +17,7 @@ import { MessageInput } from '../MessageInput';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import type { ChatWindowConfig } from '../../types/chatWindow';
 import type { Attachment, ImageGenerationConfig, ThinkingLevel } from '../../types/models';
+import type { FileReference } from '../../types/filesApi';
 import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
 import { resolveStreamingEnabled } from '../../services/streaming';
 
@@ -91,13 +92,14 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     : null;
 
   // 处理发送消息
+  // 需求: 3.3, 4.1, 4.2, 4.3 - 支持文件引用
   const handleSendMessage = useCallback(
-    async (content: string, attachments?: Attachment[]) => {
+    async (content: string, attachments?: Attachment[], fileReferences?: FileReference[]) => {
       if (!currentWindowId || !currentWindow) return;
 
       const subTopicId = currentWindow.activeSubTopicId;
       
-      // 发送消息
+      // 发送消息，包含文件引用
       await sendMessage(
         currentWindowId,
         subTopicId,
@@ -107,7 +109,9 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
           endpoint: apiEndpoint,
           apiKey: apiKey,
           model: currentWindow.config.model,
-        }
+        },
+        undefined, // advancedConfig
+        fileReferences // 传递文件引用
       );
     },
     [currentWindowId, currentWindow, sendMessage, apiEndpoint, apiKey]

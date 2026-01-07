@@ -12,12 +12,18 @@ import { validateFile, fileToBase64, getFileMimeType, isImageFile, formatFileSiz
 import { useReducedMotion } from './motion';
 import { durationValues, easings, touchTargets } from '../design/tokens';
 import { useModelStore } from '../stores/model';
+import { useSettingsStore } from '../stores/settings';
 import { ImageConfigToolbar } from './MessageInput/ImageConfigToolbar';
 import { StatusIndicators } from './MessageInput/StatusIndicators';
+import { FilesApiToggle } from './MessageInput/FilesApiToggle';
+import { FileReferencePreview } from './MessageInput/FileReferencePreview';
+import type { FileReference } from '../types/filesApi';
+import { generateFileReferenceId, createFileReference } from '../types/filesApi';
+import { uploadFileToFilesApi, validateFilesApiFile, FilesApiError, getErrorMessage } from '../services/filesApi';
 
 interface MessageInputProps {
   /** 发送消息回调 */
-  onSend: (content: string, attachments?: Attachment[]) => void;
+  onSend: (content: string, attachments?: Attachment[], fileReferences?: FileReference[]) => void;
   /** 取消请求回调 - 需求: 5.1 */
   onCancel?: () => void;
   /** 是否正在发送 */
@@ -155,6 +161,7 @@ export function MessageInput({
 }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [fileReferences, setFileReferences] = useState<FileReference[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -164,6 +171,12 @@ export function MessageInput({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  
+  // 获取 Files API 开关状态 - 需求: 1.1, 1.2
+  const filesApiEnabled = useSettingsStore(state => state.filesApiEnabled);
+  const setFilesApiEnabled = useSettingsStore(state => state.setFilesApiEnabled);
+  const apiKey = useSettingsStore(state => state.apiKey);
+  const apiEndpoint = useSettingsStore(state => state.apiEndpoint);
   
   // 获取模型 store 的 getEffectiveCapabilities 方法
   // 需求: 4.1, 4.2, 4.3, 4.4, 4.5 (model-redirect-enhancement)
@@ -228,37 +241,127 @@ export function MessageInput({
     const fileArray = Array.from(files);
     const newAttachments: Attachment[] = [];
 
-    for (const file of fileArray) {
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        setError(validation.error || '文件验证失败');
-        continue;
-      }
+    // 调试日志
+    console.log('[MessageInput] handleFiles called', {
+      filesApiEnabled,
+      fileCount: fileArray.length,
+      apiKey: apiKey ? '***' : 'empty',
+    });
 
-      try {
-        const mimeType = getFileMimeType(file);
-        const base64Data = await fileToBase64(file);
-        
-        const attachment: Attachment = {
-          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          type: isImageFile(mimeType) ? 'image' : 'file',
-          name: file.name,
-          mimeType,
-          data: base64Data,
-          size: file.size,
+    for (const file of fileArray) {
+      // 如果启用了 Files API 模式，使用 Files API 上传
+      // 需求: 2.1 - Files API 模式下上传文件到 Gemini Files API
+      if (filesApiEnabled) {
+        console.log('[MessageInput] Using Files API mode for:', file.name);
+        // 验证文件是否可以通过 Files API 上传
+        const validation = validateFilesApiFile(file);
+        if (!validation.valid) {
+          setError(validation.error || '文件验证失败');
+          continue;
+        }
+
+        // 创建初始文件引用（上传中状态）
+        const tempRef: FileReference = {
+          id: generateFileReferenceId(),
+          uri: '',
+          mimeType: file.type || 'application/octet-stream',
+          displayName: file.name,
+          sizeBytes: file.size,
+          status: 'uploading',
+          progress: 0,
+          originalFile: file, // 保存原始文件用于重试 - 需求: 5.2
         };
-        
-        newAttachments.push(attachment);
-      } catch (err) {
-        console.error('文件处理失败:', err);
-        setError(`文件处理失败: ${file.name}`);
+
+        // 添加到文件引用列表
+        setFileReferences(prev => [...prev, tempRef]);
+
+        try {
+          // 上传文件到 Files API
+          // 需求: 2.2 - 显示上传进度
+          const result = await uploadFileToFilesApi(
+            file,
+            apiKey,
+            apiEndpoint || undefined,
+            (progress) => {
+              // 更新上传进度
+              setFileReferences(prev =>
+                prev.map(ref =>
+                  ref.id === tempRef.id
+                    ? { ...ref, progress }
+                    : ref
+                )
+              );
+            }
+          );
+
+          // 更新文件引用为成功状态
+          // 需求: 2.3 - 存储文件引用
+          const successRef = createFileReference(result, file.name);
+          setFileReferences(prev =>
+            prev.map(ref =>
+              ref.id === tempRef.id
+                ? { ...successRef, id: tempRef.id }
+                : ref
+            )
+          );
+        } catch (err) {
+          console.error('Files API 上传失败:', err);
+          // 更新文件引用为错误状态
+          // 需求: 2.4, 5.1, 5.2, 5.4 - 显示上传错误，保留错误代码和原始文件用于重试
+          const errorMessage = getErrorMessage(err);
+          const errorCode = err instanceof FilesApiError ? err.code : undefined;
+          
+          setFileReferences(prev =>
+            prev.map(ref =>
+              ref.id === tempRef.id
+                ? {
+                    ...ref,
+                    status: 'error' as const,
+                    error: errorMessage,
+                    errorCode: errorCode,
+                    originalFile: file, // 保留原始文件用于重试
+                  }
+                : ref
+            )
+          );
+          // 需求: 5.4 - 错误时保留文本内容（不清空 content）
+          setError(errorMessage);
+        }
+      } else {
+        // 使用传统的 base64 内联方式
+        // 需求: 4.4 - Files API 模式禁用时使用现有内联 base64 上传方法
+        console.log('[MessageInput] Using traditional base64 mode for:', file.name);
+        const validation = validateFile(file);
+        if (!validation.valid) {
+          setError(validation.error || '文件验证失败');
+          continue;
+        }
+
+        try {
+          const mimeType = getFileMimeType(file);
+          const base64Data = await fileToBase64(file);
+          
+          const attachment: Attachment = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            type: isImageFile(mimeType) ? 'image' : 'file',
+            name: file.name,
+            mimeType,
+            data: base64Data,
+            size: file.size,
+          };
+          
+          newAttachments.push(attachment);
+        } catch (err) {
+          console.error('文件处理失败:', err);
+          setError(`文件处理失败: ${file.name}`);
+        }
       }
     }
 
     if (newAttachments.length > 0) {
       setAttachments((prev) => [...prev, ...newAttachments]);
     }
-  }, []);
+  }, [filesApiEnabled, apiKey, apiEndpoint]);
 
   /**
    * 处理粘贴事件，从剪贴板提取图片
@@ -312,6 +415,93 @@ export function MessageInput({
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
+  // 删除文件引用 - 需求: 3.2
+  const handleRemoveFileReference = (id: string) => {
+    setFileReferences((prev) => prev.filter((ref) => ref.id !== id));
+  };
+
+  // 重试上传文件 - 需求: 5.2
+  const handleRetryFileUpload = useCallback(async (id: string) => {
+    // 找到需要重试的文件引用
+    const refToRetry = fileReferences.find(ref => ref.id === id);
+    if (!refToRetry || !refToRetry.originalFile) {
+      setError('无法重试：原始文件不可用');
+      return;
+    }
+
+    const file = refToRetry.originalFile;
+
+    // 更新状态为上传中
+    setFileReferences(prev =>
+      prev.map(ref =>
+        ref.id === id
+          ? {
+              ...ref,
+              status: 'uploading' as const,
+              progress: 0,
+              error: undefined,
+              errorCode: undefined,
+            }
+          : ref
+      )
+    );
+
+    try {
+      // 重新上传文件
+      const result = await uploadFileToFilesApi(
+        file,
+        apiKey,
+        apiEndpoint || undefined,
+        (progress) => {
+          setFileReferences(prev =>
+            prev.map(ref =>
+              ref.id === id
+                ? { ...ref, progress }
+                : ref
+            )
+          );
+        }
+      );
+
+      // 更新为成功状态
+      const successRef = createFileReference(result, file.name);
+      setFileReferences(prev =>
+        prev.map(ref =>
+          ref.id === id
+            ? { ...successRef, id }
+            : ref
+        )
+      );
+      
+      // 清除错误提示
+      setError(null);
+    } catch (err) {
+      console.error('重试上传失败:', err);
+      const errorMessage = getErrorMessage(err);
+      const errorCode = err instanceof FilesApiError ? err.code : undefined;
+      
+      setFileReferences(prev =>
+        prev.map(ref =>
+          ref.id === id
+            ? {
+                ...ref,
+                status: 'error' as const,
+                error: errorMessage,
+                errorCode: errorCode,
+              }
+            : ref
+        )
+      );
+      setError(errorMessage);
+    }
+  }, [fileReferences, apiKey, apiEndpoint]);
+
+  // 切换 Files API 模式 - 需求: 1.3
+  const handleFilesApiToggle = () => {
+    console.log('[MessageInput] Toggling Files API mode:', !filesApiEnabled);
+    setFilesApiEnabled(!filesApiEnabled);
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -337,16 +527,25 @@ export function MessageInput({
   const handleSend = () => {
     const trimmedContent = content.trim();
     
-    if (!trimmedContent && attachments.length === 0) {
+    // 获取已就绪的文件引用 - 需求: 3.3
+    const readyFileReferences = fileReferences.filter(ref => ref.status === 'ready');
+    
+    if (!trimmedContent && attachments.length === 0 && readyFileReferences.length === 0) {
       return;
     }
 
-    onSend(trimmedContent, attachments.length > 0 ? attachments : undefined);
+    // 发送消息，包含文件引用 - 需求: 3.3, 3.4
+    onSend(
+      trimmedContent, 
+      attachments.length > 0 ? attachments : undefined,
+      readyFileReferences.length > 0 ? readyFileReferences : undefined
+    );
     
     // 编辑模式下不清空内容，由父组件控制 - 需求: 3.3
     if (!isEditing) {
       setContent('');
       setAttachments([]);
+      setFileReferences([]);
       
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -358,6 +557,7 @@ export function MessageInput({
   const handleCancelEdit = () => {
     setContent('');
     setAttachments([]);
+    setFileReferences([]);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -374,7 +574,9 @@ export function MessageInput({
   };
 
   const isDisabled = disabled || isSending;
-  const canSend = (content.trim() || attachments.length > 0) && !isDisabled;
+  // 获取已就绪的文件引用数量
+  const readyFileReferencesCount = fileReferences.filter(ref => ref.status === 'ready').length;
+  const canSend = (content.trim() || attachments.length > 0 || readyFileReferencesCount > 0) && !isDisabled;
 
   const transitionStyle = reducedMotion
     ? {}
@@ -440,6 +642,20 @@ export function MessageInput({
               attachment={attachment}
               onRemove={() => handleRemoveAttachment(attachment.id)}
               reducedMotion={reducedMotion}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Files API 文件引用预览区域 - 需求: 3.1, 3.5, 5.2 */}
+      {fileReferences.length > 0 && (
+        <div className="mb-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {fileReferences.map((reference) => (
+            <FileReferencePreview
+              key={reference.id}
+              reference={reference}
+              onRemove={() => handleRemoveFileReference(reference.id)}
+              onRetry={() => handleRetryFileUpload(reference.id)}
             />
           ))}
         </div>
@@ -588,6 +804,13 @@ export function MessageInput({
             <PaperclipIcon className="w-4 h-4" />
           </ToolbarButton>
 
+          {/* Files API 开关 - 需求: 1.1, 1.3, 1.4 */}
+          <FilesApiToggle
+            enabled={filesApiEnabled}
+            onToggle={handleFilesApiToggle}
+            disabled={isDisabled}
+          />
+
           {/* 分隔线 */}
           <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
@@ -639,6 +862,13 @@ export function MessageInput({
 
           <div className="flex-1" />
 
+          {/* Files API 状态指示 - 需求: 1.6 */}
+          {filesApiEnabled && (
+            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
+              Files API 已开启
+            </span>
+          )}
+
           {/* 联网搜索状态指示 */}
           {webSearchEnabled && (
             <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
@@ -657,7 +887,10 @@ export function MessageInput({
       <input
         ref={imageInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept={filesApiEnabled 
+          ? "image/jpeg,image/png,image/webp,image/heic,image/heif"
+          : "image/jpeg,image/png,image/webp,image/gif"
+        }
         multiple
         onChange={handleFileInputChange}
         className="hidden"
@@ -665,7 +898,10 @@ export function MessageInput({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.txt,.js,.ts,.jsx,.tsx,.py,.java,.css,.html,.json,.xml,.md"
+        accept={filesApiEnabled
+          ? ".pdf,.txt,.js,.ts,.jsx,.tsx,.py,.java,.css,.html,.json,.xml,.md,.mp3,.wav,.aiff,.aac,.ogg,.flac,.mp4,.mpeg,.mov,.avi,.flv,.webm,.wmv,.3gp,.png,.jpg,.jpeg,.webp,.heic,.heif,.csv"
+          : ".pdf,.txt,.js,.ts,.jsx,.tsx,.py,.java,.css,.html,.json,.xml,.md"
+        }
         multiple
         onChange={handleFileInputChange}
         className="hidden"

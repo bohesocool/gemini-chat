@@ -2,7 +2,7 @@
  * 消息列表组件
  * 现代化的消息气泡设计，支持流畅动画
  * 
- * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
+ * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 5.1, 5.3
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import type { Message, Attachment } from '../types/models';
 import { useReducedMotion } from './motion';
 import { durationValues, easings } from '../design/tokens';
 import { ThoughtSummaryCard } from './ChatArea/ThoughtSummaryCard';
+import { FileReferenceList } from './MessageList/FileReferenceList';
 
 interface MessageListProps {
   /** 消息列表 */
@@ -163,6 +164,11 @@ function MessageItem({ message, renderContent, isLast, reducedMotion }: MessageI
     >
       <Avatar role={message.role} />
       <div className={`flex-1 min-w-0 max-w-[85%] ${isUser ? 'flex flex-col items-end' : ''}`}>
+        {/* 文件引用预览 - Requirements: 5.1, 5.3 */}
+        {message.fileReferences && message.fileReferences.length > 0 && (
+          <FileReferenceList fileReferences={message.fileReferences} isUser={isUser} />
+        )}
+        
         {/* 附件预览 */}
         {message.attachments && message.attachments.length > 0 && (
           <AttachmentList attachments={message.attachments} isUser={isUser} />

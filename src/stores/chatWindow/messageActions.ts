@@ -5,6 +5,7 @@
 
 import type { ChatWindow, SubTopic } from '../../types/chatWindow';
 import type { Message, Attachment, ApiConfig, ModelAdvancedConfig, MessageTokenUsage } from '../../types/models';
+import type { FileReference } from '../../types/filesApi';
 import { saveChatWindow } from '../../services/storage';
 import { 
   sendMessageWithThoughts, 
@@ -18,20 +19,22 @@ import { storeLogger } from '../../services/logger';
 import { generateId, messagesToGeminiContents } from './utils';
 import type { SetState, GetState } from './types';
 import { UI_LIMITS } from '../../constants';
+import { buildContentWithFileReferences } from '../../services/gemini/builders';
 
 /**
  * 创建消息操作
  */
 export const createMessageActions = (set: SetState, get: GetState) => ({
   // 发送消息
-  // 需求: 5.1, 5.2, 5.3, 6.6
+  // 需求: 5.1, 5.2, 5.3, 6.6, 3.3, 4.1, 4.2, 4.3 - 支持文件引用
   sendMessage: async (
     windowId: string,
     subTopicId: string,
     content: string,
     attachments?: Attachment[],
     apiConfig?: ApiConfig,
-    advancedConfig?: ModelAdvancedConfig
+    advancedConfig?: ModelAdvancedConfig,
+    fileReferences?: FileReference[]
   ) => {
     const state = get();
     let window = state.windows.find((w) => w.id === windowId);
@@ -50,12 +53,16 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
     }
 
     // 创建用户消息
+    // 需求: 1.1, 1.3 - 存储文件引用到消息对象，只存储 status 为 'ready' 的文件引用
+    const readyFileReferences = fileReferences?.filter(ref => ref.status === 'ready');
     const userMessage: Message = {
       id: generateId(),
       role: 'user',
       content,
       attachments,
       timestamp: Date.now(),
+      // 需求: 1.1, 1.2 - 存储文件引用以便在后续对话中使用
+      fileReferences: readyFileReferences && readyFileReferences.length > 0 ? readyFileReferences : undefined,
     };
 
     // 添加用户消息到子话题
@@ -157,7 +164,27 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       }
 
       // 转换消息为 Gemini API 格式
-      const geminiContents = messagesToGeminiContents(messagesWithUser, isImageGenerationModel);
+      // 需求: 3.3, 4.1, 4.2, 4.3 - 支持文件引用
+      let geminiContents = messagesToGeminiContents(messagesWithUser, isImageGenerationModel);
+      
+      // 如果有文件引用，需要重新构建最后一条用户消息
+      // 需求: 4.1 - 使用 file_data part 格式
+      // 需求: 4.2 - 支持混合文件引用与文本内容
+      // 需求: 4.3 - 支持混合文件引用与内联 base64 数据
+      if (fileReferences && fileReferences.length > 0) {
+        const readyFileReferences = fileReferences.filter(ref => ref.status === 'ready');
+        if (readyFileReferences.length > 0) {
+          // 移除最后一条消息（用户消息）
+          geminiContents = geminiContents.slice(0, -1);
+          // 使用 buildContentWithFileReferences 重新构建
+          const lastUserContent = buildContentWithFileReferences(
+            content,
+            readyFileReferences,
+            attachments
+          );
+          geminiContents.push(lastUserContent);
+        }
+      }
 
       // 根据流式设置选择 API 调用方式
       // 需求: 10.3 - 流式输出逐字逐句实时显示
@@ -945,6 +972,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
 
   // 重试发送失败的用户消息
   // 不创建新消息，使用现有用户消息作为上下文，直接请求 AI 响应
+  // 需求: 2.3 - 重试时文件引用通过 contextMessages 被正确传递
   retryUserMessage: async (
     windowId: string,
     subTopicId: string,
@@ -978,12 +1006,14 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
     }
 
     // 清除用户消息的错误状态
+    // 需求: 2.3 - 保留 fileReferences 字段以便在重试时正确传递
     const clearedUserMessage: Message = {
       ...userMessage,
     };
     delete clearedUserMessage.error;
 
     // 获取包含该用户消息的所有消息作为上下文
+    // 需求: 2.3 - contextMessages 包含所有历史消息的 fileReferences
     const contextMessages = subTopic.messages.slice(0, messageIndex + 1).map((m, i) => 
       i === messageIndex ? clearedUserMessage : m
     );

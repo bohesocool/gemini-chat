@@ -32,15 +32,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      # 从 git tag 提取版本号并更新 package.json
+      - name: Set version from tag
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          npm version $version --no-git-tag-version
+        shell: pwsh
+      
       # 构建 Vite 应用
       - name: Build Vite app
         run: npm run build
       
-      # 构建 Electron 安装包
+      # 构建 Electron 安装包（禁用自动发布避免创建 draft）
       - name: Build Electron app
-        run: npx electron-builder --win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish never
       
       # 创建 GitHub Release 并上传 Assets
       # 使用 GitHub 自动生成的 Release Notes

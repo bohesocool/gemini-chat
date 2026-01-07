@@ -1,6 +1,6 @@
 /**
  * Gemini API 请求构建函数
- * 需求: 1.1, 1.2, 1.3, 1.4
+ * 需求: 1.1, 1.2, 1.3, 1.4, 3.3, 4.1, 4.2, 4.3
  */
 
 import type {
@@ -10,10 +10,14 @@ import type {
   SafetySetting,
   ThinkingConfig,
   ImageConfig,
+  GeminiPart,
+  GeminiInlineDataPart,
+  GeminiFileDataPart,
 } from '../../types';
-import type { ApiConfig, ModelAdvancedConfig, MediaResolution, ModelCapabilities } from '../../types/models';
+import type { ApiConfig, ModelAdvancedConfig, MediaResolution, ModelCapabilities, Attachment } from '../../types/models';
 import { getModelCapabilities as getModelCapabilitiesFromPreset, DEFAULT_IMAGE_GENERATION_CONFIG, OFFICIAL_API_ENDPOINT } from '../../types/models';
 import { useModelStore } from '../../stores/model';
+import type { FileReference } from '../../types/filesApi';
 
 // ============ 模型能力辅助函数 ============
 
@@ -409,4 +413,84 @@ export function applyMediaResolution(
       return part;
     }),
   }));
+}
+
+
+// ============ Files API 文件引用构建 ============
+
+/**
+ * 将文件引用转换为 Gemini API 的 file_data part
+ * 需求: 3.3, 4.1
+ * 
+ * @param ref - 文件引用对象
+ * @returns Gemini API 的 file_data part 格式
+ */
+export function fileReferenceToGeminiPart(ref: FileReference): GeminiFileDataPart {
+  return {
+    file_data: {
+      file_uri: ref.uri,
+      mime_type: ref.mimeType,
+    },
+  };
+}
+
+/**
+ * 将附件转换为 Gemini API 的 inlineData part
+ * 
+ * @param attachment - 附件对象
+ * @returns Gemini API 的 inlineData part 格式
+ */
+function attachmentToGeminiPart(attachment: Attachment): GeminiInlineDataPart {
+  return {
+    inlineData: {
+      mimeType: attachment.mimeType,
+      data: attachment.data,
+    },
+  };
+}
+
+/**
+ * 构建包含文件引用的消息内容
+ * 需求: 3.3, 4.1, 4.2, 4.3
+ * 
+ * 支持混合文件引用、内联附件和文本内容。
+ * 文件引用使用 file_data 格式，内联附件使用 inlineData 格式。
+ * 
+ * @param text - 文本内容
+ * @param fileReferences - 文件引用数组（通过 Files API 上传的文件）
+ * @param inlineAttachments - 内联附件数组（base64 编码的文件）
+ * @returns Gemini API 的 Content 对象
+ */
+export function buildContentWithFileReferences(
+  text: string,
+  fileReferences: FileReference[] = [],
+  inlineAttachments: Attachment[] = []
+): GeminiContent {
+  const parts: GeminiPart[] = [];
+
+  // 添加文件引用 parts（使用 file_data 格式）
+  // 需求: 4.1 - 使用 file_data part 格式
+  for (const ref of fileReferences) {
+    // 只添加状态为 ready 的文件引用
+    if (ref.status === 'ready') {
+      parts.push(fileReferenceToGeminiPart(ref));
+    }
+  }
+
+  // 添加内联附件 parts（使用 inlineData 格式）
+  // 需求: 4.3 - 支持混合文件引用与内联 base64 数据
+  for (const attachment of inlineAttachments) {
+    parts.push(attachmentToGeminiPart(attachment));
+  }
+
+  // 添加文本 part
+  // 需求: 4.2 - 支持混合文件引用与文本内容
+  if (text.trim()) {
+    parts.push({ text });
+  }
+
+  return {
+    role: 'user',
+    parts,
+  };
 }

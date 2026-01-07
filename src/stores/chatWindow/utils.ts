@@ -15,7 +15,10 @@ export function generateId(): string {
 
 /**
  * 将消息转换为 Gemini API 格式
+ * 需求: 2.1, 2.2, 2.4, 3.2, 4.1 - 支持文件引用转换
  * 需求: 2.6 - 画图模型连续对话支持
+ * 
+ * 转换顺序：file_data → inlineData → text
  * 
  * @param message - 消息对象
  * @param isImageGenerationModel - 是否为画图模型
@@ -23,9 +26,18 @@ export function generateId(): string {
 export function messageToGeminiContent(message: Message, isImageGenerationModel: boolean = false): GeminiContent {
   const parts: GeminiPart[] = [];
 
-  // 添加文本内容
-  if (message.content) {
-    parts.push({ text: message.content });
+  // 1. 添加文件引用 parts（仅 ready 状态）- 需求: 2.1, 2.2, 2.4, 4.1
+  if (message.fileReferences && message.fileReferences.length > 0) {
+    for (const ref of message.fileReferences) {
+      if (ref.status === 'ready') {
+        parts.push({
+          file_data: {
+            file_uri: ref.uri,
+            mime_type: ref.mimeType,
+          },
+        });
+      }
+    }
   }
 
   // 对于画图模型，model 角色的消息需要特殊处理
@@ -36,7 +48,7 @@ export function messageToGeminiContent(message: Message, isImageGenerationModel:
     }
     // 画图模型的 model 回复不添加图片数据
   } else {
-    // 非画图模型或 user 角色的消息，正常添加附件
+    // 2. 非画图模型或 user 角色的消息，添加内联附件 - 需求: 3.2
     if (message.attachments && message.attachments.length > 0) {
       for (const attachment of message.attachments) {
         parts.push({
@@ -47,6 +59,11 @@ export function messageToGeminiContent(message: Message, isImageGenerationModel:
         });
       }
     }
+  }
+
+  // 3. 添加文本内容 - 需求: 3.2
+  if (message.content) {
+    parts.push({ text: message.content });
   }
 
   return {

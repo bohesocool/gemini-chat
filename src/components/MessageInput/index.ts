@@ -9,3 +9,9 @@ export { ImageConfigToolbar } from './ImageConfigToolbar';
 export type { ImageConfigToolbarProps } from './ImageConfigToolbar';
 
 export { StatusIndicators } from './StatusIndicators';
+
+export { FilesApiToggle } from './FilesApiToggle';
+export type { FilesApiToggleProps } from './FilesApiToggle';
+
+export { FileReferencePreview } from './FileReferencePreview';
+export type { FileReferencePreviewProps } from './FileReferencePreview';

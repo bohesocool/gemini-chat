@@ -4,6 +4,7 @@
  */
 
 import type { GenerationConfig, SafetySetting } from './gemini';
+import type { FileReference } from './filesApi';
 
 // ============ 对话相关类型 ============
 
@@ -86,6 +87,8 @@ export interface Message {
   error?: string;
   /** 生成的图片列表（可选） - AI 模型生成的图片 - 需求: 2.1 */
   generatedImages?: GeneratedImage[];
+  /** 文件引用列表（通过 Files API 上传的文件）- 需求: 1.1, 1.2 */
+  fileReferences?: FileReference[];
 }
 
 /**
@@ -131,6 +134,8 @@ export interface AppSettings {
   sidebarCollapsed: boolean;
   /** 是否启用流式输出 - Requirements: 10.5, 10.6 */
   streamingEnabled: boolean;
+  /** 是否启用 Files API 上传模式 - Requirements: 1.2, 1.5 */
+  filesApiEnabled: boolean;
 }
 
 /**
@@ -509,6 +514,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'system',
   sidebarCollapsed: false,
   streamingEnabled: true, // 默认启用流式输出 - Requirements: 10.6
+  filesApiEnabled: false, // 默认关闭 Files API 模式 - Requirements: 1.2
 };
 
 // ============ 文件限制常量 ============
