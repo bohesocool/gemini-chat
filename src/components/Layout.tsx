@@ -26,6 +26,7 @@ import {
   SafetySettingsSection,
   DataManagementSection,
 } from './Settings/SettingsSections';
+import { AboutPanel } from './Settings/AboutPanel';
 import { DebugPanel } from './Debug';
 import { FullscreenGallery } from './Gallery/FullscreenGallery';
 import { ImagePreviewModal } from './ImagePreviewModal';
@@ -220,6 +221,8 @@ function renderSettingsContent(tabId: SettingsTabId): React.ReactNode {
       return <SafetySettingsSection />;
     case 'data':
       return <DataManagementSection />;
+    case 'about':
+      return <AboutPanel />;
     default:
       return null;
   }

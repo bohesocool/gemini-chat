@@ -16,6 +16,7 @@ import { ImageGallery } from './ImageGallery';
 import { TemplateManager } from './TemplateManager';
 import { BookmarkList } from './BookmarkList';
 import { ImagePreviewModal } from '../ImagePreviewModal';
+import { VersionDisplay } from './VersionDisplay';
 import { touchTargets } from '../../design/tokens';
 import type { ChatWindow } from '../../types/chatWindow';
 import type { GeneratedImage } from '../../types';
@@ -211,6 +212,9 @@ export function Sidebar() {
             <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
               {filteredWindows.length === windows.length ? `${windows.length} 个程序` : `显示 ${filteredWindows.length} / ${windows.length} 个程序`}
             </p>
+            <div className="mt-2 text-center">
+              <VersionDisplay />
+            </div>
           </div>
         </>
       ) : currentView === 'images' ? (

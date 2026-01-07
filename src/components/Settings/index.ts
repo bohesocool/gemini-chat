@@ -19,3 +19,6 @@ export {
   SafetySettingsSection,
   DataManagementSection,
 } from './SettingsSections';
+
+// 关于面板组件
+export { AboutPanel } from './AboutPanel';
