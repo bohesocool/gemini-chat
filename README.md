@@ -1,7 +1,7 @@
 # Gemini Chat
 
 <p align="center">
-  <img src="public/vite.svg" alt="Gemini Chat Logo" width="80" height="80">
+  <img src="public/logo.png" alt="Gemini Chat Logo" width="80" height="80">
 </p>
 
 <p align="center">

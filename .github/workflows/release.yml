@@ -32,11 +32,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      # 从 git tag 提取版本号并更新 package.json
+      # 从 git tag 提取版本号并更新 package.json（如果版本不同）
       - name: Set version from tag
         run: |
           $version = "${{ github.ref_name }}" -replace '^v', ''
-          npm version $version --no-git-tag-version
+          $currentVersion = (Get-Content package.json | ConvertFrom-Json).version
+          if ($currentVersion -ne $version) {
+            npm version $version --no-git-tag-version
+          } else {
+            Write-Host "Version already matches: $version"
+          }
         shell: pwsh
       
       # 构建 Vite 应用

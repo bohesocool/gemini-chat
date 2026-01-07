@@ -23,6 +23,7 @@
     /* 模块解析 */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -34,6 +35,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "package.json"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

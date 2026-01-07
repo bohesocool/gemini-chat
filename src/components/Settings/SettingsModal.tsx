@@ -71,6 +71,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
   { id: 'system', label: '系统指令', icon: <MessageIcon /> },
   { id: 'safety', label: '安全设置', icon: <ShieldIcon /> },
   { id: 'data', label: '数据管理', icon: <DatabaseIcon /> },
+  { id: 'about', label: '关于', icon: <InfoIcon /> },
 ];
 
 // ============================================
@@ -443,6 +444,15 @@ function DatabaseIcon() {
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
         d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
