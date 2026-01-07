@@ -23,6 +23,8 @@ export interface AuthConfig {
   passwordHash: string;
   /** 是否为默认密码 */
   isDefaultPassword: boolean;
+  /** 环境变量密码的哈希值（用于检测环境变量密码变化） */
+  envPasswordHash?: string;
 }
 
 /**
@@ -41,17 +43,25 @@ export const FALLBACK_PASSWORD = 'adminiadmin';
 
 /**
  * 从环境变量获取密码（构建时）或从 window 配置获取（运行时）
+ * 注意：Vite 环境变量返回明文，Docker 运行时返回哈希值
  */
 export const getEnvPassword = (): string | undefined => {
-  // 优先从 window 配置读取（Docker 运行时注入）
+  // 其次从 Vite 环境变量读取（构建时注入，明文）
+  return import.meta.env.VITE_AUTH_PASSWORD as string | undefined;
+};
+
+/**
+ * 从 Docker 运行时配置获取密码哈希值
+ * Docker 环境下，密码会在容器启动时被哈希后注入
+ */
+export const getEnvPasswordHash = (): string | undefined => {
   if (typeof window !== 'undefined') {
-    const appConfig = (window as { __APP_CONFIG__?: { AUTH_PASSWORD?: string } }).__APP_CONFIG__;
-    if (appConfig?.AUTH_PASSWORD) {
-      return appConfig.AUTH_PASSWORD;
+    const appConfig = (window as { __APP_CONFIG__?: { AUTH_PASSWORD_HASH?: string } }).__APP_CONFIG__;
+    if (appConfig?.AUTH_PASSWORD_HASH) {
+      return appConfig.AUTH_PASSWORD_HASH;
     }
   }
-  // 其次从 Vite 环境变量读取（构建时注入）
-  return import.meta.env.VITE_AUTH_PASSWORD as string | undefined;
+  return undefined;
 };
 
 /**
@@ -65,7 +75,7 @@ export const getDefaultPassword = (): string => {
  * 是否使用了环境变量密码
  */
 export const isEnvPassword = (): boolean => {
-  return !!getEnvPassword();
+  return !!getEnvPassword() || !!getEnvPasswordHash();
 };
 
 /**

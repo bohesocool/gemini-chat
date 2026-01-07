@@ -1,19 +1,54 @@
 # 依赖
-node_modules
+node_modules/
 
 # 构建产物
+dist/
+build/
 release/
 *.tsbuildinfo
 
-# 环境变量
+# TypeScript 编译输出
+*.js.map
+*.d.ts.map
+vite.config.js
+vite.config.d.ts
+vite.config.d.ts.map
+vitest.config.js
+vitest.config.d.ts
+vitest.config.d.ts.map
+
+# 环境变量（包含敏感信息）
 .env
 .env.local
+.env.*.local
 
-# IDE
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE / 编辑器
 .idea/
+.vscode/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
 
 # 系统文件
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 测试覆盖率
+coverage/
+
+# 临时文件
+*.tmp
+*.temp
+.cache/
