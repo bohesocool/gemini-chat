@@ -9,6 +9,7 @@ import type {
   SubTopic 
 } from '../../types/chatWindow';
 import type { Attachment, ApiConfig, ModelAdvancedConfig, MessageTokenUsage } from '../../types/models';
+import type { FileReference } from '../../types/filesApi';
 
 // ============ Store 状态接口 ============
 
@@ -78,7 +79,8 @@ export interface ChatWindowActions {
     content: string,
     attachments?: Attachment[],
     apiConfig?: ApiConfig,
-    advancedConfig?: ModelAdvancedConfig
+    advancedConfig?: ModelAdvancedConfig,
+    fileReferences?: FileReference[]
   ) => Promise<void>;
   
   // 工具方法

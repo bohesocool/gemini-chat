@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import type { AuthState } from '../types/auth';
+import { isElectronEnvironment } from '../types/auth';
 import {
   initAuthConfig,
   updatePassword,
@@ -69,11 +70,23 @@ export const useAuthStore = create<AuthStore>((set) => ({
   initialize: async () => {
     set({ isLoading: true, error: null });
     try {
+      // Electron 环境下自动跳过密码验证
+      if (isElectronEnvironment()) {
+        set({
+          initialized: true,
+          isLoading: false,
+          isAuthenticated: true,
+          needsPasswordReset: false,
+        });
+        logger.info('Electron 环境检测到，自动跳过密码验证');
+        return;
+      }
+
       const config = await initAuthConfig();
-      
+
       // 尝试从 Token 恢复登录状态
       const sessionRestored = await restoreSession();
-      
+
       set({
         initialized: true,
         isLoading: false,
@@ -81,7 +94,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         // 如果是默认密码，登录后需要重置
         needsPasswordReset: config.isDefaultPassword,
       });
-      
+
       if (sessionRestored) {
         logger.info('鉴权系统初始化完成，已从 Token 恢复登录状态');
       } else {

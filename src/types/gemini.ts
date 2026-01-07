@@ -90,9 +90,10 @@ export interface GeminiContent {
 }
 
 /**
- * Gemini 内容部分，可以是文本、内联数据（图片/文件）、思维链或思维链签名
+ * Gemini 内容部分，可以是文本、内联数据（图片/文件）、文件引用、思维链或思维链签名
+ * 需求: 4.1, 4.2, 4.3
  */
-export type GeminiPart = GeminiTextPart | GeminiInlineDataPart | ThoughtPart | ThoughtSignaturePart;
+export type GeminiPart = GeminiTextPart | GeminiInlineDataPart | GeminiFileDataPart | ThoughtPart | ThoughtSignaturePart;
 
 /**
  * 文本类型的内容部分
@@ -102,12 +103,25 @@ export interface GeminiTextPart {
 }
 
 /**
- * 内联数据类型的内容部分（用于图片和文件）
+ * 内联数据类型的内容部分（用于图片和文件的 base64 编码）
  */
 export interface GeminiInlineDataPart {
   inlineData: {
     mimeType: string;
     data: string; // base64 编码
+  };
+}
+
+/**
+ * 文件数据类型的内容部分（用于 Files API 上传的文件引用）
+ * 需求: 4.1 - 使用 file_data 格式引用已上传的文件
+ */
+export interface GeminiFileDataPart {
+  file_data: {
+    /** 文件 URI，从 Files API 上传结果获取 */
+    file_uri: string;
+    /** 文件 MIME 类型 */
+    mime_type: string;
   };
 }
 

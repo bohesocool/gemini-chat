@@ -44,6 +44,8 @@ interface SettingsState {
   sidebarCollapsed: boolean;
   /** 是否启用流式输出 - Requirements: 10.5, 10.6 */
   streamingEnabled: boolean;
+  /** 是否启用 Files API 上传模式 - Requirements: 1.2, 1.5 */
+  filesApiEnabled: boolean;
 
   // 状态标志
   /** 是否已初始化 */
@@ -97,6 +99,8 @@ interface SettingsActions {
   setSidebarCollapsed: (collapsed: boolean) => void;
   /** 设置流式输出开关 - Requirements: 10.5 */
   setStreamingEnabled: (enabled: boolean) => void;
+  /** 设置 Files API 开关 - Requirements: 1.2, 1.5 */
+  setFilesApiEnabled: (enabled: boolean) => void;
 
   // 连接测试
   /** 测试 API 连接，可指定测试模型 */
@@ -131,6 +135,7 @@ async function persistSettings(state: SettingsState): Promise<void> {
     theme: state.theme,
     sidebarCollapsed: state.sidebarCollapsed,
     streamingEnabled: state.streamingEnabled,
+    filesApiEnabled: state.filesApiEnabled,
   };
   await saveSettings(settings);
 }
@@ -151,6 +156,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   theme: DEFAULT_APP_SETTINGS.theme,
   sidebarCollapsed: DEFAULT_APP_SETTINGS.sidebarCollapsed,
   streamingEnabled: DEFAULT_APP_SETTINGS.streamingEnabled,
+  filesApiEnabled: DEFAULT_APP_SETTINGS.filesApiEnabled,
   initialized: false,
   isLoading: false,
   connectionStatus: 'idle',
@@ -171,6 +177,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         theme: settings.theme,
         sidebarCollapsed: settings.sidebarCollapsed,
         streamingEnabled: settings.streamingEnabled ?? DEFAULT_APP_SETTINGS.streamingEnabled,
+        filesApiEnabled: settings.filesApiEnabled ?? DEFAULT_APP_SETTINGS.filesApiEnabled,
         initialized: true,
         isLoading: false,
       });
@@ -319,6 +326,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     });
   },
 
+  // 设置 Files API 开关
+  // Requirements: 1.2, 1.5 - Files API 设置持久化存储
+  setFilesApiEnabled: (enabled: boolean) => {
+    set({ filesApiEnabled: enabled });
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化 Files API 设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
+  },
+
   // 测试连接
   // 需求: 1.4 - 支持指定模型进行测试
   testConnection: async (modelId?: string) => {
@@ -369,6 +388,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       theme: state.theme,
       sidebarCollapsed: state.sidebarCollapsed,
       streamingEnabled: state.streamingEnabled,
+      filesApiEnabled: state.filesApiEnabled,
     };
   },
 
@@ -384,6 +404,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       theme: DEFAULT_APP_SETTINGS.theme,
       sidebarCollapsed: DEFAULT_APP_SETTINGS.sidebarCollapsed,
       streamingEnabled: DEFAULT_APP_SETTINGS.streamingEnabled,
+      filesApiEnabled: DEFAULT_APP_SETTINGS.filesApiEnabled,
       connectionStatus: 'idle',
       connectionError: null,
     });

@@ -103,6 +103,42 @@ function useIsMobile(): boolean {
 }
 
 /**
+ * 自定义 Hook：修复移动端浏览器视口高度问题
+ * 解决手机 Edge 等浏览器地址栏导致 100vh 不准确的问题
+ */
+function useViewportHeight(): void {
+  useEffect(() => {
+    // 设置真实视口高度的 CSS 变量
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // 初始设置
+    setViewportHeight();
+
+    // 监听窗口大小变化和方向变化
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', setViewportHeight);
+
+    // 某些移动端浏览器在滚动时会改变视口高度，需要延迟处理
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const debouncedSetHeight = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(setViewportHeight, 100);
+    };
+    window.addEventListener('scroll', debouncedSetHeight);
+
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+      window.removeEventListener('scroll', debouncedSetHeight);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+}
+
+/**
  * 触摸手势配置
  */
 const SWIPE_CONFIG = {
@@ -215,6 +251,9 @@ export function Layout({ sidebar, children }: LayoutProps) {
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
   const isMobile = useIsMobile();
+
+  // 修复移动端浏览器视口高度问题
+  useViewportHeight();
 
   // 触摸手势处理
   useSwipeGesture(
@@ -410,7 +449,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
       selectedBookmarkId,
       setSelectedBookmarkId
     }}>
-      <div className="flex h-screen overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300">
+      <div className="flex overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
         {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
         {!sidebarCollapsed && isMobile && currentView !== 'images' && (
           <div

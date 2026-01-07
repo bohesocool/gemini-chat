@@ -12,6 +12,7 @@ import { MessageActions } from './MessageActions';
 import { InlineMessageEditor } from './InlineMessageEditor';
 import { ImageGrid } from '../shared/ImageGrid';
 import { ImagePreviewModal } from '../ImagePreviewModal';
+import { FileReferenceList } from '../MessageList/FileReferenceList';
 
 // ============ 类型定义 ============
 
@@ -690,6 +691,11 @@ const MessageItem = memo(function MessageItem({
         // 显示模式：显示消息内容
         // 消息容器自适应内容宽度，图片消息可以更宽
         <div className={`relative flex-1 min-w-0 ${isUser ? 'flex flex-col items-end' : ''}`}>
+          {/* 文件引用预览 - Requirements: 5.1, 5.3 */}
+          {message.fileReferences && message.fileReferences.length > 0 && (
+            <FileReferenceList fileReferences={message.fileReferences} isUser={isUser} />
+          )}
+          
           {/* 附件预览 */}
           {message.attachments && message.attachments.length > 0 && (
             <AttachmentList attachments={message.attachments} isUser={isUser} />

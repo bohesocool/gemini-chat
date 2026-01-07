@@ -20,9 +20,20 @@ body {
 }
 
 /* 防止页面滚动 */
+/* 使用 dvh 单位解决移动端浏览器地址栏导致的视口高度问题 */
+/* dvh = dynamic viewport height，会根据地址栏显示/隐藏动态调整 */
 html, body, #root {
   height: 100%;
+  height: 100dvh; /* 现代浏览器优先使用 dvh */
   overflow: hidden;
+}
+
+/* 为不支持 dvh 的浏览器提供 JS 回退方案 */
+/* 通过 CSS 变量 --vh 动态设置真实视口高度 */
+@supports not (height: 100dvh) {
+  html, body, #root {
+    height: calc(var(--vh, 1vh) * 100);
+  }
 }
 
 /* 滚动条样式 - 使用设计系统变量 */

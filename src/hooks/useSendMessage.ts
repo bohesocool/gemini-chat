@@ -1,6 +1,6 @@
 /**
  * useSendMessage Hook
- * 需求: 5.1, 5.3 - 封装消息发送逻辑
+ * 需求: 5.1, 5.3, 3.3, 4.1, 4.2, 4.3 - 封装消息发送逻辑，支持文件引用
  * 
  * 提供消息发送、取消请求等方法，以及发送状态和错误信息
  */
@@ -8,6 +8,7 @@
 import { useCallback } from 'react';
 import { useChatWindowStore } from '../stores/chatWindow';
 import type { Attachment, ApiConfig, ModelAdvancedConfig } from '../types/models';
+import type { FileReference } from '../types/filesApi';
 
 /**
  * useSendMessage Hook 配置选项
@@ -28,7 +29,8 @@ export interface UseSendMessageReturn {
     content: string,
     attachments?: Attachment[],
     apiConfig?: ApiConfig,
-    advancedConfig?: ModelAdvancedConfig
+    advancedConfig?: ModelAdvancedConfig,
+    fileReferences?: FileReference[]
   ) => Promise<void>;
   /** 是否正在发送 */
   isSending: boolean;
@@ -61,6 +63,9 @@ export interface UseSendMessageReturn {
  * // 发送消息
  * await sendMessage('你好');
  * 
+ * // 发送带文件引用的消息
+ * await sendMessage('分析这个文件', undefined, undefined, undefined, fileReferences);
+ * 
  * // 取消请求
  * cancelRequest();
  * ```
@@ -79,12 +84,14 @@ export function useSendMessage(options: UseSendMessageOptions): UseSendMessageRe
   const storeCancelRequest = useChatWindowStore((state) => state.cancelRequest);
 
   // 封装发送消息方法
+  // 需求: 3.3, 4.1, 4.2, 4.3 - 支持文件引用
   const sendMessage = useCallback(
     async (
       content: string,
       attachments?: Attachment[],
       apiConfig?: ApiConfig,
-      advancedConfig?: ModelAdvancedConfig
+      advancedConfig?: ModelAdvancedConfig,
+      fileReferences?: FileReference[]
     ) => {
       await storeSendMessage(
         windowId,
@@ -92,7 +99,8 @@ export function useSendMessage(options: UseSendMessageOptions): UseSendMessageRe
         content,
         attachments,
         apiConfig,
-        advancedConfig
+        advancedConfig,
+        fileReferences
       );
     },
     [windowId, subTopicId, storeSendMessage]
