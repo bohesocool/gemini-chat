@@ -12,4 +12,4 @@ services:
     restart: unless-stopped
     environment:
       # 登录密码（可选，不设置则使用默认密码 adminiadmin）
-      - VITE_AUTH_PASSWORD=
+      - VITE_AUTH_PASSWORD=${VITE_AUTH_PASSWORD:-}
