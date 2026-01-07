@@ -10,7 +10,7 @@ import { getFileCategory } from '../../types/filesApi';
 import { formatFileSize } from '../../services/file';
 import { durationValues, easings } from '../../design/tokens';
 import { useReducedMotion } from '../motion';
-import { isRetryableError, getErrorDetails } from '../../services/filesApi/errors';
+import { isRetryableError } from '../../services/filesApi/errors';
 
 /**
  * FileReferencePreview 组件属性

@@ -6,7 +6,6 @@
 // 导出错误处理相关
 export {
   FilesApiError,
-  FilesApiErrorCode,
   ERROR_MESSAGES,
   ERROR_DETAILS,
   getErrorMessage,
@@ -16,3 +15,6 @@ export {
   createFilesApiError,
   createErrorFromResponse,
 } from './errors';
+
+// 导出类型
+export type { FilesApiErrorCode } from './errors';
