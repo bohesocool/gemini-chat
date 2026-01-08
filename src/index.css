@@ -14,24 +14,103 @@ body {
   /* 使用设计系统的中性色 */
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: var(--theme-transition);
+  transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
   padding: 0;
+}
+
+/* Midnight Mint Theme */
+/* Midnight Mint Theme */
+.midnight {
+  --bg-primary: #050505;
+  /* Deepest black/gray */
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #111111;
+  --bg-sidebar: #000000;
+  /* Pure black for sidebar */
+
+  --text-primary: #ecfdf5;
+  /* Mint 50 */
+  --text-secondary: #a7f3d0;
+  /* Mint 200 */
+  --text-tertiary: #6ee7b7;
+  /* Mint 300 */
+
+  --border-primary: #064e3b;
+  /* Mint 900 - subtle border */
+  --border-secondary: #065f46;
+  /* Mint 800 */
+
+  --primary-500: #10b981;
+  /* Emerald 500 */
+  --primary-600: #059669;
+  /* Emerald 600 */
+
+  /* Scrollbar override */
+  --scrollbar-thumb: #059669;
+  --scrollbar-track: #000000;
+}
+
+/* Midnight Theme Specific Component Overrides */
+.midnight nav {
+  background-color: #000000 !important;
+  border-right: 1px solid #064e3b;
+}
+
+.midnight aside {
+  background-color: #000000 !important;
+  border-right: 1px solid #064e3b;
+}
+
+.midnight .bg-white {
+  background-color: #0a0a0a !important;
+  /* Override white backgrounds in main content */
+}
+
+.midnight .bg-neutral-50 {
+  background-color: #000000 !important;
+}
+
+.midnight .border-neutral-200 {
+  border-color: #064e3b !important;
+}
+
+.midnight .text-neutral-500 {
+  color: #6ee7b7 !important;
+  /* Mint 300 */
+}
+
+/* Sidebar active item in Midnight */
+.midnight nav button.bg-white\/25 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.midnight nav button:hover {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #a7f3d0 !important;
 }
 
 /* 防止页面滚动 */
 /* 使用 dvh 单位解决移动端浏览器地址栏导致的视口高度问题 */
 /* dvh = dynamic viewport height，会根据地址栏显示/隐藏动态调整 */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
-  height: 100dvh; /* 现代浏览器优先使用 dvh */
+  height: 100dvh;
+  /* 现代浏览器优先使用 dvh */
   overflow: hidden;
 }
 
 /* 为不支持 dvh 的浏览器提供 JS 回退方案 */
 /* 通过 CSS 变量 --vh 动态设置真实视口高度 */
 @supports not (height: 100dvh) {
-  html, body, #root {
+
+  html,
+  body,
+  #root {
     height: calc(var(--vh, 1vh) * 100);
   }
 }
@@ -61,6 +140,23 @@ html, body, #root {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-neutral-500);
+}
+
+/* Midnight scrollbars */
+/* Midnight scrollbars */
+.midnight ::-webkit-scrollbar-track {
+  background-color: #000000;
+}
+
+.midnight ::-webkit-scrollbar-thumb {
+  background-color: #059669;
+  /* Mint 600 */
+  border: 2px solid #000000;
+}
+
+.midnight ::-webkit-scrollbar-thumb:hover {
+  background-color: #10b981;
+  /* Mint 500 */
 }
 
 /* 自定义滚动条类 */
@@ -117,11 +213,11 @@ html, body, #root {
   line-height: 1.7;
 }
 
-.markdown-content > *:first-child {
+.markdown-content>*:first-child {
   margin-top: 0;
 }
 
-.markdown-content > *:last-child {
+.markdown-content>*:last-child {
   margin-bottom: 0;
 }
 
@@ -133,7 +229,14 @@ html, body, #root {
 
 /* 选择文本样式 */
 ::selection {
-  background-color: rgba(59, 130, 246, 0.3); /* primary-500 with opacity */
+  background-color: rgba(59, 130, 246, 0.3);
+  /* primary-500 with opacity */
+}
+
+.midnight ::selection {
+  background-color: rgba(16, 185, 129, 0.3);
+  /* emerald-500 with opacity */
+  color: #ecfdf5;
 }
 
 /* 焦点样式 - 使用设计系统变量 */
@@ -148,9 +251,11 @@ html, body, #root {
     transform: scale(0);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.2);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -162,6 +267,7 @@ html, body, #root {
     opacity: 0;
     transform: translateX(-4px);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -182,6 +288,7 @@ html, body, #root {
     opacity: 0;
     transform: translateY(-4px) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -190,4 +297,13 @@ html, body, #root {
 
 .animate-dropdown-in {
   animation: dropdown-in 0.15s ease-out forwards;
+}
+
+/* 拖拽区域样式 */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
 }

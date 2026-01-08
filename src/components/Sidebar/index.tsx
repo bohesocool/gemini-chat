@@ -36,10 +36,10 @@ export function Sidebar() {
     selectSubTopic,
     reorderWindows,
   } = useChatWindowStore();
-  
-  const { currentModel, systemInstruction } = useSettingsStore();
+
+  const { currentModel, systemInstruction, toggleSidebar } = useSettingsStore();
   const { currentView } = useSidebarView();
-  
+
   // 搜索关键词
   const [searchTerm, setSearchTerm] = useState('');
   // 正在编辑的窗口 ID
@@ -181,6 +181,15 @@ export function Sidebar() {
         <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
           {currentView === 'assistants' ? '助手' : currentView === 'images' ? '图片库' : currentView === 'templates' ? '模板' : currentView === 'bookmarks' ? '书签' : '设置'}
         </h2>
+        <button
+          onClick={toggleSidebar}
+          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors"
+          title="折叠侧边栏"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
       </div>
 
       {currentView === 'assistants' ? (
