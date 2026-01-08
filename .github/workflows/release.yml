@@ -53,11 +53,21 @@ jobs:
         run: npx electron-builder --win --publish never
       
       # 创建 GitHub Release 并上传 Assets
-      # 使用 GitHub 自动生成的 Release Notes
+      # 生成 Release Notes (基于 commit message)
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          configuration: ".github/release-changelog-builder-config.json"
+          commitMode: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 创建 GitHub Release 并上传 Assets
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          body: ${{ steps.build_changelog.outputs.changelog }}
           files: |
             release/*.exe
             release/*.exe.blockmap

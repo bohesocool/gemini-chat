@@ -15,7 +15,7 @@ import { useReducedMotion } from '../motion';
 // 类型定义
 // ============================================
 
-export type SettingsTabId = 'api' | 'model' | 'generation' | 'system' | 'safety' | 'data' | 'about';
+export type SettingsTabId = 'appearance' | 'api' | 'model' | 'generation' | 'system' | 'safety' | 'data' | 'about';
 
 export interface SettingsTab {
   /** 标签 ID */
@@ -53,7 +53,7 @@ export const SETTINGS_PANEL_SIZE = {
  * 自定义 Hook：检测是否为移动端
  */
 function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => 
+  const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < breakpointValues.md : false
   );
 
@@ -120,20 +120,20 @@ export function SettingsPanel({
     if (isOpen) {
       previousActiveElement.current = document.activeElement;
       setShouldRender(true);
-      
+
       requestAnimationFrame(() => {
         setAnimationState('entering');
-        
+
         const timer = setTimeout(() => {
           setAnimationState('entered');
           panelRef.current?.focus();
         }, duration);
-        
+
         return () => clearTimeout(timer);
       });
     } else if (shouldRender) {
       setAnimationState('exiting');
-      
+
       const timer = setTimeout(() => {
         setAnimationState('exited');
         setShouldRender(false);
@@ -141,7 +141,7 @@ export function SettingsPanel({
           previousActiveElement.current.focus();
         }
       }, duration);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isOpen, duration, shouldRender]);
@@ -207,7 +207,7 @@ export function SettingsPanel({
   // 计算遮罩样式
   const getOverlayStyles = (): React.CSSProperties => {
     const isAnimating = animationState === 'entering' || animationState === 'exiting';
-    
+
     return {
       position: 'fixed',
       inset: 0,
@@ -225,7 +225,7 @@ export function SettingsPanel({
   const getPanelStyles = (): React.CSSProperties => {
     const isAnimating = animationState === 'entering' || animationState === 'exiting';
     const isHidden = animationState === 'entering' || animationState === 'exited';
-    
+
     // 移动端全屏模式
     if (isMobile) {
       return {
@@ -246,7 +246,7 @@ export function SettingsPanel({
           : undefined,
       };
     }
-    
+
     // 桌面端固定尺寸
     return {
       width: `${SETTINGS_PANEL_SIZE.width}px`,
@@ -272,7 +272,7 @@ export function SettingsPanel({
     if (contentAnimationState === 'idle') {
       return { opacity: 1, transform: 'translateX(0)' };
     }
-    
+
     if (contentAnimationState === 'exiting') {
       return {
         opacity: 0,
@@ -280,7 +280,7 @@ export function SettingsPanel({
         transition: `all ${contentDuration}ms ${easings.easeIn}`,
       };
     }
-    
+
     // entering
     return {
       opacity: 1,
@@ -306,7 +306,7 @@ export function SettingsPanel({
       >
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-          <h2 
+          <h2
             id="settings-title"
             className="text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100"
           >
@@ -325,7 +325,7 @@ export function SettingsPanel({
         {/* 内容区域 - 左右布局（移动端使用更窄的导航栏） */}
         <div className="flex flex-1 overflow-hidden">
           {/* 左侧导航栏 */}
-          <nav 
+          <nav
             className="flex-shrink-0 border-r border-slate-200 dark:border-slate-700 p-2 md:p-4 space-y-1 overflow-y-auto"
             style={{ width: isMobile ? `${SETTINGS_PANEL_SIZE.mobileNavWidth}px` : `${SETTINGS_PANEL_SIZE.navWidth}px` }}
           >
@@ -341,7 +341,7 @@ export function SettingsPanel({
           </nav>
 
           {/* 右侧内容区 */}
-          <div 
+          <div
             className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar"
             style={getContentStyles()}
           >
@@ -372,8 +372,8 @@ function SettingsTabButton({ tab, isActive, onClick, isMobile = false }: Setting
       onClick={onClick}
       className={`
         flex items-center gap-2 md:gap-3 w-full px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors touch-manipulation
-        ${isActive 
-          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+        ${isActive
+          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
         }
       `}
@@ -402,7 +402,7 @@ function CloseIcon({ className }: { className?: string }) {
 function KeyIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
     </svg>
   );
@@ -411,7 +411,7 @@ function KeyIcon() {
 function CpuIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
     </svg>
   );
@@ -420,7 +420,7 @@ function CpuIcon() {
 function SlidersIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
     </svg>
   );
@@ -429,7 +429,7 @@ function SlidersIcon() {
 function MessageIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
     </svg>
   );
@@ -438,7 +438,7 @@ function MessageIcon() {
 function ShieldIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
     </svg>
   );
@@ -447,7 +447,7 @@ function ShieldIcon() {
 function DatabaseIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
     </svg>
   );
@@ -456,7 +456,7 @@ function DatabaseIcon() {
 function InfoIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );

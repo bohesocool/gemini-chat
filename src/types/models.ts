@@ -141,7 +141,7 @@ export interface AppSettings {
 /**
  * 主题模式
  */
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'midnight' | 'system';
 
 /**
  * API 配置
@@ -464,15 +464,15 @@ export const GEMINI_MODELS: ModelInfo[] = [
   { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', description: '最智能的多模态理解模型，最强大的代理和编程模型' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', description: '快速智能模型，支持四级思考深度调节' },
   { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image', description: '支持图像生成的 Gemini 3 Pro' },
-  
+
   // Gemini 2.5 Pro 系列 - 高级思考模型
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: '最先进的思考模型，擅长代码、数学和 STEM 推理' },
-  
+
   // Gemini 2.5 Flash 系列 - 快速智能模型
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: '性价比最佳，适合大规模处理和代理用例' },
   { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', description: '超快速模型，优化成本效率和高吞吐量' },
   { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image', description: '支持图像生成的 Flash 模型' },
-  
+
   // Gemini 2.0 系列 - 第二代主力模型
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: '第二代主力模型，100万 token 上下文' },
   { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash-Lite', description: '第二代快速模型，优化成本和延迟' },

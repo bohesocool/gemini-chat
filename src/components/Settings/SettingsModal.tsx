@@ -42,7 +42,7 @@ export const SETTINGS_MODAL_SIZE = {
  * 自定义 Hook：检测是否为移动端
  */
 function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => 
+  const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < breakpointValues.md : false
   );
 
@@ -65,6 +65,7 @@ function useIsMobile(): boolean {
 
 /** 设置标签配置 */
 export const SETTINGS_TABS: SettingsTab[] = [
+  { id: 'appearance', label: '外观设置', icon: <EyeIcon /> },
   { id: 'api', label: 'API 配置', icon: <KeyIcon /> },
   { id: 'model', label: '模型选择', icon: <CpuIcon /> },
   { id: 'generation', label: '生成参数', icon: <SlidersIcon /> },
@@ -112,20 +113,20 @@ export function SettingsModal({
     if (isOpen) {
       previousActiveElement.current = document.activeElement;
       setShouldRender(true);
-      
+
       requestAnimationFrame(() => {
         setAnimationState('entering');
-        
+
         const timer = setTimeout(() => {
           setAnimationState('entered');
           panelRef.current?.focus();
         }, duration);
-        
+
         return () => clearTimeout(timer);
       });
     } else if (shouldRender) {
       setAnimationState('exiting');
-      
+
       const timer = setTimeout(() => {
         setAnimationState('exited');
         setShouldRender(false);
@@ -133,7 +134,7 @@ export function SettingsModal({
           previousActiveElement.current.focus();
         }
       }, duration);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isOpen, duration, shouldRender]);
@@ -197,7 +198,7 @@ export function SettingsModal({
   // 计算遮罩样式 - 毛玻璃效果，带平滑过渡
   const getOverlayStyles = (): React.CSSProperties => {
     const isHidden = animationState === 'entering' || animationState === 'exited';
-    
+
     return {
       position: 'fixed',
       inset: 0,
@@ -218,7 +219,7 @@ export function SettingsModal({
   // 计算面板样式 - 毛玻璃效果，带平滑过渡动画
   const getPanelStyles = (): React.CSSProperties => {
     const isHidden = animationState === 'entering' || animationState === 'exited';
-    
+
     // 移动端全屏模式
     if (isMobile) {
       return {
@@ -240,7 +241,7 @@ export function SettingsModal({
         transition: `opacity ${duration}ms cubic-bezier(0.4, 0, 0.2, 1), transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
       };
     }
-    
+
     // 桌面端固定尺寸 - 毛玻璃效果，带缩放动画
     return {
       width: `${SETTINGS_MODAL_SIZE.width}px`,
@@ -268,7 +269,7 @@ export function SettingsModal({
     if (contentAnimationState === 'idle') {
       return { opacity: 1, transform: 'translateX(0)' };
     }
-    
+
     if (contentAnimationState === 'exiting') {
       return {
         opacity: 0,
@@ -276,7 +277,7 @@ export function SettingsModal({
         transition: `all ${contentDuration}ms ${easings.easeIn}`,
       };
     }
-    
+
     return {
       opacity: 1,
       transform: 'translateX(0)',
@@ -301,7 +302,7 @@ export function SettingsModal({
       >
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-neutral-200/50 dark:border-neutral-700/50 flex-shrink-0 bg-white/50 dark:bg-neutral-800/50">
-          <h2 
+          <h2
             id="settings-modal-title"
             className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100"
           >
@@ -320,7 +321,7 @@ export function SettingsModal({
         {/* 内容区域 - 左右布局 */}
         <div className="flex flex-1 overflow-hidden">
           {/* 左侧导航栏 */}
-          <nav 
+          <nav
             className="flex-shrink-0 border-r border-neutral-200/50 dark:border-neutral-700/50 p-2 md:p-4 space-y-1 overflow-y-auto bg-neutral-50/50 dark:bg-neutral-800/30"
             style={{ width: isMobile ? `${SETTINGS_MODAL_SIZE.mobileNavWidth}px` : `${SETTINGS_MODAL_SIZE.navWidth}px` }}
           >
@@ -336,7 +337,7 @@ export function SettingsModal({
           </nav>
 
           {/* 右侧内容区 */}
-          <div 
+          <div
             className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar"
             style={getContentStyles()}
           >
@@ -367,8 +368,8 @@ function SettingsTabButton({ tab, isActive, onClick, isMobile = false }: Setting
       onClick={onClick}
       className={`
         flex items-center gap-2 md:gap-3 w-full px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors touch-manipulation
-        ${isActive 
-          ? 'bg-primary-100/80 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300' 
+        ${isActive
+          ? 'bg-primary-100/80 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100/80 dark:hover:bg-neutral-700/50'
         }
       `}
@@ -397,7 +398,7 @@ function CloseIcon({ className }: { className?: string }) {
 function KeyIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
     </svg>
   );
@@ -406,7 +407,7 @@ function KeyIcon() {
 function CpuIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
     </svg>
   );
@@ -415,7 +416,7 @@ function CpuIcon() {
 function SlidersIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
     </svg>
   );
@@ -424,7 +425,7 @@ function SlidersIcon() {
 function MessageIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
     </svg>
   );
@@ -433,7 +434,7 @@ function MessageIcon() {
 function ShieldIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
     </svg>
   );
@@ -442,8 +443,19 @@ function ShieldIcon() {
 function DatabaseIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
     </svg>
   );
 }
@@ -451,7 +463,7 @@ function DatabaseIcon() {
 function InfoIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );

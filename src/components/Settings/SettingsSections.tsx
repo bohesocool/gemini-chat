@@ -495,8 +495,8 @@ export function GenerationConfigSection() {
               流式输出
             </label>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {streamingEnabled 
-                ? '开启：AI 响应逐字逐句实时显示' 
+              {streamingEnabled
+                ? '开启：AI 响应逐字逐句实时显示'
                 : '关闭：AI 响应完整生成后一次性显示'}
             </p>
           </div>
@@ -504,8 +504,8 @@ export function GenerationConfigSection() {
             onClick={() => setStreamingEnabled(!streamingEnabled)}
             className={`
               relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-              ${streamingEnabled 
-                ? 'bg-primary-500' 
+              ${streamingEnabled
+                ? 'bg-primary-500'
                 : 'bg-slate-300 dark:bg-slate-600'}
             `}
             role="switch"
@@ -603,8 +603,8 @@ export function GenerationConfigSection() {
           min="1"
           max="8192"
           value={generationConfig.maxOutputTokens ?? ''}
-          onChange={(e) => updateGenerationConfig({ 
-            maxOutputTokens: e.target.value ? parseInt(e.target.value) : undefined 
+          onChange={(e) => updateGenerationConfig({
+            maxOutputTokens: e.target.value ? parseInt(e.target.value) : undefined
           })}
           placeholder="留空使用默认值"
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 
@@ -645,7 +645,7 @@ export function GenerationConfigSection() {
 export function SystemInstructionSection() {
   const { systemInstruction, updateSystemInstruction } = useSettingsStore();
   const { activeWindowId, windows, updateWindowConfig } = useChatWindowStore();
-  
+
   const currentWindow = windows.find(w => w.id === activeWindowId);
   const [windowInstruction, setWindowInstruction] = useState(
     currentWindow?.config.systemInstruction || ''
@@ -748,7 +748,7 @@ export function SafetySettingsSection() {
 
   const handleThresholdChange = (category: HarmCategory, threshold: HarmBlockThreshold | '') => {
     let newSettings: SafetySetting[];
-    
+
     if (threshold === '') {
       // 移除该类别的设置
       newSettings = safetySettings.filter(s => s.category !== category);
@@ -762,7 +762,7 @@ export function SafetySettingsSection() {
         newSettings = [...safetySettings, { category, threshold }];
       }
     }
-    
+
     updateSafetySettings(newSettings);
   };
 
@@ -914,11 +914,10 @@ export function DataManagementSection() {
 
         {/* 导入状态提示 */}
         {importStatus !== 'idle' && (
-          <div className={`mt-4 p-3 rounded-lg ${
-            importStatus === 'success' 
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+          <div className={`mt-4 p-3 rounded-lg ${importStatus === 'success'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
               : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-          }`}>
+            }`}>
             {importMessage}
           </div>
         )}
@@ -974,8 +973,8 @@ function ConfirmDialog({
           <button
             onClick={onConfirm}
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors
-              ${variant === 'danger' 
-                ? 'bg-red-500 hover:bg-red-600' 
+              ${variant === 'danger'
+                ? 'bg-red-500 hover:bg-red-600'
                 : 'bg-blue-500 hover:bg-blue-600'
               }`}
           >
@@ -1019,7 +1018,7 @@ function CloseIcon({ className }: { className?: string }) {
 function RefreshIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
   );
@@ -1036,7 +1035,7 @@ function PlusIcon({ className }: { className?: string }) {
 function ResetIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 4v5h.582m0 0a8.001 8.001 0 0115.356 2M4.582 9H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
   );
@@ -1047,7 +1046,7 @@ function LoadingSpinner({ className }: { className?: string }) {
   return (
     <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" 
+      <path className="opacity-75" fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
     </svg>
   );
@@ -1064,7 +1063,7 @@ function ArrowRightIcon({ className }: { className?: string }) {
 function DownloadIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
   );
@@ -1073,8 +1072,146 @@ function DownloadIcon({ className }: { className?: string }) {
 function UploadIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    </svg>
+  );
+}
+
+// ============================================
+// 外观设置 (新增)
+// ============================================
+
+export function AppearanceSettingsSection() {
+  const { theme, setTheme } = useSettingsStore();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">外观设置</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          自定义应用程序的外观和主题。
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* 浅色主题 */}
+        <button
+          onClick={() => setTheme('light')}
+          className={`
+            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            ${theme === 'light'
+              ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+          `}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-white shadow-sm border border-slate-100">
+              <SunIcon className="w-5 h-5 text-amber-500" />
+            </div>
+            {theme === 'light' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />}
+          </div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">浅色模式</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">清新明亮的界面风格</div>
+        </button>
+
+        {/* 深色主题 */}
+        <button
+          onClick={() => setTheme('dark')}
+          className={`
+            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            ${theme === 'dark'
+              ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+          `}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-slate-800 shadow-sm border border-slate-700">
+              <MoonIcon className="w-5 h-5 text-slate-200" />
+            </div>
+            {theme === 'dark' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />}
+          </div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">深色模式</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">舒适护眼的暗色界面</div>
+        </button>
+
+        {/* 午夜薄荷主题 */}
+        <button
+          onClick={() => setTheme('midnight')}
+          className={`
+            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            ${theme === 'midnight'
+              ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20 shadow-sm'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+          `}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-black shadow-sm border border-emerald-900">
+              <SparklesIcon className="w-5 h-5 text-emerald-400" />
+            </div>
+            {theme === 'midnight' && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />}
+          </div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">午夜薄荷</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">极客风格的纯黑体验</div>
+        </button>
+
+        {/* 跟随系统 */}
+        <button
+          onClick={() => setTheme('system')}
+          className={`
+            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            ${theme === 'system'
+              ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+          `}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+              <ComputerDesktopIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            </div>
+            {theme === 'system' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />}
+          </div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">跟随系统</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">自动适应系统设置</div>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Icons
+function SunIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  );
+}
+
+function MoonIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  );
+}
+
+function SparklesIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+  );
+}
+
+function ComputerDesktopIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
     </svg>
   );
 }

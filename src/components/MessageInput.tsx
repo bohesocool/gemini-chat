@@ -165,19 +165,19 @@ export function MessageInput({
   const [isDragging, setIsDragging] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  
+
   // 获取 Files API 开关状态 - 需求: 1.1, 1.2
   const filesApiEnabled = useSettingsStore(state => state.filesApiEnabled);
   const setFilesApiEnabled = useSettingsStore(state => state.setFilesApiEnabled);
   const apiKey = useSettingsStore(state => state.apiKey);
   const apiEndpoint = useSettingsStore(state => state.apiEndpoint);
-  
+
   // 获取模型 store 的 getEffectiveCapabilities 方法
   // 需求: 4.1, 4.2, 4.3, 4.4, 4.5 (model-redirect-enhancement)
   const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
@@ -310,17 +310,17 @@ export function MessageInput({
           // 需求: 2.4, 5.1, 5.2, 5.4 - 显示上传错误，保留错误代码和原始文件用于重试
           const errorMessage = getErrorMessage(err);
           const errorCode = err instanceof FilesApiError ? err.code : undefined;
-          
+
           setFileReferences(prev =>
             prev.map(ref =>
               ref.id === tempRef.id
                 ? {
-                    ...ref,
-                    status: 'error' as const,
-                    error: errorMessage,
-                    errorCode: errorCode,
-                    originalFile: file, // 保留原始文件用于重试
-                  }
+                  ...ref,
+                  status: 'error' as const,
+                  error: errorMessage,
+                  errorCode: errorCode,
+                  originalFile: file, // 保留原始文件用于重试
+                }
                 : ref
             )
           );
@@ -340,7 +340,7 @@ export function MessageInput({
         try {
           const mimeType = getFileMimeType(file);
           const base64Data = await fileToBase64(file);
-          
+
           const attachment: Attachment = {
             id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             type: isImageFile(mimeType) ? 'image' : 'file',
@@ -349,7 +349,7 @@ export function MessageInput({
             data: base64Data,
             size: file.size,
           };
-          
+
           newAttachments.push(attachment);
         } catch (err) {
           console.error('文件处理失败:', err);
@@ -436,12 +436,12 @@ export function MessageInput({
       prev.map(ref =>
         ref.id === id
           ? {
-              ...ref,
-              status: 'uploading' as const,
-              progress: 0,
-              error: undefined,
-              errorCode: undefined,
-            }
+            ...ref,
+            status: 'uploading' as const,
+            progress: 0,
+            error: undefined,
+            errorCode: undefined,
+          }
           : ref
       )
     );
@@ -472,23 +472,23 @@ export function MessageInput({
             : ref
         )
       );
-      
+
       // 清除错误提示
       setError(null);
     } catch (err) {
       console.error('重试上传失败:', err);
       const errorMessage = getErrorMessage(err);
       const errorCode = err instanceof FilesApiError ? err.code : undefined;
-      
+
       setFileReferences(prev =>
         prev.map(ref =>
           ref.id === id
             ? {
-                ...ref,
-                status: 'error' as const,
-                error: errorMessage,
-                errorCode: errorCode,
-              }
+              ...ref,
+              status: 'error' as const,
+              error: errorMessage,
+              errorCode: errorCode,
+            }
             : ref
         )
       );
@@ -511,6 +511,13 @@ export function MessageInput({
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // 修复闪烁问题：检查离开的目标是否还在容器内部
+    // 如果鼠标只是移动到了子元素上，不应该取消拖拽状态
+    if (containerRef.current && containerRef.current.contains(e.relatedTarget as Node)) {
+      return;
+    }
+
     setIsDragging(false);
   };
 
@@ -526,27 +533,27 @@ export function MessageInput({
 
   const handleSend = () => {
     const trimmedContent = content.trim();
-    
+
     // 获取已就绪的文件引用 - 需求: 3.3
     const readyFileReferences = fileReferences.filter(ref => ref.status === 'ready');
-    
+
     if (!trimmedContent && attachments.length === 0 && readyFileReferences.length === 0) {
       return;
     }
 
     // 发送消息，包含文件引用 - 需求: 3.3, 3.4
     onSend(
-      trimmedContent, 
+      trimmedContent,
       attachments.length > 0 ? attachments : undefined,
       readyFileReferences.length > 0 ? readyFileReferences : undefined
     );
-    
+
     // 编辑模式下不清空内容，由父组件控制 - 需求: 3.3
     if (!isEditing) {
       setContent('');
       setAttachments([]);
       setFileReferences([]);
-      
+
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -690,7 +697,7 @@ export function MessageInput({
             >
               <ImageIcon className="w-5 h-5" />
             </IconButton>
-            
+
             <IconButton
               onClick={handleFileClick}
               disabled={isDisabled}
@@ -794,7 +801,7 @@ export function MessageInput({
           >
             <ImageIcon className="w-4 h-4" />
           </ToolbarButton>
-          
+
           <ToolbarButton
             onClick={handleFileClick}
             disabled={isDisabled}
@@ -887,7 +894,7 @@ export function MessageInput({
       <input
         ref={imageInputRef}
         type="file"
-        accept={filesApiEnabled 
+        accept={filesApiEnabled
           ? "image/jpeg,image/png,image/webp,image/heic,image/heif"
           : "image/jpeg,image/png,image/webp,image/gif"
         }

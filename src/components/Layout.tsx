@@ -25,6 +25,7 @@ import {
   SystemInstructionSection,
   SafetySettingsSection,
   DataManagementSection,
+  AppearanceSettingsSection,
 } from './Settings/SettingsSections';
 import { AboutPanel } from './Settings/AboutPanel';
 import { DebugPanel } from './Debug';
@@ -36,6 +37,9 @@ import { BookmarkDetailView } from './Sidebar/BookmarkDetailView';
 import { useBookmarkStore } from '../stores/bookmark';
 import type { Bookmark } from '../stores/bookmark';
 import type { GeneratedImage } from '../types';
+
+import { WindowControls } from './WindowControls';
+import logoImage from '../assets/logo.png';
 
 /** 侧边栏视图类型 */
 export type SidebarView = 'assistants' | 'settings' | 'images' | 'templates' | 'bookmarks';
@@ -77,6 +81,7 @@ function getEffectiveTheme(theme: ThemeMode): 'light' | 'dark' {
   if (theme === 'system') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
+  if (theme === 'midnight') return 'dark';
   return theme;
 }
 
@@ -84,7 +89,7 @@ function getEffectiveTheme(theme: ThemeMode): 'light' | 'dark' {
  * 自定义 Hook：检测是否为移动端
  */
 function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => 
+  const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < breakpointValues.md : false
   );
 
@@ -209,6 +214,8 @@ function useSwipeGesture(
  */
 function renderSettingsContent(tabId: SettingsTabId): React.ReactNode {
   switch (tabId) {
+    case 'appearance':
+      return <AppearanceSettingsSection />;
     case 'api':
       return <ApiConfigSection />;
     case 'model':
@@ -279,29 +286,34 @@ export function Layout({ sidebar, children }: LayoutProps) {
   // 应用主题 - 优化过渡效果
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // 添加过渡类
     root.style.setProperty('--theme-transition-duration', '300ms');
-    
+
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const applySystemTheme = () => {
         if (mediaQuery.matches) {
           root.classList.add('dark');
+          root.classList.remove('midnight');
           setEffectiveTheme('dark');
         } else {
-          root.classList.remove('dark');
+          root.classList.remove('dark', 'midnight');
           setEffectiveTheme('light');
         }
       };
       applySystemTheme();
       mediaQuery.addEventListener('change', applySystemTheme);
       return () => mediaQuery.removeEventListener('change', applySystemTheme);
+    } else if (theme === 'midnight') {
+      root.classList.add('dark', 'midnight');
+      setEffectiveTheme('dark');
     } else if (theme === 'dark') {
       root.classList.add('dark');
+      root.classList.remove('midnight');
       setEffectiveTheme('dark');
     } else {
-      root.classList.remove('dark');
+      root.classList.remove('dark', 'midnight');
       setEffectiveTheme('light');
     }
   }, [theme]);
@@ -444,15 +456,17 @@ export function Layout({ sidebar, children }: LayoutProps) {
   }, [removeBookmark]);
 
   return (
-    <SidebarContext.Provider value={{ 
-      currentView, 
+    <SidebarContext.Provider value={{
+      currentView,
       setCurrentView,
       selectedTemplateId,
       setSelectedTemplateId,
       selectedBookmarkId,
       setSelectedBookmarkId
     }}>
-      <div className="flex overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+      <div className="flex overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300 relative" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+
+
         {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
         {!sidebarCollapsed && isMobile && currentView !== 'images' && (
           <div
@@ -463,11 +477,16 @@ export function Layout({ sidebar, children }: LayoutProps) {
         )}
 
         {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
-        <nav className="flex flex-col w-12 bg-primary-600 dark:bg-primary-700 flex-shrink-0 z-40 transition-colors duration-300">
-          {/* 顶部 Logo */}
-          <div className="flex items-center justify-center h-12 border-b border-primary-500/30">
-            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
+        {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
+        {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
+        <nav className={`
+          flex flex-col w-12 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
+          ${effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-primary-600'}
+        `}>
+          {/* 顶部 Logo - 替换为图片 */}
+          <div className="flex items-center justify-center h-12 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
+              <img src={logoImage} alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
 
@@ -522,45 +541,75 @@ export function Layout({ sidebar, children }: LayoutProps) {
           </div>
         </nav>
 
-        {/* 侧边栏内容区 - 需求: 4.2 图片库视图时隐藏侧边栏 */}
-        <aside
-          className={`
-            fixed inset-y-0 left-12 z-30 w-64 transform transition-all duration-300 ease-out
-            md:relative md:left-0 md:translate-x-0
-            ${sidebarCollapsed || currentView === 'images' ? '-translate-x-full md:w-0 md:overflow-hidden' : 'translate-x-0'}
-            bg-neutral-50 dark:bg-neutral-800 border-r border-neutral-200 dark:border-neutral-700
-          `}
-        >
-          <div className="flex h-full flex-col">
-            {sidebar}
-          </div>
-        </aside>
+        {/* 侧边栏内容区 - 图片库视图时直接移除 (不渲染) */}
+        {currentView !== 'images' && (
+          <aside
+            className={`
+              fixed inset-y-0 left-12 z-30 transform transition-[width,transform,opacity] duration-300 ease-in-out overflow-hidden
+              md:relative md:left-0 md:translate-x-0
+              ${sidebarCollapsed ? '-translate-x-full md:w-0 md:opacity-0' : 'translate-x-0 md:w-64 md:opacity-100'}
+              ${effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-neutral-50 border-r border-neutral-200'}
+            `}
+          >
+            {/* Fixed width container to prevent squashing */}
+            <div className="w-64 h-full flex flex-col">
+              {sidebar}
+            </div>
+          </aside>
+        )}
 
         {/* 主内容区 - 需求: 2.1, 2.2, 2.3, 3.3 */}
-        <main className="flex flex-1 flex-col overflow-hidden transition-colors duration-300">
-          {currentView === 'images' ? (
-            <FullscreenGallery
-              onBackToChat={handleBackToChat}
-              onImageClick={handleImageClick}
-            />
-          ) : currentView === 'templates' ? (
-            /* 模板详情视图 - 需求: 2.3 */
-            <TemplateDetailView
-              selectedTemplateId={selectedTemplateId}
-              onEdit={handleEditTemplate}
-              onDelete={handleDeleteTemplate}
-              onUseTemplate={handleUseTemplate}
-            />
-          ) : currentView === 'bookmarks' ? (
-            /* 书签详情视图 - 需求: 3.3 */
-            <BookmarkDetailView
-              selectedBookmarkId={selectedBookmarkId}
-              onNavigate={handleNavigateToBookmark}
-              onDelete={handleDeleteBookmark}
-            />
-          ) : (
-            children
-          )}
+        <main className={`
+          flex flex-1 flex-col overflow-hidden transition-all duration-300 relative
+          ${effectiveTheme === 'dark' ? 'bg-[#050505]' : 'bg-white'}
+        `}>
+
+          {/* Windows Controls Header Area - 需求: 顶部控制栏 */}
+          <div className="h-10 flex items-center justify-between px-4 drag-region flex-shrink-0 z-50">
+            {/* Left side spacer - Sidebar Toggle Button */}
+            <div className="flex-1 flex items-center">
+              {sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 no-drag focus:outline-none"
+                  title="展开侧边栏"
+                >
+                  {/* Menu Icon */}
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {/* Window Controls - Right aligned */}
+            <WindowControls />
+          </div>
+
+          <div className="flex-1 overflow-hidden relative flex flex-col">
+            {currentView === 'images' ? (
+              <FullscreenGallery
+                onBackToChat={handleBackToChat}
+                onImageClick={handleImageClick}
+              />
+            ) : currentView === 'templates' ? (
+              /* 模板详情视图 - 需求: 2.3 */
+              <TemplateDetailView
+                selectedTemplateId={selectedTemplateId}
+                onEdit={handleEditTemplate}
+                onDelete={handleDeleteTemplate}
+                onUseTemplate={handleUseTemplate}
+              />
+            ) : currentView === 'bookmarks' ? (
+              /* 书签详情视图 - 需求: 3.3 */
+              <BookmarkDetailView
+                selectedBookmarkId={selectedBookmarkId}
+                onNavigate={handleNavigateToBookmark}
+                onDelete={handleDeleteBookmark}
+              />
+            ) : (
+              children
+            )}
+          </div>
         </main>
 
         {/* 毛玻璃设置模态框 */}
@@ -610,8 +659,8 @@ function NavIconButton({ icon, label, isActive, onClick }: NavIconButtonProps) {
       onClick={onClick}
       className={`
         w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200
-        ${isActive 
-          ? 'bg-white/25 text-white shadow-sm' 
+        ${isActive
+          ? 'bg-white/25 text-white shadow-sm'
           : 'text-white/70 hover:bg-white/15 hover:text-white'
         }
       `}
@@ -628,7 +677,7 @@ function NavIconButton({ icon, label, isActive, onClick }: NavIconButtonProps) {
 function ChatIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
     </svg>
   );
@@ -637,7 +686,7 @@ function ChatIcon() {
 function SettingsIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
@@ -647,7 +696,7 @@ function SettingsIcon() {
 function SunIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   );
@@ -656,7 +705,7 @@ function SunIcon() {
 function MoonIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
     </svg>
   );
@@ -665,7 +714,7 @@ function MoonIcon() {
 function ImageGalleryIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
   );
@@ -678,7 +727,7 @@ function ImageGalleryIcon() {
 function TemplateNavIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   );
@@ -691,7 +740,7 @@ function TemplateNavIcon() {
 function BookmarkNavIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
     </svg>
   );
@@ -704,7 +753,7 @@ function BookmarkNavIcon() {
 function DebugIcon() {
   return (
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
     </svg>
   );

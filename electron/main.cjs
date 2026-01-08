@@ -1,7 +1,7 @@
 // Electron 主进程入口文件
 // 需求: 1.1, 1.2, 1.4
 
-const { app, BrowserWindow, Menu } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const path = require('path')
 
 // 主窗口引用
@@ -18,9 +18,10 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     // 需求 1.3: 支持窗口的最小化、最大化和关闭操作
-    frame: true,
+    frame: false, // 移除原生标题栏
     // 隐藏菜单栏，让界面更简洁
     autoHideMenuBar: true,
+    titleBarStyle: 'hidden', // macOS 风格隐藏标题栏
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -49,6 +50,23 @@ function createWindow() {
     mainWindow = null
   })
 }
+
+// IPC 监听：窗口控制
+ipcMain.on('window-minimize', () => {
+  mainWindow?.minimize()
+})
+
+ipcMain.on('window-maximize', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize()
+  } else {
+    mainWindow?.maximize()
+  }
+})
+
+ipcMain.on('window-close', () => {
+  mainWindow?.close()
+})
 
 // 需求 1.4: 应用关闭时正确清理资源并退出进程
 // 当所有窗口关闭时退出应用（macOS 除外）
