@@ -471,15 +471,11 @@ export async function fetchModels(
 ): Promise<ModelConfig[]> {
   const provider = detectApiProvider(endpoint);
   
-  try {
-    if (provider === 'gemini') {
-      return await fetchGeminiModels(endpoint, apiKey);
-    } else {
-      return await fetchOpenAIModels(endpoint, apiKey);
-    }
-  } catch (error) {
-    // 需求 1.5: 获取失败时抛出错误，由调用方处理
-    throw error;
+  // 需求 1.5: 获取失败时抛出错误，由调用方处理
+  if (provider === 'gemini') {
+    return await fetchGeminiModels(endpoint, apiKey);
+  } else {
+    return await fetchOpenAIModels(endpoint, apiKey);
   }
 }
 

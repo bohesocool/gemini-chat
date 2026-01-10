@@ -13,6 +13,7 @@ import type {
   GeminiPart,
   GeminiInlineDataPart,
   GeminiFileDataPart,
+  GeminiTool,
 } from '../../types';
 import type { ApiConfig, ModelAdvancedConfig, MediaResolution, ModelCapabilities, Attachment } from '../../types/models';
 import { getModelCapabilities as getModelCapabilitiesFromPreset, DEFAULT_IMAGE_GENERATION_CONFIG, OFFICIAL_API_ENDPOINT } from '../../types/models';
@@ -146,7 +147,7 @@ export function buildRequestUrl(config: ApiConfig, stream: boolean = true): stri
 
 /**
  * 构建 Gemini API 请求体
- * 需求: 2.4, 3.2, 3.8, 4.2, 5.6, 12.3, 联网搜索
+ * 需求: 2.4, 3.2, 3.8, 4.2, 5.6, 12.3, 联网搜索, URL 上下文
  * 
  * @param contents - 消息内容数组
  * @param generationConfig - 生成配置（可选）
@@ -155,6 +156,7 @@ export function buildRequestUrl(config: ApiConfig, stream: boolean = true): stri
  * @param advancedConfig - 高级参数配置（可选）
  * @param modelId - 模型 ID（可选，用于确定思考配置类型）
  * @param webSearchEnabled - 是否启用联网搜索（可选）
+ * @param urlContextEnabled - 是否启用 URL 上下文（可选）
  * @returns 符合 Gemini API 格式的请求体
  */
 export function buildRequestBody(
@@ -164,7 +166,8 @@ export function buildRequestBody(
   systemInstruction?: string,
   advancedConfig?: ModelAdvancedConfig,
   modelId?: string,
-  webSearchEnabled?: boolean
+  webSearchEnabled?: boolean,
+  urlContextEnabled?: boolean
 ): GeminiRequest {
   const request: GeminiRequest = {
     contents,
@@ -278,10 +281,20 @@ export function buildRequestBody(
     request.generationConfig.mediaResolution = advancedConfig.mediaResolution;
   }
 
-  // 添加联网搜索工具配置
-  // 需求: 联网搜索功能
+  // 添加联网搜索和 URL 上下文工具配置
+  // 需求: 联网搜索功能, URL 上下文功能 2.1, 2.2, 2.3
+  const tools: GeminiTool[] = [];
+  
   if (webSearchEnabled) {
-    request.tools = [{ googleSearch: {} }];
+    tools.push({ googleSearch: {} });
+  }
+  
+  if (urlContextEnabled) {
+    tools.push({ urlContext: {} });
+  }
+  
+  if (tools.length > 0) {
+    request.tools = tools;
   }
 
   return request;

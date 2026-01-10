@@ -176,6 +176,14 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     });
   }, [currentWindowId, currentWindow, updateWindowConfig]);
 
+  // 处理 URL 上下文切换 - 需求: 1.2, 5.2
+  const handleUrlContextToggle = useCallback(() => {
+    if (!currentWindowId || !currentWindow) return;
+    updateWindowConfig(currentWindowId, {
+      urlContextEnabled: !currentWindow.config.urlContextEnabled,
+    });
+  }, [currentWindowId, currentWindow, updateWindowConfig]);
+
   // 获取当前图片配置 - 需求: 5.2
   const currentImageConfig: ImageGenerationConfig = currentWindow?.config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG;
 
@@ -383,7 +391,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         windowTitle={currentWindow.title}
       />
 
-      {/* 消息输入 - Requirements: 5.1, 5.4, 联网搜索, 图片配置, 状态指示器 */}
+      {/* 消息输入 - Requirements: 5.1, 5.4, 联网搜索, 图片配置, 状态指示器, URL 上下文 */}
       {/* 注意：已移除 ModelParamsBar 组件 - Requirements: 7.5 */}
       <MessageInput
         onSend={handleSendMessage}
@@ -397,6 +405,8 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         }
         webSearchEnabled={currentWindow.config.webSearchEnabled}
         onWebSearchToggle={handleWebSearchToggle}
+        urlContextEnabled={currentWindow.config.urlContextEnabled}
+        onUrlContextToggle={handleUrlContextToggle}
         currentModel={currentWindow.config.model}
         imageConfig={currentImageConfig}
         onImageConfigChange={handleImageConfigChange}

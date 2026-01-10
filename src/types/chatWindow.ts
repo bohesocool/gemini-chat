@@ -28,6 +28,8 @@ export interface ChatWindowConfig {
   streamingEnabled?: boolean;
   /** 是否启用联网搜索（默认 false） */
   webSearchEnabled?: boolean;
+  /** 是否启用 URL 上下文（默认 false） */
+  urlContextEnabled?: boolean;
 }
 
 // ============ 子话题 ============
@@ -113,6 +115,7 @@ export const DEFAULT_CHAT_WINDOW_CONFIG: ChatWindowConfig = {
   systemInstruction: '',
   safetySettings: [],
   webSearchEnabled: false,
+  urlContextEnabled: false,
 };
 
 /**

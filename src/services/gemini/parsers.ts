@@ -5,7 +5,7 @@
 
 import type { StreamChunk } from '../../types';
 import type { MessageTokenUsage } from '../../types/models';
-import type { ImageExtractionResult, ThoughtExtractionResult } from './types';
+import type { ImageExtractionResult, ThoughtExtractionResult, UrlContextMetadata, UrlMetadata, UrlRetrievalStatus } from './types';
 
 /**
  * 解包 API 响应数据
@@ -194,5 +194,96 @@ export function extractTokenUsage(chunk: StreamChunk): MessageTokenUsage | null 
     completionTokens: candidatesTokenCount || 0,
     thoughtsTokens: thoughtsTokenCount || 0,
     totalTokens: totalTokenCount || 0,
+  };
+}
+
+
+// ============ URL 上下文相关常量 ============
+
+/**
+ * 有效的 URL 检索状态值
+ */
+const VALID_URL_RETRIEVAL_STATUSES: UrlRetrievalStatus[] = [
+  'URL_RETRIEVAL_STATUS_SUCCESS',
+  'URL_RETRIEVAL_STATUS_UNSAFE',
+  'URL_RETRIEVAL_STATUS_UNSPECIFIED',
+  'URL_RETRIEVAL_STATUS_ERROR',
+];
+
+/**
+ * 检查是否为有效的 URL 检索状态
+ * @param status - 待检查的状态值
+ * @returns 是否为有效状态
+ */
+function isValidUrlRetrievalStatus(status: unknown): status is UrlRetrievalStatus {
+  return typeof status === 'string' && VALID_URL_RETRIEVAL_STATUSES.includes(status as UrlRetrievalStatus);
+}
+
+/**
+ * 从 API 响应中提取 URL 上下文元数据
+ * 需求: 3.1, 3.2
+ * 
+ * @param chunk - 流式响应块或原始响应数据
+ * @returns URL 上下文元数据，如果没有数据则返回 undefined
+ */
+export function extractUrlContextMetadata(chunk: unknown): UrlContextMetadata | undefined {
+  // 处理 null 或非对象类型
+  if (!chunk || typeof chunk !== 'object') {
+    return undefined;
+  }
+
+  // 尝试从响应中获取 urlContextMetadata
+  const data = chunk as Record<string, unknown>;
+  const urlContextMetadata = data.urlContextMetadata;
+
+  // 如果没有 urlContextMetadata 字段，返回 undefined
+  if (!urlContextMetadata || typeof urlContextMetadata !== 'object') {
+    return undefined;
+  }
+
+  const metadata = urlContextMetadata as Record<string, unknown>;
+  const urlMetadataArray = metadata.urlMetadata;
+
+  // 如果没有 urlMetadata 数组，返回 undefined
+  if (!Array.isArray(urlMetadataArray)) {
+    return undefined;
+  }
+
+  // 解析每个 URL 元数据项
+  const parsedUrlMetadata: UrlMetadata[] = [];
+
+  for (const item of urlMetadataArray) {
+    // 跳过无效项
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const urlItem = item as Record<string, unknown>;
+    const retrievedUrl = urlItem.retrievedUrl;
+    const urlRetrievalStatus = urlItem.urlRetrievalStatus;
+
+    // 验证 retrievedUrl 是字符串
+    if (typeof retrievedUrl !== 'string') {
+      continue;
+    }
+
+    // 验证 urlRetrievalStatus 是有效的状态值
+    if (!isValidUrlRetrievalStatus(urlRetrievalStatus)) {
+      continue;
+    }
+
+    parsedUrlMetadata.push({
+      retrievedUrl,
+      urlRetrievalStatus,
+    });
+  }
+
+  // 如果没有有效的 URL 元数据，返回 undefined
+  if (parsedUrlMetadata.length === 0) {
+    return undefined;
+  }
+
+  return {
+    urlMetadata: parsedUrlMetadata,
   };
 }
