@@ -206,6 +206,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         // 流式响应（支持思维链提取）
         // 需求: 5.2 - 传递 AbortSignal 用于取消请求
         // 需求: 联网搜索 - 传递 webSearchEnabled 配置
+        // 需求: URL 上下文 - 传递 urlContextEnabled 配置
         // 需求: 4.2 - 传递 onThoughtChunk 回调更新 streamingThought
         const result = await sendMessageWithThoughts(
           geminiContents,
@@ -224,7 +225,9 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           (thoughtChunk) => {
             fullThought += thoughtChunk;
             set({ streamingThought: fullThought });
-          }
+          },
+          // 需求: 2.1 - 传递 urlContextEnabled 配置
+          window.config.urlContextEnabled
         );
         fullResponse = result.text;
         thoughtSummary = result.thoughtSummary;
@@ -238,6 +241,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         tokenUsage = result.tokenUsage;
       } else {
         // 非流式响应 - 返回完整数据
+        // 需求: 2.1 - 传递 urlContextEnabled 配置
         const result = await sendMessageNonStreamingWithThoughts(
           geminiContents,
           effectiveApiConfig,
@@ -245,7 +249,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           window.config.safetySettings,
           window.config.systemInstruction,
           effectiveAdvancedConfig,
-          window.config.webSearchEnabled
+          window.config.webSearchEnabled,
+          window.config.urlContextEnabled
         );
         fullResponse = result.text;
         thoughtSummary = result.thoughtSummary;
@@ -633,6 +638,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       if (streamingEnabled) {
         // 需求: 5.2 - 传递 AbortSignal 用于取消请求
         // 需求: 联网搜索 - 传递 webSearchEnabled 配置
+        // 需求: URL 上下文 - 传递 urlContextEnabled 配置
         // 需求: 4.2 - 传递 onThoughtChunk 回调更新 streamingThought
         const result = await sendMessageWithThoughts(
           geminiContents,
@@ -651,7 +657,9 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           (thoughtChunk) => {
             fullThought += thoughtChunk;
             set({ streamingThought: fullThought });
-          }
+          },
+          // 需求: 2.1 - 传递 urlContextEnabled 配置
+          window.config.urlContextEnabled
         );
         fullResponse = result.text;
         thoughtSummary = result.thoughtSummary;
@@ -665,6 +673,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         tokenUsage = result.tokenUsage;
       } else {
         // 非流式响应 - 返回完整数据
+        // 需求: 2.1 - 传递 urlContextEnabled 配置
         const result = await sendMessageNonStreamingWithThoughts(
           geminiContents,
           effectiveApiConfig,
@@ -672,7 +681,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           window.config.safetySettings,
           window.config.systemInstruction,
           effectiveAdvancedConfig,
-          window.config.webSearchEnabled
+          window.config.webSearchEnabled,
+          window.config.urlContextEnabled
         );
         fullResponse = result.text;
         thoughtSummary = result.thoughtSummary;
@@ -1106,6 +1116,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       let tokenUsage: MessageTokenUsage | undefined;
 
       if (streamingEnabled) {
+        // 需求: 2.1 - 传递 urlContextEnabled 配置
         const result = await sendMessageWithThoughts(
           geminiContents,
           effectiveApiConfig,
@@ -1122,7 +1133,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           (thoughtChunk) => {
             fullThought += thoughtChunk;
             set({ streamingThought: fullThought });
-          }
+          },
+          window.config.urlContextEnabled
         );
         fullResponse = result.text;
         thoughtSummary = result.thoughtSummary;
@@ -1133,6 +1145,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         ttfb = result.ttfb;
         tokenUsage = result.tokenUsage;
       } else {
+        // 需求: 2.1 - 传递 urlContextEnabled 配置
         const result = await sendMessageNonStreamingWithThoughts(
           geminiContents,
           effectiveApiConfig,
@@ -1140,7 +1153,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           window.config.safetySettings,
           window.config.systemInstruction,
           effectiveAdvancedConfig,
-          window.config.webSearchEnabled
+          window.config.webSearchEnabled,
+          window.config.urlContextEnabled
         );
         fullResponse = result.text;
         thoughtSummary = result.thoughtSummary;

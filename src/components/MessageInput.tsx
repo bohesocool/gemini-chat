@@ -44,6 +44,10 @@ interface MessageInputProps {
   webSearchEnabled?: boolean;
   /** 切换联网搜索回调 - 需求: 联网搜索 */
   onWebSearchToggle?: () => void;
+  /** 是否启用 URL 上下文 - 需求: 1.2, 1.3 */
+  urlContextEnabled?: boolean;
+  /** 切换 URL 上下文回调 - 需求: 1.2 */
+  onUrlContextToggle?: () => void;
   /** 当前模型 ID - 用于判断是否显示图片配置 - 需求: 1.1, 1.2 */
   currentModel?: string;
   /** 当前图片配置 - 需求: 1.1, 1.2 */
@@ -146,6 +150,8 @@ export function MessageInput({
   onCancelEdit,
   webSearchEnabled = false,
   onWebSearchToggle,
+  urlContextEnabled = false,
+  onUrlContextToggle,
   currentModel,
   imageConfig,
   onImageConfigChange,
@@ -832,6 +838,17 @@ export function MessageInput({
             <GlobeIcon className="w-4 h-4" />
           </ToolbarButton>
 
+          {/* URL 上下文按钮 - 需求: 1.2, 1.3, 1.4 */}
+          <ToolbarButton
+            onClick={() => onUrlContextToggle?.()}
+            disabled={isDisabled}
+            title={urlContextEnabled ? '关闭 URL 上下文' : '开启 URL 上下文'}
+            active={urlContextEnabled}
+            reducedMotion={reducedMotion}
+          >
+            <LinkIcon className="w-4 h-4" />
+          </ToolbarButton>
+
           {/* 图片配置工具栏 - 需求: 2.1, 3.1 */}
           {showImageConfig && imageConfig && onImageConfigChange && (
             <>
@@ -880,6 +897,13 @@ export function MessageInput({
           {webSearchEnabled && (
             <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
               联网搜索已开启
+            </span>
+          )}
+
+          {/* URL 上下文状态指示 - 需求: 1.3 */}
+          {urlContextEnabled && (
+            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
+              URL 上下文已开启
             </span>
           )}
 
@@ -1172,6 +1196,22 @@ function GlobeIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+      />
+    </svg>
+  );
+}
+
+/**
+ * 链接图标 - 需求: URL 上下文 1.2, 1.4
+ */
+function LinkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
       />
     </svg>
   );

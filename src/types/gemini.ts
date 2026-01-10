@@ -63,10 +63,19 @@ export interface GoogleSearchTool {
 }
 
 /**
- * Gemini API 工具配置
- * 需求: 联网搜索功能
+ * URL 上下文工具配置
+ * 需求: URL 上下文功能 2.1
  */
-export type GeminiTool = GoogleSearchTool;
+export interface UrlContextTool {
+  /** URL 上下文工具（空对象表示启用） */
+  urlContext: Record<string, never>;
+}
+
+/**
+ * Gemini API 工具配置
+ * 需求: 联网搜索功能, URL 上下文功能
+ */
+export type GeminiTool = GoogleSearchTool | UrlContextTool;
 
 /**
  * Gemini API 请求体
@@ -239,8 +248,38 @@ export interface StreamUsageMetadata {
 }
 
 /**
+ * URL 检索状态枚举
+ * 需求: 3.2
+ */
+export type UrlRetrievalStatus =
+  | 'URL_RETRIEVAL_STATUS_SUCCESS'
+  | 'URL_RETRIEVAL_STATUS_UNSAFE'
+  | 'URL_RETRIEVAL_STATUS_UNSPECIFIED'
+  | 'URL_RETRIEVAL_STATUS_ERROR';
+
+/**
+ * 单个 URL 的元数据
+ * 需求: 3.2
+ */
+export interface UrlMetadata {
+  /** 检索的 URL */
+  retrievedUrl: string;
+  /** 检索状态 */
+  urlRetrievalStatus: UrlRetrievalStatus;
+}
+
+/**
+ * URL 上下文元数据
+ * 需求: 3.2
+ */
+export interface UrlContextMetadata {
+  /** URL 元数据数组 */
+  urlMetadata: UrlMetadata[];
+}
+
+/**
  * 流式响应块
- * 需求: 1.1
+ * 需求: 1.1, 3.1, 3.2
  */
 export interface StreamChunk {
   candidates?: {
@@ -253,6 +292,8 @@ export interface StreamChunk {
   modelVersion?: string;
   /** 响应 ID */
   responseId?: string;
+  /** URL 上下文元数据 - 需求: 3.1, 3.2 */
+  urlContextMetadata?: UrlContextMetadata;
 }
 
 // ============ 常量定义 ============

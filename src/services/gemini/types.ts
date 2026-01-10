@@ -5,6 +5,40 @@
 
 import type { MessageTokenUsage } from '../../types/models';
 
+// ============ URL 上下文相关类型 ============
+
+/**
+ * URL 检索状态枚举
+ * 需求: 3.2
+ */
+export type UrlRetrievalStatus =
+  | 'URL_RETRIEVAL_STATUS_SUCCESS'
+  | 'URL_RETRIEVAL_STATUS_UNSAFE'
+  | 'URL_RETRIEVAL_STATUS_UNSPECIFIED'
+  | 'URL_RETRIEVAL_STATUS_ERROR';
+
+/**
+ * 单个 URL 的元数据
+ * 需求: 3.2
+ */
+export interface UrlMetadata {
+  /** 检索的 URL */
+  retrievedUrl: string;
+  /** 检索状态 */
+  urlRetrievalStatus: UrlRetrievalStatus;
+}
+
+/**
+ * URL 上下文元数据
+ * 需求: 3.2
+ */
+export interface UrlContextMetadata {
+  /** URL 元数据数组 */
+  urlMetadata: UrlMetadata[];
+}
+
+// ============ 图片和思维链相关类型 ============
+
 /**
  * 图片提取结果接口
  * 需求: 2.7

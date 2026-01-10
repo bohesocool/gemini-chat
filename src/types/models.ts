@@ -277,6 +277,8 @@ export interface ModelCapabilities {
   thinkingBudgetConfig?: ThinkingBudgetConfig;
   /** 是否支持思维链 - 需求: 5.1 */
   supportsThoughtSummary?: boolean;
+  /** 是否支持 URL 上下文工具 - 需求: 5.1, 5.3 */
+  supportsUrlContext?: boolean;
 }
 
 /**
@@ -381,6 +383,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
       canDisable: false,
     },
     supportsThoughtSummary: true,
+    supportsUrlContext: true,  // 需求: 5.1, 5.3
   },
   'gemini-2.5-flash': {
     supportsThinking: true,
@@ -397,6 +400,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
       canDisable: true,
     },
     supportsThoughtSummary: true,
+    supportsUrlContext: true,  // 需求: 5.1, 5.3
   },
   'gemini-2.5-flash-lite': {
     supportsThinking: false,
@@ -413,6 +417,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
       canDisable: true,
     },
     supportsThoughtSummary: false,
+    supportsUrlContext: true,  // 需求: 5.1, 5.3
   },
   'gemini-2.5-flash-image': {
     supportsThinking: false,

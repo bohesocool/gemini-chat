@@ -237,7 +237,7 @@ export async function sendMessage(
 
 /**
  * 发送消息到 Gemini API 并处理流式响应（支持思维链提取和 Token 统计）
- * 需求: 4.3, 5.2, 5.4, 2.2, 2.3, 3.1, 1.2, 联网搜索
+ * 需求: 4.3, 5.2, 5.4, 2.2, 2.3, 3.1, 1.2, 联网搜索, URL 上下文
  * 
  * @param contents - 消息内容数组
  * @param config - API 配置
@@ -249,6 +249,7 @@ export async function sendMessage(
  * @param signal - AbortSignal 用于取消请求（可选）
  * @param webSearchEnabled - 是否启用联网搜索（可选）
  * @param onThoughtChunk - 接收思维链块的回调函数（可选）- 需求: 3.1
+ * @param urlContextEnabled - 是否启用 URL 上下文（可选）- 需求: 2.1, 2.4
  * @returns 包含文本、思维链、Token 使用量等的结果对象
  */
 export async function sendMessageWithThoughts(
@@ -261,10 +262,11 @@ export async function sendMessageWithThoughts(
   advancedConfig?: ModelAdvancedConfig,
   signal?: AbortSignal,
   webSearchEnabled?: boolean,
-  onThoughtChunk?: (thought: string) => void
+  onThoughtChunk?: (thought: string) => void,
+  urlContextEnabled?: boolean
 ): Promise<SendMessageResult> {
   // 需求: 2.2 - 输出请求日志
-  apiLogger.info('发送流式消息请求（含思维链）', { model: config.model, messageCount: contents.length, webSearchEnabled });
+  apiLogger.info('发送流式消息请求（含思维链）', { model: config.model, messageCount: contents.length, webSearchEnabled, urlContextEnabled });
 
   // 验证 API 配置
   const validation = validateApiEndpoint(config.endpoint);
@@ -278,9 +280,9 @@ export async function sendMessageWithThoughts(
     throw new GeminiApiError('API 密钥不能为空');
   }
 
-  // 构建请求，传入模型 ID 以正确构建思考配置，以及联网搜索配置
+  // 构建请求，传入模型 ID 以正确构建思考配置，以及联网搜索和 URL 上下文配置
   const url = buildRequestUrl(config, true);
-  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled);
+  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled, urlContextEnabled);
 
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
@@ -738,7 +740,7 @@ export async function sendMessageNonStreaming(
 
 /**
  * 发送消息到 Gemini API（非流式响应，支持思维链和完整数据返回）
- * 需求: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4
+ * 需求: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, URL 上下文
  * 
  * @param contents - 消息内容数组
  * @param config - API 配置
@@ -747,6 +749,7 @@ export async function sendMessageNonStreaming(
  * @param systemInstruction - 系统指令（可选）
  * @param advancedConfig - 高级参数配置（可选）
  * @param webSearchEnabled - 是否启用联网搜索（可选）
+ * @param urlContextEnabled - 是否启用 URL 上下文（可选）- 需求: 2.1, 2.4
  * @returns 包含文本、思维链、Token 使用量等的完整结果对象
  */
 export async function sendMessageNonStreamingWithThoughts(
@@ -756,10 +759,11 @@ export async function sendMessageNonStreamingWithThoughts(
   safetySettings?: SafetySetting[],
   systemInstruction?: string,
   advancedConfig?: ModelAdvancedConfig,
-  webSearchEnabled?: boolean
+  webSearchEnabled?: boolean,
+  urlContextEnabled?: boolean
 ): Promise<NonStreamingResult> {
   // 需求: 2.2 - 输出请求日志
-  apiLogger.info('发送非流式消息请求（含思维链）', { model: config.model, messageCount: contents.length, webSearchEnabled });
+  apiLogger.info('发送非流式消息请求（含思维链）', { model: config.model, messageCount: contents.length, webSearchEnabled, urlContextEnabled });
 
   // 验证 API 配置
   const validation = validateApiEndpoint(config.endpoint);
@@ -773,10 +777,10 @@ export async function sendMessageNonStreamingWithThoughts(
     throw new GeminiApiError('API 密钥不能为空');
   }
 
-  // 构建请求（非流式），传入模型 ID 以正确构建思考配置，以及联网搜索配置
-  // 需求: 2.1, 2.2, 2.3, 2.4 - 正确传递 modelId 和 webSearchEnabled 参数
+  // 构建请求（非流式），传入模型 ID 以正确构建思考配置，以及联网搜索和 URL 上下文配置
+  // 需求: 2.1, 2.2, 2.3, 2.4 - 正确传递 modelId、webSearchEnabled 和 urlContextEnabled 参数
   const url = buildRequestUrl(config, false);
-  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled);
+  const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled, urlContextEnabled);
 
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {

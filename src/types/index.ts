@@ -21,6 +21,9 @@ export type {
   StreamChunk,
   ThinkingConfig,
   ImageConfig,
+  GeminiTool,
+  GoogleSearchTool,
+  UrlContextTool,
 } from './gemini';
 
 export {
