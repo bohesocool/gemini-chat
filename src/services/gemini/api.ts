@@ -59,6 +59,12 @@ export async function sendMessage(
   const url = buildRequestUrl(config, true);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model);
 
+  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': config.apiKey,
+  };
+
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
     model: config.model,
@@ -67,7 +73,7 @@ export async function sendMessage(
   });
 
   // 需求: 6.3 - 开始记录调试信息
-  const debugInfo = startDebugRecord(url, 'POST', body);
+  const debugInfo = startDebugRecord(url, 'POST', body, headers);
 
   // 用于追踪已接收的部分响应
   let fullText = '';
@@ -78,9 +84,7 @@ export async function sendMessage(
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
       signal, // 传递 AbortSignal 用于取消请求
     });
@@ -284,6 +288,12 @@ export async function sendMessageWithThoughts(
   const url = buildRequestUrl(config, true);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled, urlContextEnabled);
 
+  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': config.apiKey,
+  };
+
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
     model: config.model,
@@ -296,7 +306,7 @@ export async function sendMessageWithThoughts(
   const requestStartTime = Date.now();
   
   // 需求: 6.3 - 开始记录调试信息
-  const debugInfo = startDebugRecord(url, 'POST', body);
+  const debugInfo = startDebugRecord(url, 'POST', body, headers);
 
   // 用于追踪已接收的部分响应 - 需求: 5.3, 5.4
   let fullText = '';
@@ -316,9 +326,7 @@ export async function sendMessageWithThoughts(
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
       signal, // 传递 AbortSignal 用于取消请求
     });
@@ -623,6 +631,12 @@ export async function sendMessageNonStreaming(
   const url = buildRequestUrl(config, false);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model);
 
+  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': config.apiKey,
+  };
+
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
     model: config.model,
@@ -631,14 +645,12 @@ export async function sendMessageNonStreaming(
   });
 
   // 需求: 6.3 - 开始记录调试信息
-  const debugInfo = startDebugRecord(url, 'POST', body);
+  const debugInfo = startDebugRecord(url, 'POST', body, headers);
 
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
@@ -782,6 +794,12 @@ export async function sendMessageNonStreamingWithThoughts(
   const url = buildRequestUrl(config, false);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled, urlContextEnabled);
 
+  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': config.apiKey,
+  };
+
   // 需求: 2.3 - 输出 API 调用日志
   apiLogger.debug('API 请求参数', {
     model: config.model,
@@ -795,14 +813,12 @@ export async function sendMessageNonStreamingWithThoughts(
   const requestStartTime = Date.now();
   
   // 需求: 6.3 - 开始记录调试信息
-  const debugInfo = startDebugRecord(url, 'POST', body);
+  const debugInfo = startDebugRecord(url, 'POST', body, headers);
 
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
@@ -938,6 +954,7 @@ export async function testConnection(config: ApiConfig): Promise<{ success: bool
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': config.apiKey, // 同时使用 header 方式传递 API key，兼容更多上游服务
       },
       body: JSON.stringify(body),
     });

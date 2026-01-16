@@ -44,3 +44,16 @@ export type {
   CircularAudioLevelProps, 
   WaveformAudioLevelProps 
 } from './AudioLevelIndicator';
+
+// 历史记录相关组件
+export { TranscriptText } from './TranscriptText';
+export type { TranscriptTextProps } from './TranscriptText';
+
+export { VoiceMessageCard, getVoiceMessageRoleStyles } from './VoiceMessageCard';
+export type { VoiceMessageCardProps } from './VoiceMessageCard';
+
+export { LiveSessionList } from './LiveSessionList';
+export type { LiveSessionListProps } from './LiveSessionList';
+
+export { LiveHistoryView } from './LiveHistoryView';
+export type { LiveHistoryViewProps } from './LiveHistoryView';

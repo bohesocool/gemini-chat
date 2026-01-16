@@ -1,9 +1,10 @@
 /**
  * Live API 状态管理
- * 需求: 2.2-2.6, 3.6, 4.2, 6.1-6.4, 9.1-9.4
+ * 需求: 2.1, 2.2, 2.2-2.6, 3.6, 4.2, 6.1-6.4, 9.1-9.4
  * 
  * 管理 Live API 实时对话功能的所有状态，包括连接状态、音频状态、
  * 说话状态、转录消息和会话配置。
+ * 支持音频数据累积用于历史记录保存。
  */
 
 import { create } from 'zustand';
@@ -25,6 +26,39 @@ import { useSettingsStore } from './settings';
 import { storeLogger } from '../services/logger';
 
 // ============ Store 状态接口 ============
+
+/**
+ * 音频数据累积器
+ * 用于收集一个轮次内的所有音频数据
+ * 需求: 2.1, 2.2
+ */
+interface AudioAccumulator {
+  /** 用户音频数据块 */
+  userChunks: ArrayBuffer[];
+  /** AI 音频数据块 */
+  modelChunks: ArrayBuffer[];
+  /** 用户音频开始时间 */
+  userStartTime: number | null;
+  /** AI 音频开始时间 */
+  modelStartTime: number | null;
+}
+
+/**
+ * 完成的音频消息
+ * 需求: 2.1, 2.2
+ */
+export interface CompletedAudioMessage {
+  /** 角色 */
+  role: 'user' | 'model';
+  /** 合并后的音频数据 */
+  audioData: ArrayBuffer;
+  /** 时长（毫秒） */
+  durationMs: number;
+  /** 转录文字 */
+  transcript: string;
+  /** 时间戳 */
+  timestamp: number;
+}
 
 /**
  * Live Store 状态
@@ -62,13 +96,18 @@ interface LiveState {
   // 配置
   /** 会话配置 */
   config: LiveSessionConfig;
+
+  // 音频累积（用于历史记录保存）
+  // 需求: 2.1, 2.2
+  /** 待保存的完成消息队列 */
+  pendingMessages: CompletedAudioMessage[];
 }
 
 // ============ Store 操作接口 ============
 
 /**
  * Live Store 操作
- * 需求: 2.2-2.6, 3.6, 4.2, 6.1-6.4
+ * 需求: 2.1, 2.2, 2.2-2.6, 3.6, 4.2, 6.1-6.4
  */
 interface LiveActions {
   // 会话控制
@@ -108,6 +147,11 @@ interface LiveActions {
   finalizePendingTranscript: (type: 'input' | 'output') => void;
   /** 清除所有转录 */
   clearTranscripts: () => void;
+
+  // 音频消息队列操作（用于历史记录保存）
+  // 需求: 2.1, 2.2
+  /** 获取并清除待保存的消息 */
+  consumePendingMessages: () => CompletedAudioMessage[];
 }
 
 // ============ Store 类型 ============
@@ -122,6 +166,63 @@ let liveApiService: LiveApiService | null = null;
 let audioCaptureService: AudioCaptureService | null = null;
 /** 音频播放服务实例 */
 let audioPlayerService: AudioPlayerService | null = null;
+
+// ============ 音频累积器 ============
+// 需求: 2.1, 2.2
+
+/** 音频数据累积器实例 */
+let audioAccumulator: AudioAccumulator = {
+  userChunks: [],
+  modelChunks: [],
+  userStartTime: null,
+  modelStartTime: null,
+};
+
+/**
+ * 重置音频累积器
+ */
+function resetAudioAccumulator(): void {
+  audioAccumulator = {
+    userChunks: [],
+    modelChunks: [],
+    userStartTime: null,
+    modelStartTime: null,
+  };
+}
+
+/**
+ * 合并音频数据块
+ * @param chunks 音频数据块数组
+ * @returns 合并后的 ArrayBuffer
+ */
+function mergeAudioChunks(chunks: ArrayBuffer[]): ArrayBuffer {
+  if (chunks.length === 0) {
+    return new ArrayBuffer(0);
+  }
+  
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  
+  for (const chunk of chunks) {
+    result.set(new Uint8Array(chunk), offset);
+    offset += chunk.byteLength;
+  }
+  
+  return result.buffer;
+}
+
+/**
+ * 计算 PCM 音频时长（毫秒）
+ * @param audioData PCM 音频数据
+ * @param sampleRate 采样率
+ * @returns 时长（毫秒）
+ */
+function calculatePcmDuration(audioData: ArrayBuffer, sampleRate: number): number {
+  // 16 位 PCM，每个样本 2 字节
+  const numSamples = audioData.byteLength / 2;
+  return Math.round((numSamples / sampleRate) * 1000);
+}
 
 // ============ 辅助函数 ============
 
@@ -182,6 +283,10 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
   // 配置
   config: { ...DEFAULT_LIVE_CONFIG },
 
+  // 音频消息队列
+  // 需求: 2.1, 2.2
+  pendingMessages: [],
+
   // ============ 会话控制 ============
 
   /**
@@ -237,6 +342,13 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
           if (audioPlayerService) {
             audioPlayerService.enqueue(data);
           }
+          
+          // 累积 AI 音频数据用于历史记录保存
+          // 需求: 2.2
+          if (audioAccumulator.modelStartTime === null) {
+            audioAccumulator.modelStartTime = Date.now();
+          }
+          audioAccumulator.modelChunks.push(data.slice(0)); // 复制数据
         },
         onTextData: (text) => {
           // 处理文本响应（如果响应模态为文本）
@@ -265,9 +377,50 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
           set({ currentSpeaker: 'none' });
         },
         onTurnComplete: () => {
-          // 轮次完成 - 完成待处理的转录
+          // 轮次完成 - 完成待处理的转录并保存音频消息
           storeLogger.info('轮次完成');
           const currentState = get();
+          const newPendingMessages: CompletedAudioMessage[] = [...currentState.pendingMessages];
+          
+          // 处理用户音频消息
+          // 需求: 2.1
+          if (audioAccumulator.userChunks.length > 0) {
+            const userAudioData = mergeAudioChunks(audioAccumulator.userChunks);
+            const userDurationMs = calculatePcmDuration(userAudioData, 16000); // 用户音频 16kHz
+            
+            if (userAudioData.byteLength > 0) {
+              newPendingMessages.push({
+                role: 'user',
+                audioData: userAudioData,
+                durationMs: userDurationMs,
+                transcript: currentState.pendingInputTranscript.trim(),
+                timestamp: audioAccumulator.userStartTime || Date.now(),
+              });
+            }
+          }
+          
+          // 处理 AI 音频消息
+          // 需求: 2.2
+          if (audioAccumulator.modelChunks.length > 0) {
+            const modelAudioData = mergeAudioChunks(audioAccumulator.modelChunks);
+            const modelDurationMs = calculatePcmDuration(modelAudioData, 24000); // AI 音频 24kHz
+            
+            if (modelAudioData.byteLength > 0) {
+              newPendingMessages.push({
+                role: 'model',
+                audioData: modelAudioData,
+                durationMs: modelDurationMs,
+                transcript: currentState.pendingOutputTranscript.trim(),
+                timestamp: audioAccumulator.modelStartTime || Date.now(),
+              });
+            }
+          }
+          
+          // 更新待保存消息队列
+          set({ pendingMessages: newPendingMessages });
+          
+          // 重置音频累积器
+          resetAudioAccumulator();
           
           // 完成输入转录
           if (currentState.pendingInputTranscript) {
@@ -334,6 +487,13 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
           // 发送音频数据到 Live API
           if (liveApiService?.isConnected() && !get().isMuted) {
             liveApiService.sendRealtimeInput(pcmData);
+            
+            // 累积用户音频数据用于历史记录保存
+            // 需求: 2.1
+            if (audioAccumulator.userStartTime === null) {
+              audioAccumulator.userStartTime = Date.now();
+            }
+            audioAccumulator.userChunks.push(pcmData.slice(0)); // 复制数据
           }
         },
         onLevelChange: (level) => {
@@ -385,6 +545,9 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
     
     // 清理服务
     cleanupServices();
+    
+    // 重置音频累积器
+    resetAudioAccumulator();
 
     // 重置状态
     set({
@@ -394,6 +557,7 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
       inputLevel: 0,
       outputLevel: 0,
       isMuted: false,
+      pendingMessages: [],
     });
   },
 
@@ -569,6 +733,18 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
       pendingInputTranscript: '',
       pendingOutputTranscript: '',
     });
+  },
+
+  /**
+   * 获取并清除待保存的消息
+   * 需求: 2.1, 2.2
+   * 
+   * 用于外部（如 LiveApiView）获取待保存的音频消息并保存到历史记录
+   */
+  consumePendingMessages: () => {
+    const messages = get().pendingMessages;
+    set({ pendingMessages: [] });
+    return messages;
   },
 }));
 

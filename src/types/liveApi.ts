@@ -490,3 +490,81 @@ export interface AvailableVoice {
   /** 语音描述 */
   description: string;
 }
+
+
+// ============ 会话历史记录类型 ============
+// 需求: 1.3, 2.4, 3.2
+
+/**
+ * Live API 消息记录
+ * 存储在 IndexedDB 中的消息数据结构
+ * 需求: 2.4, 3.2
+ */
+export interface LiveMessageRecord {
+  /** 消息唯一标识 */
+  id: string;
+  /** 消息角色（用户/模型） */
+  role: 'user' | 'model';
+  /** 关联的音频 Blob ID，用于从 AudioBlobStorage 获取音频数据 */
+  audioId: string | null;
+  /** 语音时长（毫秒） */
+  durationMs: number;
+  /** 转录文字内容 */
+  transcript: string;
+  /** 消息时间戳 */
+  timestamp: number;
+}
+
+/**
+ * Live API 会话记录
+ * 存储在 IndexedDB 中的完整会话数据结构
+ * 需求: 1.3
+ */
+export interface LiveSessionRecord {
+  /** 会话唯一标识 */
+  id: string;
+  /** 会话创建时间戳 */
+  createdAt: number;
+  /** 会话最后更新时间戳 */
+  updatedAt: number;
+  /** 会话中的所有消息 */
+  messages: LiveMessageRecord[];
+  /** 会话配置 */
+  config: LiveSessionConfig;
+}
+
+/**
+ * Live API 会话摘要
+ * 用于在侧边栏列表中显示的简要信息
+ * 需求: 1.3
+ */
+export interface LiveSessionSummary {
+  /** 会话唯一标识 */
+  id: string;
+  /** 会话创建时间戳 */
+  createdAt: number;
+  /** 会话摘要（首条消息的转录文字） */
+  summary: string;
+  /** 会话中的消息数量 */
+  messageCount: number;
+}
+
+/**
+ * Live API 语音消息
+ * 用于 UI 组件显示的语音消息数据结构，包含实际的音频 Blob
+ * 需求: 2.4, 3.2
+ */
+export interface LiveVoiceMessage {
+  /** 消息唯一标识 */
+  id: string;
+  /** 消息角色（用户/模型） */
+  role: 'user' | 'model';
+  /** 音频 Blob 数据，可能为 null（如果音频加载失败或不存在） */
+  audioBlob: Blob | null;
+  /** 语音时长（毫秒） */
+  durationMs: number;
+  /** 转录文字内容 */
+  transcript: string;
+  /** 消息时间戳 */
+  timestamp: number;
+}

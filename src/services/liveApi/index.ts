@@ -1,6 +1,6 @@
 /**
  * Live API 服务层导出入口
- * Requirements: 2.2
+ * Requirements: 2.1, 2.2
  * 
  * 导出所有 Live API 相关的服务类和类型
  */
@@ -9,6 +9,20 @@
 export { LiveApiService } from './LiveApiService';
 export { AudioCaptureService } from './AudioCaptureService';
 export { AudioPlayerService } from './AudioPlayerService';
+export { VoicePlayerService, PlaybackError } from './VoicePlayerService';
+export type { VoicePlayerCallbacks } from './VoicePlayerService';
+
+// 历史记录存储服务导出
+export {
+  AudioBlobStorage,
+  audioBlobStorage,
+  StorageError,
+  QuotaExceededError,
+  AudioNotFoundError,
+} from './AudioBlobStorage';
+export type { AudioBlobRecord } from './AudioBlobStorage';
+
+export { LiveSessionStorage, liveSessionStorage } from './LiveSessionStorage';
 
 // 错误类导出
 export {
@@ -58,6 +72,13 @@ export type {
   // 模型和语音类型
   LiveApiModel,
   AvailableVoice,
+  
+  // 历史记录类型
+  // Requirements: 2.1
+  LiveSessionRecord,
+  LiveSessionSummary,
+  LiveMessageRecord,
+  LiveVoiceMessage,
 } from '../../types/liveApi';
 
 // 从常量文件重新导出

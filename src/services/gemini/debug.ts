@@ -13,12 +13,14 @@ import type { DebugInfo } from './types';
  * @param url - 请求 URL（不含 API 密钥）
  * @param method - HTTP 方法
  * @param body - 请求体
+ * @param headers - 请求头（可选，默认只有 Content-Type）
  * @returns 请求记录 ID 和开始时间
  */
 export function startDebugRecord(
   url: string,
   method: string,
-  body: unknown
+  body: unknown,
+  headers?: Record<string, string>
 ): DebugInfo | null {
   const debugStore = useDebugStore.getState();
   
@@ -33,10 +35,20 @@ export function startDebugRecord(
   // 创建请求记录（隐藏 API 密钥）
   const sanitizedUrl = url.replace(/key=[^&]+/, 'key=***');
   
+  // 处理请求头，隐藏 API 密钥
+  const sanitizedHeaders = headers 
+    ? Object.fromEntries(
+        Object.entries(headers).map(([key, value]) => [
+          key,
+          key.toLowerCase() === 'x-goog-api-key' ? '***' : value
+        ])
+      )
+    : { 'Content-Type': 'application/json' };
+  
   const record = createRequestRecord(
     sanitizedUrl,
     method,
-    { 'Content-Type': 'application/json' },
+    sanitizedHeaders,
     body
   );
   

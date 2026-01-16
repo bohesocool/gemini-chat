@@ -166,4 +166,9 @@ export type {
   // 模型信息类型
   LiveApiModel,
   AvailableVoice,
+  // 会话历史记录类型
+  LiveMessageRecord,
+  LiveSessionRecord,
+  LiveSessionSummary,
+  LiveVoiceMessage,
 } from './liveApi';
