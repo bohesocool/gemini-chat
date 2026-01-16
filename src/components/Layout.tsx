@@ -40,9 +40,10 @@ import type { GeneratedImage } from '../types';
 
 import { WindowControls } from './WindowControls';
 import logoImage from '../assets/logo.png';
+import { LiveApiView } from './LiveApi';
 
 /** 侧边栏视图类型 */
-export type SidebarView = 'assistants' | 'settings' | 'images' | 'templates' | 'bookmarks';
+export type SidebarView = 'assistants' | 'settings' | 'images' | 'templates' | 'bookmarks' | 'live';
 
 /** 侧边栏上下文 */
 interface SidebarContextType {
@@ -352,6 +353,14 @@ export function Layout({ sidebar, children }: LayoutProps) {
     setSidebarCollapsed(false);
   }, [setSidebarCollapsed]);
 
+  // 点击 Live 按钮
+  // 需求: 1.1 - Live API 实时对话入口
+  const handleLiveClick = useCallback(() => {
+    setCurrentView('live');
+    // Live 视图时自动折叠侧边栏，让主视图占据更多空间
+    setSidebarCollapsed(true);
+  }, [setSidebarCollapsed]);
+
   // 点击设置按钮 - 打开毛玻璃设置模态框
   const handleSettingsClick = useCallback(() => {
     setIsSettingsModalOpen(true);
@@ -516,6 +525,12 @@ export function Layout({ sidebar, children }: LayoutProps) {
               isActive={currentView === 'images' && !sidebarCollapsed}
               onClick={handleImagesClick}
             />
+            <NavIconButton
+              icon={<LiveIcon />}
+              label="实时对话"
+              isActive={currentView === 'live'}
+              onClick={handleLiveClick}
+            />
           </div>
 
           {/* 底部工具 - 调试、主题切换和设置 */}
@@ -541,8 +556,8 @@ export function Layout({ sidebar, children }: LayoutProps) {
           </div>
         </nav>
 
-        {/* 侧边栏内容区 - 图片库视图时直接移除 (不渲染) */}
-        {currentView !== 'images' && (
+        {/* 侧边栏内容区 - 图片库和 Live 视图时直接移除 (不渲染) */}
+        {currentView !== 'images' && currentView !== 'live' && (
           <aside
             className={`
               fixed inset-y-0 left-12 z-30 transform transition-[width,transform,opacity] duration-300 ease-in-out overflow-hidden
@@ -591,6 +606,9 @@ export function Layout({ sidebar, children }: LayoutProps) {
                 onBackToChat={handleBackToChat}
                 onImageClick={handleImageClick}
               />
+            ) : currentView === 'live' ? (
+              /* Live API 实时对话视图 - 需求: 1.1, 2.1 */
+              <LiveApiView />
             ) : currentView === 'templates' ? (
               /* 模板详情视图 - 需求: 2.3 */
               <TemplateDetailView
@@ -755,6 +773,19 @@ function DebugIcon() {
     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+    </svg>
+  );
+}
+
+/**
+ * Live 实时对话图标
+ * 需求: 1.1 - Live API 导航入口
+ */
+function LiveIcon() {
+  return (
+    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
     </svg>
   );
 }

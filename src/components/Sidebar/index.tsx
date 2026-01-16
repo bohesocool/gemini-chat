@@ -179,7 +179,7 @@ export function Sidebar() {
     <div className="flex h-full flex-col bg-neutral-50 dark:bg-neutral-800 transition-colors duration-300">
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
-          {currentView === 'assistants' ? '助手' : currentView === 'images' ? '图片库' : currentView === 'templates' ? '模板' : currentView === 'bookmarks' ? '书签' : '设置'}
+          {currentView === 'assistants' ? '助手' : currentView === 'images' ? '图片库' : currentView === 'templates' ? '模板' : currentView === 'bookmarks' ? '书签' : currentView === 'live' ? '实时对话' : '设置'}
         </h2>
         <button
           onClick={toggleSidebar}

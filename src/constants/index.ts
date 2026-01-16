@@ -97,3 +97,16 @@ export type UILimitsKey = keyof typeof UI_LIMITS;
 
 /** 动画配置类型 */
 export type AnimationsKey = keyof typeof ANIMATIONS;
+
+// ============ Live API 常量导出 ============
+
+export {
+  AVAILABLE_VOICES,
+  LIVE_API_MODELS,
+  DEFAULT_LIVE_CONFIG,
+  AUDIO_CONFIG,
+  SESSION_LIMITS,
+  VAD_DEFAULTS,
+} from './liveApi';
+
+export type { VoiceId, LiveModelId } from './liveApi';

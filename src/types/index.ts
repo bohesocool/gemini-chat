@@ -111,3 +111,59 @@ export {
   generateFileReferenceId,
   createFileReference,
 } from './filesApi';
+
+// Live API 相关类型
+export type {
+  // 会话配置类型
+  VadSensitivity,
+  VadConfig,
+  ResponseModality,
+  LiveSessionConfig,
+  // 转录消息类型
+  TranscriptRole,
+  TranscriptMessage,
+  // 连接状态类型
+  ConnectionStatus,
+  Speaker,
+  // WebSocket 消息类型 - 客户端发送
+  ApiStartSensitivity,
+  ApiEndSensitivity,
+  VoiceConfig,
+  SpeechConfig,
+  LiveThinkingConfig,
+  LiveGenerationConfig,
+  AutomaticActivityDetection,
+  RealtimeInputConfig,
+  ProactivityConfig,
+  SetupConfig,
+  BidiGenerateContentSetup,
+  AudioData,
+  RealtimeInputContent,
+  BidiGenerateContentRealtimeInput,
+  ContentTurn,
+  ClientContentData,
+  BidiGenerateContentClientContent,
+  ClientMessage,
+  // WebSocket 消息类型 - 服务端返回
+  InlineData,
+  ModelTurnPart,
+  ModelTurn,
+  InputTranscription,
+  OutputTranscription,
+  ServerContentData,
+  BidiGenerateContentServerContent,
+  ResponseTokensDetail,
+  LiveUsageMetadata,
+  UsageMetadataMessage,
+  SetupCompleteMessage,
+  ServerMessage,
+  // 服务层类型
+  LiveApiServiceConfig,
+  LiveApiCallbacks,
+  AudioCaptureCallbacks,
+  AudioCaptureState,
+  AudioPlayerCallbacks,
+  // 模型信息类型
+  LiveApiModel,
+  AvailableVoice,
+} from './liveApi';
