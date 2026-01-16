@@ -33,9 +33,12 @@ export class PlaybackError extends Error {
  * @param mimeType - MIME 类型，如 "audio/pcm;rate=16000"
  * @returns 采样率，默认 24000
  */
-function parseSampleRate(mimeType: string): number {
+function parseSampleRate(mimeType: string | undefined): number {
+  if (!mimeType) {
+    return 24000;
+  }
   const match = mimeType.match(/rate=(\d+)/);
-  if (match) {
+  if (match && match[1]) {
     return parseInt(match[1], 10);
   }
   // 默认采样率（AI 输出通常是 24000）
