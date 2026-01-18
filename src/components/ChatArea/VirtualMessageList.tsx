@@ -109,12 +109,12 @@ export function VirtualMessageList({
   const config = { ...DEFAULT_CONFIG, ...userConfig };
   const parentRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  
+
   // 是否在底部状态（用于自动滚动控制）
   const [isAtBottom, setIsAtBottom] = useState(true);
   // 上一次消息数量（用于检测新消息）
   const prevMessageCountRef = useRef(messages.length);
-  
+
   // 需求 7.1, 7.2: 图片预览状态
   const [previewImages, setPreviewImages] = useState<GeneratedImage[]>([]);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
@@ -153,7 +153,7 @@ export function VirtualMessageList({
   // 滚动到底部
   const scrollToBottom = useCallback((smooth = true) => {
     if (!parentRef.current) return;
-    
+
     const container = parentRef.current;
     container.scrollTo({
       top: container.scrollHeight,
@@ -166,7 +166,7 @@ export function VirtualMessageList({
   useEffect(() => {
     const currentCount = messages.length;
     const prevCount = prevMessageCountRef.current;
-    
+
     // 检测到新消息
     if (currentCount > prevCount) {
       if (isAtBottom) {
@@ -174,7 +174,7 @@ export function VirtualMessageList({
         requestAnimationFrame(() => scrollToBottom(true));
       }
     }
-    
+
     prevMessageCountRef.current = currentCount;
   }, [messages.length, isAtBottom, scrollToBottom]);
 
@@ -235,7 +235,7 @@ export function VirtualMessageList({
             // 更新 isStreamingItem 判断 - 需求 1.1, 2.1
             const isStreamingItem = index === messages.length && isNewMessageSending;
             const message = isStreamingItem ? null : messages[index];
-            
+
             // 检查当前消息是否正在重新生成 - 需求 1.1, 1.2, 1.3
             const isRegeneratingThis = message?.id === regeneratingMessageId && isSending;
 
@@ -292,9 +292,9 @@ export function VirtualMessageList({
 
       {/* 错误提示 - 显示API错误并提供重试选项 */}
       {error && !isSending && (
-        <ErrorMessage 
-          error={error} 
-          onRetry={onRetry} 
+        <ErrorMessage
+          error={error}
+          onRetry={onRetry}
           onDismiss={onDismissError}
         />
       )}
@@ -335,12 +335,12 @@ const ErrorMessage = memo(function ErrorMessage({ error, onRetry, onDismiss }: E
               请求失败
             </span>
           </div>
-          
+
           {/* 错误详情 */}
           <p className="text-sm text-red-600 dark:text-red-400 mb-3 break-words">
             {error}
           </p>
-          
+
           {/* 操作按钮 */}
           <div className="flex items-center gap-2">
             {onRetry && (
@@ -400,12 +400,12 @@ const MessageError = memo(function MessageError({ error, onRetry, onDismiss }: M
           请求失败
         </span>
       </div>
-      
+
       {/* 错误详情 */}
       <p className="text-sm text-red-600 dark:text-red-400 mb-3 break-words">
         {error}
       </p>
-      
+
       {/* 操作按钮 */}
       <div className="flex items-center gap-2">
         {onRetry && (
@@ -455,9 +455,9 @@ interface StreamingMessageProps {
   onImageClick?: (images: GeneratedImage[], index: number) => void;
 }
 
-function StreamingMessage({ 
-  streamingText, 
-  streamingThought = '', 
+function StreamingMessage({
+  streamingText,
+  streamingThought = '',
   streamingImages = [],
   renderContent,
   onImageClick,
@@ -481,17 +481,17 @@ function StreamingMessage({
         {streamingThought && (
           <ThoughtSummaryCard content={streamingThought} isStreaming={true} />
         )}
-        
+
         {/* 流式响应内容 - 需求 5.1: 显示流式图片 */}
         <MessageBubble isUser={false}>
           {/* 流式图片显示 - 需求 5.1 */}
           {streamingImages.length > 0 && (
-            <ImageGrid 
+            <ImageGrid
               images={streamingImages}
               onImageClick={handleImageClick}
             />
           )}
-          
+
           {/* 文本内容 */}
           {streamingText ? (
             <>
@@ -571,10 +571,10 @@ interface MessageItemProps {
   windowTitle?: string;
 }
 
-const MessageItem = memo(function MessageItem({ 
-  message, 
-  renderContent, 
-  isLast, 
+const MessageItem = memo(function MessageItem({
+  message,
+  renderContent,
+  isLast,
   reducedMotion,
   onEdit,
   onRegenerate,
@@ -593,12 +593,12 @@ const MessageItem = memo(function MessageItem({
   const isUser = message.role === 'user';
   const [showTimestamp, setShowTimestamp] = useState(false);
   const [showActions, setShowActions] = useState(false);
-  
+
   // 需求 1.1: 添加编辑状态管理
   const [isEditing, setIsEditing] = useState(false);
 
   // 性能优化：缓存过渡样式
-  const transitionStyle = useMemo(() => 
+  const transitionStyle = useMemo(() =>
     reducedMotion ? {} : { transition: 'all 150ms ease-out' },
     [reducedMotion]
   );
@@ -654,15 +654,15 @@ const MessageItem = memo(function MessageItem({
 
   // 确定要显示的内容 - 需求 1.2, 1.3
   const displayContent = isRegenerating ? regeneratingContent : message.content;
-  
+
   // 确定要显示的图片 - 需求 2.2, 5.1
   const displayImages = isRegenerating ? regeneratingImages : (message.generatedImages || []);
-  
+
   // 判断是否有内容（文本或图片）- 需求 3.1, 3.2
   const hasContent = displayContent || displayImages.length > 0;
 
   return (
-    <div 
+    <div
       className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
       onMouseEnter={() => {
         if (!isEditing && !isRegenerating) {
@@ -676,7 +676,7 @@ const MessageItem = memo(function MessageItem({
       }}
     >
       <Avatar role={message.role} />
-      
+
       {/* 需求 1.2: 根据 isEditing 状态渲染 MessageBubble 或 InlineMessageEditor */}
       {isEditing ? (
         // 编辑模式：显示原位编辑器
@@ -695,12 +695,12 @@ const MessageItem = memo(function MessageItem({
           {message.fileReferences && message.fileReferences.length > 0 && (
             <FileReferenceList fileReferences={message.fileReferences} isUser={isUser} />
           )}
-          
+
           {/* 附件预览 */}
           {message.attachments && message.attachments.length > 0 && (
             <AttachmentList attachments={message.attachments} isUser={isUser} />
           )}
-          
+
           {/* 思维链卡片 - 需求 3.3, 3.4: 重新生成时显示流式思维链 */}
           {/* 需求 2.1, 3.1, 4.1: 历史消息默认折叠，重新生成时展开 */}
           {!isUser && (
@@ -712,27 +712,27 @@ const MessageItem = memo(function MessageItem({
             ) : (
               // 普通状态显示已保存的思维链，isStreaming=false 默认折叠
               message.thoughtSummary && (
-                <ThoughtSummaryCard 
-                  content={message.thoughtSummary} 
+                <ThoughtSummaryCard
+                  content={message.thoughtSummary}
                   isStreaming={false}
                   images={message.thoughtImages}
                 />
               )
             )
           )}
-          
+
           {/* 消息内容 - 需求 1.2, 1.3, 3.1, 2.2, 3.2, 3.3 */}
           {/* AI 消息始终显示气泡（包括空响应占位符），用户消息只有有内容时才显示 */}
           {(hasContent || isRegenerating || !isUser) && (
             <MessageBubble isUser={isUser} isRegenerating={isRegenerating}>
               {/* 生成的图片显示 - 需求 2.2, 2.3, 5.1 */}
               {displayImages.length > 0 && (
-                <ImageGrid 
+                <ImageGrid
                   images={displayImages}
                   onImageClick={handleImageClick}
                 />
               )}
-              
+
               {isRegenerating ? (
                 // 重新生成状态
                 displayContent ? (
@@ -827,6 +827,7 @@ const Avatar = memo(function Avatar({ role }: { role: 'user' | 'model' }) {
     <div
       className={`
         flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center shadow-sm
+        avatar-container
         ${isUser
           ? 'bg-brand text-white'
           : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
@@ -935,6 +936,7 @@ const EmptyState = memo(function EmptyState() {
         bg-gradient-to-br from-green-500 to-emerald-600 
         flex items-center justify-center mb-4
         shadow-lg shadow-green-500/30
+        start-new-chat-icon
       ">
         <BotIcon className="w-8 h-8 text-white" />
       </div>
@@ -968,17 +970,17 @@ const EmptyResponsePlaceholder = memo(function EmptyResponsePlaceholder() {
 const TypingIndicator = memo(function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 py-1">
-      <span 
-        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" 
-        style={{ animationDelay: '0ms', animationDuration: '600ms' }} 
+      <span
+        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"
+        style={{ animationDelay: '0ms', animationDuration: '600ms' }}
       />
-      <span 
-        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" 
-        style={{ animationDelay: '150ms', animationDuration: '600ms' }} 
+      <span
+        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"
+        style={{ animationDelay: '150ms', animationDuration: '600ms' }}
       />
-      <span 
-        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" 
-        style={{ animationDelay: '300ms', animationDuration: '600ms' }} 
+      <span
+        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"
+        style={{ animationDelay: '300ms', animationDuration: '600ms' }}
       />
     </div>
   );
@@ -1084,7 +1086,7 @@ export function calculateVisibleCount(
   overscan: number
 ): number {
   if (totalMessages === 0) return 0;
-  
+
   // 可视区域内的项数
   const visibleCount = Math.ceil(viewportHeight / estimatedItemHeight);
   // 加上缓冲区
@@ -1185,12 +1187,12 @@ export function isIndicatorProperlyCleared(
     // 指示器应该被清除（regeneratingId 应该为 null 或不再匹配）
     return true;
   }
-  
+
   // 场景 2: regeneratingMessageId 被清除
   if (previousRegeneratingId !== null && currentRegeneratingId === null) {
     return true;
   }
-  
+
   // 场景 3: 状态没有变化或正在进行中
   return false;
 }
@@ -1227,7 +1229,7 @@ export function handleCancelOperation(
 ): CancelOperationResult {
   // 判断是否有有效的部分内容（非空字符串）
   const hasPartialContent = partialContent.length > 0;
-  
+
   if (hasPartialContent) {
     // 需求 4.1, 4.2: 有部分内容时，保留部分内容
     return {
@@ -1285,12 +1287,12 @@ export function validateCancelOperation(
   if (isSendingAfterCancel) {
     return false;
   }
-  
+
   // 2. 取消后 regeneratingMessageId 应该为 null
   if (regeneratingIdAfterCancel !== null) {
     return false;
   }
-  
+
   // 3. 验证内容处理逻辑
   if (partialContent.length > 0) {
     // 有部分内容时，最终内容应该是部分内容

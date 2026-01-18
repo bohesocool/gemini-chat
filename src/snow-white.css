@@ -1,0 +1,283 @@
+/* Snow White Theme Overrides */
+/* 纯白主题特殊样式：将主色按钮变为白底黑字+边框 */
+.snow-white {
+  /* 调整主色变量为纯白 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f4f5;
+  /* Zinc 100 */
+  --border-default: #e4e4e7;
+  /* Zinc 200 */
+
+  /* 重定义 Primary 色板为灰度 (Zinc) */
+  /* 这将消除所有残留的绿色 (Mint)，将 50-900 映射为灰色阶 */
+  --color-primary-50: #fafafa;
+  /* Zinc 50 */
+  --color-primary-100: #f4f4f5;
+  /* Zinc 100 */
+  --color-primary-200: #e4e4e7;
+  /* Zinc 200 */
+  --color-primary-300: #d4d4d8;
+  /* Zinc 300 */
+  --color-primary-400: #a1a1aa;
+  /* Zinc 400 */
+  --color-primary-500: #18181b;
+  /* Zinc 900 (Black) - 用于高亮强调 */
+  --color-primary-600: #09090b;
+  /* Zinc 950 */
+  --color-primary-700: #000000;
+  --color-primary-800: #000000;
+  --color-primary-900: #000000;
+}
+
+/* ========================================= */
+/* 导航栏 & 侧边栏 (Sidebar & Nav) */
+/* ========================================= */
+
+/* 强制导航栏背景为纯白，增加右侧边框分隔 */
+.snow-white nav,
+.snow-white aside {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e4e4e7 !important;
+  /* Zinc 200 */
+}
+
+/* 覆盖导航栏图标颜色 (原为 text-white) */
+.snow-white nav button {
+  color: #52525b !important;
+  /* Zinc 600 */
+}
+
+.snow-white nav button:hover {
+  background-color: #f4f4f5 !important;
+  color: #18181b !important;
+}
+
+/* 激活状态的导航图标 */
+/* NavIconButton 的激活态 */
+.snow-white nav button[class*='bg-black/20'] {
+  background-color: #f4f4f5 !important;
+  color: #000000 !important;
+  border: 1px solid #d4d4d8 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+
+/* ========================================= */
+/* 按钮 & 交互元素 (Buttons & Inputs) */
+/* ========================================= */
+
+/* 覆盖 Primary BUTTON 样式 */
+/* 只针对 button 元素，避免影响 Toggle (div) 或其他指示器 */
+.snow-white button[class*='bg-primary-500'] {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  /* Zinc 900 */
+  border: 1px solid #d4d4d8 !important;
+  /* Zinc 300 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.snow-white button[class*='bg-primary-500']:hover {
+  background-color: #f4f4f5 !important;
+  /* Zinc 100 */
+  border-color: #a1a1aa !important;
+  /* Zinc 400 */
+}
+
+/* Brand 按钮也类似 */
+.snow-white button[class*='bg-brand-500'] {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border: 1px solid #d4d4d8 !important;
+}
+
+/* 输入框增强对比度 */
+.snow-white input,
+.snow-white textarea,
+.snow-white select {
+  border: 1px solid #e4e4e7 !important;
+  /* Zinc 200 */
+  background-color: #ffffff !important;
+}
+
+.snow-white input:focus,
+.snow-white textarea:focus,
+.snow-white select:focus {
+  border-color: #a1a1aa !important;
+  /* Zinc 400 */
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 选中状态文本 */
+.snow-white ::selection {
+  background-color: #e4e4e7;
+  /* Zinc 200 */
+  color: #000000;
+}
+
+/* ========================================= */
+/* 图标与气泡 (Icons & Bubbles)             */
+/* ========================================= */
+
+/* 1. 主界面：开始新程序图标 */
+.snow-white .start-new-program-icon {
+  background: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+  /* 图标黑色 */
+}
+
+.snow-white .start-new-program-icon svg {
+  color: #000000 !important;
+}
+
+/* 2. 新建程序后：开始新对话图标 */
+/* 要求：白色背景 + 黑色边框，中间白色 + 边框 */
+.snow-white .start-new-chat-icon {
+  background: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  /* 让当前的 currentColor 变为白色 */
+}
+
+.snow-white .start-new-chat-icon svg {
+  /* SVG 图标本体：填充白色，描边黑色 */
+  fill: #ffffff !important;
+  stroke: #000000 !important;
+  stroke-width: 1.5px;
+  /* 确保边框可见 */
+  color: #ffffff !important;
+  overflow: visible;
+  /* 防止描边被裁剪 */
+}
+
+/* 针对 BotIcon 的 path 单独处理，确保填充和描边生效 */
+.snow-white .start-new-chat-icon svg path {
+  fill: #ffffff !important;
+  stroke: #000000 !important;
+  stroke-width: 1px;
+}
+
+/* 3. 对话气泡 */
+.snow-white .message-user,
+.snow-white .message-ai {
+  background-color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+}
+
+/* 4. 用户头像 和 AI 头像 */
+.snow-white .avatar-container {
+  background: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+  /* 默认图标颜色 */
+}
+
+/* 头像内部 SVG 处理 */
+/* 如果是 UserIcon (通常是线性的 stroke 或者是 fill) */
+/* 统一处理：如果是 fill 的图标，弄成白填充+黑描边；如果是 stroke 的图标，弄成黑描边 */
+
+/* 这里假设 UserIcon 和 BotIcon 都是 fill="currentColor" */
+.snow-white .avatar-container svg {
+  color: #ffffff !important;
+  /* 基础色白 */
+  fill: #ffffff !important;
+  stroke: #000000 !important;
+  stroke-width: 1px;
+}
+
+/* ========================================= */
+/* 侧边栏与导航 (Sidebar & Nav overrides)   */
+/* ========================================= */
+
+/* 1. 最左侧图标导航栏 */
+.snow-white .layout-nav {
+  background-color: #ffffff !important;
+  border-right: 1px solid #000000 !important;
+}
+
+/* 导航栏按钮图标颜色 */
+.snow-white .layout-nav button,
+.snow-white .layout-nav svg {
+  color: #000000 !important;
+}
+
+/* 2. 侧边栏容器 */
+.snow-white .layout-sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #000000 !important;
+}
+
+/* 3. 侧边栏 - 新建对话按钮 */
+.snow-white .sidebar-new-btn {
+  background-color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  color: #000000 !important;
+  box-shadow: none !important;
+}
+
+.snow-white .sidebar-new-btn:hover {
+  background-color: #f4f4f5 !important;
+}
+
+/* 覆盖按钮内图标颜色 */
+.snow-white .sidebar-new-btn svg {
+  stroke: #000000 !important;
+}
+
+/* 4. 侧边栏 - 对话列表项 */
+/* 统一：未选中时无边框(或透明)，选中/hover时有黑边框 */
+.snow-white .sidebar-item {
+  /* 基础状态 */
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  color: #000000 !important;
+}
+
+/* Hover 状态 */
+.snow-white .sidebar-item:hover {
+  background-color: #f4f4f5 !important;
+  border: 1px solid #000000 !important;
+}
+
+/* 激活 (Active) 状态 */
+.snow-white .sidebar-item[class*='bg-blue-100'] {
+  background-color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  color: #000000 !important;
+}
+
+/* 调整列表项内的文字颜色 */
+.snow-white .sidebar-item h3 {
+  color: #000000 !important;
+}
+
+.snow-white .sidebar-item p {
+  color: #52525b !important;
+  /* Zinc 600 */
+}
+
+/* ========================================= */
+/* 全局工具类覆盖 (Global Utility Overrides) */
+/* ========================================= */
+
+/* 强制覆盖所有 bg-neutral-50 (侧边栏灰底) 为纯白 */
+.snow-white .bg-neutral-50 {
+  background-color: #ffffff !important;
+}
+
+/* 强制覆盖 bg-slate-50 (某些面板底色) 为纯白 */
+.snow-white .bg-slate-50 {
+  background-color: #ffffff !important;
+}
+
+/* 确保边框也是纯黑或高对比度灰 */
+.snow-white .border-neutral-200 {
+  border-color: #e4e4e7 !important;
+  /* Zinc 200 */
+}

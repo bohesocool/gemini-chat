@@ -125,7 +125,7 @@ export function LiveApiView({
 
     // 获取并清除待保存的消息
     const messages = consumePendingMessages();
-    
+
     // 异步保存每条消息
     const saveMessages = async () => {
       for (const msg of messages) {
@@ -137,7 +137,7 @@ export function LiveApiView({
             msg.durationMs,
             msg.role === 'user' ? 'audio/pcm;rate=16000' : 'audio/pcm;rate=24000'
           );
-          
+
           // 更新转录文字
           if (msg.transcript) {
             await updateTranscript(messageId, msg.transcript);
@@ -244,7 +244,7 @@ export function LiveApiView({
               <CollapseLeftIcon className="w-4 h-4" />
             </button>
           </div>
-          
+
           {/* 会话列表 */}
           <LiveSessionList
             sessions={sessions}
@@ -305,7 +305,7 @@ export function LiveApiView({
                   {isConnected ? '对话中' : isConnecting ? '连接中...' : '准备就绪'}
                 </span>
                 {isConnected && (
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
                 )}
               </div>
 
@@ -321,14 +321,14 @@ export function LiveApiView({
                     <ClearIcon className="w-5 h-5" />
                   </button>
                 )}
-                
+
                 {/* 配置面板切换按钮 */}
                 <button
                   onClick={() => setIsConfigExpanded(!isConfigExpanded)}
                   className={`
                     p-1.5 rounded-lg transition-colors
-                    ${isConfigExpanded 
-                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' 
+                    ${isConfigExpanded
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                       : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400'
                     }
                   `}

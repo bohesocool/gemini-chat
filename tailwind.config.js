@@ -24,12 +24,50 @@ export default {
     extend: {
       // 颜色系统
       colors: {
-        // 薄荷绿主题色
-        // Requirements: 1.1, 1.2 - 使用薄荷绿作为主题色
-        mint: mintColors,
+        // 薄荷绿主题色 (Refactored to use CSS variables for dynamic theming)
+        // Requirements: 1.1, 1.2 - 使用薄荷绿作为主题色 (默认值在 variables.css 中定义)
+        mint: {
+          50: 'var(--color-mint-50)',
+          100: 'var(--color-mint-100)',
+          200: 'var(--color-mint-200)',
+          300: 'var(--color-mint-300)',
+          400: 'var(--color-mint-400)',
+          500: 'var(--color-mint-500)',
+          600: 'var(--color-mint-600)',
+          700: 'var(--color-mint-700)',
+          800: 'var(--color-mint-800)',
+          900: 'var(--color-mint-900)',
+          DEFAULT: 'var(--color-mint-500)',
+        },
         // 主色 - 薄荷绿色系
         // Requirements: 1.3, 1.4, 1.5 - 所有使用主色的 UI 元素显示薄荷绿色
-        primary: primaryColors,
+        primary: {
+          50: 'var(--color-primary-50)',
+          100: 'var(--color-primary-100)',
+          200: 'var(--color-primary-200)',
+          300: 'var(--color-primary-300)',
+          400: 'var(--color-primary-400)',
+          500: 'var(--color-primary-500)',
+          600: 'var(--color-primary-600)',
+          700: 'var(--color-primary-700)',
+          800: 'var(--color-primary-800)',
+          900: 'var(--color-primary-900)',
+          DEFAULT: 'var(--color-primary-500)',
+        },
+        // 品牌色
+        brand: {
+          50: 'var(--color-brand-50)',
+          100: 'var(--color-brand-100)',
+          200: 'var(--color-brand-200)',
+          300: 'var(--color-brand-300)',
+          400: 'var(--color-brand-400)',
+          500: 'var(--color-brand-500)',
+          600: 'var(--color-brand-600)',
+          700: 'var(--color-brand-700)',
+          800: 'var(--color-brand-800)',
+          900: 'var(--color-brand-900)',
+          DEFAULT: 'var(--color-brand-500)',
+        },
         // 中性色
         neutral: neutralColors,
         // 语义色
@@ -96,6 +134,7 @@ export default {
         'md': shadows.md,
         'lg': shadows.lg,
         'xl': shadows.xl,
+        'full': shadows.xl, // Fixed logical fallback
       },
       // 字体系统
       fontFamily: {

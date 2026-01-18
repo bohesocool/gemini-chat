@@ -49,8 +49,8 @@ export function MessageList({
   // Requirements: 8.6
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: reducedMotion ? 'auto' : 'smooth' 
+      messagesEndRef.current.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth'
       });
     }
   }, [messages, streamingText, reducedMotion]);
@@ -157,7 +157,7 @@ function MessageItem({ message, renderContent, isLast, reducedMotion }: MessageI
     : { transition: `all ${durationValues.fast}ms ${easings.easeOut}` };
 
   return (
-    <div 
+    <div
       className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
       onMouseEnter={() => setShowTimestamp(true)}
       onMouseLeave={() => setShowTimestamp(false)}
@@ -168,20 +168,20 @@ function MessageItem({ message, renderContent, isLast, reducedMotion }: MessageI
         {message.fileReferences && message.fileReferences.length > 0 && (
           <FileReferenceList fileReferences={message.fileReferences} isUser={isUser} />
         )}
-        
+
         {/* 附件预览 */}
         {message.attachments && message.attachments.length > 0 && (
           <AttachmentList attachments={message.attachments} isUser={isUser} />
         )}
-        
+
         {/* 思维链卡片 - Requirements: 4.3, 6.1 */}
         {!isUser && message.thoughtSummary && (
-          <ThoughtSummaryCard 
+          <ThoughtSummaryCard
             content={message.thoughtSummary}
             images={message.thoughtImages}
           />
         )}
-        
+
         {/* 消息内容 - Requirements: 8.1, 8.2, 8.3 */}
         {message.content && (
           <MessageBubble isUser={isUser}>
@@ -346,17 +346,17 @@ function EmptyState() {
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 py-1">
-      <span 
-        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" 
-        style={{ animationDelay: '0ms', animationDuration: '600ms' }} 
+      <span
+        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"
+        style={{ animationDelay: '0ms', animationDuration: '600ms' }}
       />
-      <span 
-        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" 
-        style={{ animationDelay: '150ms', animationDuration: '600ms' }} 
+      <span
+        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"
+        style={{ animationDelay: '150ms', animationDuration: '600ms' }}
       />
-      <span 
-        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" 
-        style={{ animationDelay: '300ms', animationDuration: '600ms' }} 
+      <span
+        className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"
+        style={{ animationDelay: '300ms', animationDuration: '600ms' }}
       />
     </div>
   );

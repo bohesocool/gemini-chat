@@ -66,7 +66,7 @@ export function TranscriptDisplay({
   const hasContent = messages.length > 0 || pendingInputTranscript || pendingOutputTranscript;
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`flex flex-col gap-3 overflow-y-auto custom-scrollbar p-4 ${className}`}
     >
@@ -135,7 +135,7 @@ function TranscriptMessageItem({ message, formatTime }: TranscriptMessageItemPro
   const isUser = message.role === 'user';
 
   return (
-    <div 
+    <div
       className={`flex flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}
       data-role={message.role}
       data-testid={`transcript-message-${message.role}`}
@@ -151,11 +151,11 @@ function TranscriptMessageItem({ message, formatTime }: TranscriptMessageItemPro
       </div>
 
       {/* 消息内容 */}
-      <div 
+      <div
         className={`
           max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed
-          ${isUser 
-            ? 'bg-primary-500 text-white rounded-br-md' 
+          ${isUser
+            ? 'bg-primary-500 text-white rounded-br-md'
             : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-bl-md'
           }
         `}
@@ -183,7 +183,7 @@ function PendingTranscriptItem({ text, role, isActive }: PendingTranscriptItemPr
   const isUser = role === 'user';
 
   return (
-    <div 
+    <div
       className={`flex flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}
       data-role={role}
       data-pending="true"
@@ -196,18 +196,18 @@ function PendingTranscriptItem({ text, role, isActive }: PendingTranscriptItemPr
         </span>
         {isActive && (
           <span className="flex items-center gap-1 text-neutral-400 dark:text-neutral-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
             正在说话
           </span>
         )}
       </div>
 
       {/* 消息内容 */}
-      <div 
+      <div
         className={`
           max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed
-          ${isUser 
-            ? 'bg-primary-400/80 text-white rounded-br-md' 
+          ${isUser
+            ? 'bg-primary-400/80 text-white rounded-br-md'
             : 'bg-neutral-100/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 rounded-bl-md'
           }
           ${isActive ? 'animate-pulse' : ''}
@@ -235,7 +235,7 @@ function SpeakingIndicator({ role }: SpeakingIndicatorProps): JSX.Element {
   const isUser = role === 'user';
 
   return (
-    <div 
+    <div
       className={`flex flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}
       data-testid={`speaking-indicator-${role}`}
     >
@@ -247,11 +247,11 @@ function SpeakingIndicator({ role }: SpeakingIndicatorProps): JSX.Element {
       </div>
 
       {/* 说话动画 */}
-      <div 
+      <div
         className={`
           px-4 py-3 rounded-2xl
-          ${isUser 
-            ? 'bg-primary-400/50 rounded-br-md' 
+          ${isUser
+            ? 'bg-primary-400/50 rounded-br-md'
             : 'bg-neutral-100/50 dark:bg-neutral-800/50 rounded-bl-md'
           }
         `}
@@ -272,11 +272,11 @@ function SpeakingIndicator({ role }: SpeakingIndicatorProps): JSX.Element {
 function TranscriptEmptyIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-        strokeWidth={1.5} 
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
       />
     </svg>
   );

@@ -136,12 +136,14 @@ export interface AppSettings {
   streamingEnabled: boolean;
   /** 是否启用 Files API 上传模式 - Requirements: 1.2, 1.5 */
   filesApiEnabled: boolean;
+  /** 自定义主题色（可选） */
+  customThemeColor?: string;
 }
 
 /**
  * 主题模式
  */
-export type ThemeMode = 'light' | 'dark' | 'midnight' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'midnight' | 'snow-white' | 'system';
 
 /**
  * API 配置
@@ -520,6 +522,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   sidebarCollapsed: false,
   streamingEnabled: true, // 默认启用流式输出 - Requirements: 10.6
   filesApiEnabled: false, // 默认关闭 Files API 模式 - Requirements: 1.2
+  customThemeColor: undefined,
 };
 
 // ============ 文件限制常量 ============

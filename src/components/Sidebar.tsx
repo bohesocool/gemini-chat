@@ -13,16 +13,16 @@ import { useSettingsStore } from '../stores/settings';
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
-  
+
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  
+
   if (minutes < 1) return '刚刚';
   if (minutes < 60) return `${minutes} 分钟前`;
   if (hours < 24) return `${hours} 小时前`;
   if (days < 7) return `${days} 天前`;
-  
+
   return new Date(timestamp).toLocaleDateString('zh-CN');
 }
 
@@ -38,9 +38,9 @@ export function Sidebar() {
     deleteWindow,
     updateWindow,
   } = useChatWindowStore();
-  
-  const { currentModel, systemInstruction } = useSettingsStore();
-  
+
+  const { currentModel, systemInstruction, theme } = useSettingsStore();
+
   // 正在编辑的窗口 ID
   const [editingId, setEditingId] = useState<string | null>(null);
   // 编辑中的标题
@@ -107,7 +107,8 @@ export function Sidebar() {
           onClick={handleCreateWindow}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 
             bg-blue-500 hover:bg-blue-600 text-white rounded-lg 
-            transition-colors font-medium"
+            transition-colors font-medium
+            sidebar-new-btn"
         >
           <PlusIcon className="h-5 w-5" />
           新建对话
@@ -152,11 +153,21 @@ export function Sidebar() {
                     onClick={() => handleSelectWindow(window.id)}
                     className={`
                       group relative p-3 rounded-lg cursor-pointer transition-colors
-                      ${activeWindowId === window.id
-                        ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                      sidebar-item
+                      ${theme === 'snow-white'
+                        ? activeWindowId === window.id
+                          ? 'bg-white border border-black text-black'
+                          : 'hover:bg-zinc-100 border border-transparent hover:border-black text-black'
+                        : activeWindowId === window.id
+                          ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
+                          : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'
                       }
                     `}
+                    style={
+                      theme === 'snow-white' && activeWindowId === window.id
+                        ? { backgroundColor: '#ffffff', borderColor: '#000000', color: '#000000' }
+                        : undefined
+                    }
                   >
                     {/* 重命名输入框 */}
                     {editingId === window.id ? (
@@ -180,7 +191,7 @@ export function Sidebar() {
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           {formatRelativeTime(window.updatedAt)}
                         </p>
-                        
+
                         {/* 操作按钮 */}
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -237,8 +248,8 @@ function PlusIcon({ className }: { className?: string }) {
 function ChatIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
       />
     </svg>
   );
@@ -247,8 +258,8 @@ function ChatIcon({ className }: { className?: string }) {
 function EditIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
       />
     </svg>
   );
@@ -257,8 +268,8 @@ function EditIcon({ className }: { className?: string }) {
 function TrashIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
       />
     </svg>
   );

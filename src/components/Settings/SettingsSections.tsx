@@ -915,8 +915,8 @@ export function DataManagementSection() {
         {/* 导入状态提示 */}
         {importStatus !== 'idle' && (
           <div className={`mt-4 p-3 rounded-lg ${importStatus === 'success'
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
             }`}>
             {importMessage}
           </div>
@@ -1155,6 +1155,31 @@ export function AppearanceSettingsSection() {
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">极客风格的纯黑体验</div>
         </button>
 
+        {/* 雪白主题 (Snow White) */}
+        {/* 雪白主题 (Snow White) */}
+        <button
+          onClick={() => {
+            setTheme('snow-white');
+            // We do NOT touch customThemeColor here, allowing user to keep their custom preference
+            // when switching back to Light/Dark.
+          }}
+          className={`
+            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            ${theme === 'snow-white'
+              ? 'border-neutral-900 bg-neutral-50 shadow-sm'
+              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+          `}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className={`p-2 rounded-lg shadow-sm border ${theme === 'snow-white' ? 'bg-white border-neutral-200' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+              <div className="w-5 h-5 rounded-full bg-neutral-900" />
+            </div>
+            {theme === 'snow-white' && <div className="w-2.5 h-2.5 rounded-full bg-neutral-900 ring-2 ring-white" />}
+          </div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">雪白主题 (Pure)</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">几近纯白，极简边框风格</div>
+        </button>
+
         {/* 跟随系统 */}
         <button
           onClick={() => setTheme('system')}
@@ -1174,7 +1199,59 @@ export function AppearanceSettingsSection() {
           <div className="font-medium text-slate-900 dark:text-slate-100">跟随系统</div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">自动适应系统设置</div>
         </button>
+
+        {/* 自定义颜色 */}
+        <CustomColorSelector />
       </div>
+    </div>
+  );
+}
+
+function CustomColorSelector() {
+  const { customThemeColor, setCustomThemeColor } = useSettingsStore();
+
+  return (
+    <div className={`
+      relative p-4 rounded-xl border-2 transition-all duration-200 text-left
+      ${customThemeColor
+        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-sm'
+        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+    `}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+          <div
+            className="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-600"
+            style={{ backgroundColor: customThemeColor || 'transparent', backgroundImage: !customThemeColor ? 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' : 'none' }}
+          />
+        </div>
+        {customThemeColor && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setCustomThemeColor(''); // Clean
+            }}
+            className="text-xs text-slate-500 hover:text-red-500 underline z-10"
+          >
+            重置
+          </button>
+        )}
+      </div>
+
+      <div className="font-medium text-slate-900 dark:text-slate-100">
+        {customThemeColor ? '自定义颜色' : '选择颜色'}
+      </div>
+      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        {customThemeColor ? customThemeColor : '点击选择主题色'}
+      </div>
+
+      <input
+        type="color"
+        value={customThemeColor || '#22c55e'}
+        onChange={(e) => setCustomThemeColor(e.target.value)}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
+        title="选择自定义主题色"
+      />
     </div>
   );
 }

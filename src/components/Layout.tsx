@@ -41,6 +41,7 @@ import type { GeneratedImage } from '../types';
 import { WindowControls } from './WindowControls';
 import logoImage from '../assets/logo.png';
 import { LiveApiView } from './LiveApi';
+import { generatePalette, generateDarkPalette } from '../utils/color';
 
 /** 侧边栏视图类型 */
 export type SidebarView = 'assistants' | 'settings' | 'images' | 'templates' | 'bookmarks' | 'live';
@@ -83,7 +84,8 @@ function getEffectiveTheme(theme: ThemeMode): 'light' | 'dark' {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   if (theme === 'midnight') return 'dark';
-  return theme;
+  if (theme === 'snow-white') return 'light';
+  return theme === 'dark' ? 'dark' : 'light';
 }
 
 /**
@@ -240,7 +242,7 @@ function renderSettingsContent(tabId: SettingsTabId): React.ReactNode {
  * 应用主布局 - 三栏设计
  */
 export function Layout({ sidebar, children }: LayoutProps) {
-  const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed, theme, setTheme } = useSettingsStore();
+  const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed, theme, setTheme, customThemeColor } = useSettingsStore();
   const { createWindow, selectWindow, selectSubTopic } = useChatWindowStore();
   const { currentModel } = useSettingsStore();
   const { updateTemplate, deleteTemplate, addTemplate } = useTemplateStore();
@@ -308,19 +310,182 @@ export function Layout({ sidebar, children }: LayoutProps) {
       return () => mediaQuery.removeEventListener('change', applySystemTheme);
     } else if (theme === 'midnight') {
       root.classList.add('dark', 'midnight');
+      root.classList.remove('snow-white');
       setEffectiveTheme('dark');
+    } else if (theme === 'snow-white') {
+      root.classList.remove('dark', 'midnight');
+      root.classList.add('snow-white');
+      setEffectiveTheme('light');
     } else if (theme === 'dark') {
       root.classList.add('dark');
-      root.classList.remove('midnight');
+      root.classList.remove('midnight', 'snow-white');
       setEffectiveTheme('dark');
     } else {
-      root.classList.remove('dark', 'midnight');
+      root.classList.remove('dark', 'midnight', 'snow-white');
       setEffectiveTheme('light');
     }
   }, [theme]);
 
-  // 切换主题 - 简化为只有浅色和深色
+  // 应用自定义主题色 - 需求: 自定义UI颜色功能
+  useEffect(() => {
+    const root = document.documentElement;
+
+    // 如果是雪白主题，使用 snow-white.css 控制，不应用 customThemeColor (保留用户选择的值)
+    if (theme === 'snow-white') {
+      // 需要清除所有自定义 CSS 变量，以免与 snow-white.css 冲突
+      root.style.removeProperty('--color-primary-50');
+      root.style.removeProperty('--color-primary-100');
+      root.style.removeProperty('--color-primary-200');
+      root.style.removeProperty('--color-primary-300');
+      root.style.removeProperty('--color-primary-400');
+      root.style.removeProperty('--color-primary-500');
+      root.style.removeProperty('--color-primary-600');
+      root.style.removeProperty('--color-primary-700');
+      root.style.removeProperty('--color-primary-800');
+      root.style.removeProperty('--color-primary-900');
+
+      root.style.removeProperty('--color-mint-50');
+      root.style.removeProperty('--color-mint-100');
+      root.style.removeProperty('--color-mint-200');
+      root.style.removeProperty('--color-mint-300');
+      root.style.removeProperty('--color-mint-400');
+      root.style.removeProperty('--color-mint-500');
+      root.style.removeProperty('--color-mint-600');
+      root.style.removeProperty('--color-mint-700');
+      root.style.removeProperty('--color-mint-800');
+      root.style.removeProperty('--color-mint-900');
+
+      root.style.removeProperty('--color-brand-50');
+      root.style.removeProperty('--color-brand-100');
+      root.style.removeProperty('--color-brand-200');
+      root.style.removeProperty('--color-brand-300');
+      root.style.removeProperty('--color-brand-400');
+      root.style.removeProperty('--color-brand-500');
+      root.style.removeProperty('--color-brand-600');
+      root.style.removeProperty('--color-brand-700');
+      root.style.removeProperty('--color-brand-800');
+      root.style.removeProperty('--color-brand-900');
+
+      root.style.removeProperty('--brand');
+      root.style.removeProperty('--brand-hover');
+      root.style.removeProperty('--brand-active');
+      root.style.removeProperty('--brand-light');
+      root.style.removeProperty('--brand-dark');
+
+      // 添加类 (Layout已处理，但为了保险)
+      root.classList.add('snow-white');
+      return;
+    }
+
+    if (customThemeColor) {
+      // 根据当前生效的主题（深色/浅色）生成对应的色板
+      // 注意：variables.css 中的逻辑是 --color-primary-50 在深色模式下也是深色 (??? Wait, let's re-verify variables.css)
+      // Re-read variables.css: 
+      // Light Mode: --color-primary-50: #f0fdf4; (Lightest)
+      // Dark Mode:  --color-primary-50: #14532d; (Darkest)
+      // 所以 Tailwind 类的 bg-primary-50 在 Light Mode 是浅色，在 Dark Mode 是深色。
+      // 这意味着我们生成的 "50" 号颜色，应该根据模式来决定是浅还是深。
+
+      let palette;
+      if (effectiveTheme === 'dark') {
+        // 深色模式：生成反转色板 (50=深, 900=浅)
+        palette = generateDarkPalette(customThemeColor);
+      } else {
+        // 浅色模式：生成标准色板 (50=浅, 900=深)
+        palette = generatePalette(customThemeColor);
+      }
+
+      // 应用变量 - Primary
+      root.style.setProperty('--color-primary-50', palette[50]);
+      root.style.setProperty('--color-primary-100', palette[100]);
+      root.style.setProperty('--color-primary-200', palette[200]);
+      root.style.setProperty('--color-primary-300', palette[300]);
+      root.style.setProperty('--color-primary-400', palette[400]);
+      root.style.setProperty('--color-primary-500', palette[500]);
+      root.style.setProperty('--color-primary-600', palette[600]);
+      root.style.setProperty('--color-primary-700', palette[700]);
+      root.style.setProperty('--color-primary-800', palette[800]);
+      root.style.setProperty('--color-primary-900', palette[900]);
+
+      // 应用变量 - Mint (覆盖原有 mint 以实现全主题变色)
+      root.style.setProperty('--color-mint-50', palette[50]);
+      root.style.setProperty('--color-mint-100', palette[100]);
+      root.style.setProperty('--color-mint-200', palette[200]);
+      root.style.setProperty('--color-mint-300', palette[300]);
+      root.style.setProperty('--color-mint-400', palette[400]);
+      root.style.setProperty('--color-mint-500', palette[500]);
+      root.style.setProperty('--color-mint-600', palette[600]);
+      root.style.setProperty('--color-mint-700', palette[700]);
+      root.style.setProperty('--color-mint-800', palette[800]);
+      root.style.setProperty('--color-mint-900', palette[900]);
+
+      // 应用变量 - Brand
+      root.style.setProperty('--color-brand-50', palette[50]);
+      root.style.setProperty('--color-brand-100', palette[100]);
+      root.style.setProperty('--color-brand-200', palette[200]);
+      root.style.setProperty('--color-brand-300', palette[300]);
+      root.style.setProperty('--color-brand-400', palette[400]);
+      root.style.setProperty('--color-brand-500', palette[500]);
+      root.style.setProperty('--color-brand-600', palette[600]);
+      root.style.setProperty('--color-brand-700', palette[700]);
+      root.style.setProperty('--color-brand-800', palette[800]);
+      root.style.setProperty('--color-brand-900', palette[900]);
+
+      // 快捷变量
+      root.style.setProperty('--brand', palette[500]);
+      root.style.setProperty('--brand-hover', palette[600]);
+      root.style.setProperty('--brand-active', palette[700]);
+      // light/dark 快捷变量也需要适配
+      root.style.setProperty('--brand-light', effectiveTheme === 'dark' ? palette[900] : palette[100]);
+      root.style.setProperty('--brand-dark', effectiveTheme === 'dark' ? palette[100] : palette[800]);
+
+    } else {
+      root.classList.remove('snow-white');
+      // 清除自定义颜色，恢复默认
+      root.style.removeProperty('--color-primary-50');
+      root.style.removeProperty('--color-primary-100');
+      root.style.removeProperty('--color-primary-200');
+      root.style.removeProperty('--color-primary-300');
+      root.style.removeProperty('--color-primary-400');
+      root.style.removeProperty('--color-primary-500');
+      root.style.removeProperty('--color-primary-600');
+      root.style.removeProperty('--color-primary-700');
+      root.style.removeProperty('--color-primary-800');
+      root.style.removeProperty('--color-primary-900');
+
+      root.style.removeProperty('--color-mint-50');
+      root.style.removeProperty('--color-mint-100');
+      root.style.removeProperty('--color-mint-200');
+      root.style.removeProperty('--color-mint-300');
+      root.style.removeProperty('--color-mint-400');
+      root.style.removeProperty('--color-mint-500');
+      root.style.removeProperty('--color-mint-600');
+      root.style.removeProperty('--color-mint-700');
+      root.style.removeProperty('--color-mint-800');
+      root.style.removeProperty('--color-mint-900');
+
+      root.style.removeProperty('--color-brand-50');
+      root.style.removeProperty('--color-brand-100');
+      root.style.removeProperty('--color-brand-200');
+      root.style.removeProperty('--color-brand-300');
+      root.style.removeProperty('--color-brand-400');
+      root.style.removeProperty('--color-brand-500');
+      root.style.removeProperty('--color-brand-600');
+      root.style.removeProperty('--color-brand-700');
+      root.style.removeProperty('--color-brand-800');
+      root.style.removeProperty('--color-brand-900');
+
+      root.style.removeProperty('--brand');
+      root.style.removeProperty('--brand-hover');
+      root.style.removeProperty('--brand-active');
+      root.style.removeProperty('--brand-light');
+      root.style.removeProperty('--brand-dark');
+    }
+  }, [theme, customThemeColor, effectiveTheme]);
+
+  // 切换主题 - 简化为只有浅色和深色 (如果当前是雪白，也切回深色)
   const handleThemeToggle = useCallback(() => {
+    // 简单逻辑：如果当前不是深色，就切换到深色；如果是深色，切换到浅色
     const newTheme: ThemeMode = effectiveTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
   }, [effectiveTheme, setTheme]);
@@ -490,7 +655,10 @@ export function Layout({ sidebar, children }: LayoutProps) {
         {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
         <nav className={`
           flex flex-col w-12 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
-          ${effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-primary-600'}
+          ${theme === 'snow-white'
+            ? 'bg-white border-r border-black'
+            : effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-primary-600'}
+          layout-nav
         `}>
           {/* 顶部 Logo - 替换为图片 */}
           <div className="flex items-center justify-center h-12 mb-2">
@@ -563,8 +731,12 @@ export function Layout({ sidebar, children }: LayoutProps) {
               fixed inset-y-0 left-12 z-30 transform transition-[width,transform,opacity] duration-300 ease-in-out overflow-hidden
               md:relative md:left-0 md:translate-x-0
               ${sidebarCollapsed ? '-translate-x-full md:w-0 md:opacity-0' : 'translate-x-0 md:w-64 md:opacity-100'}
-              ${effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-neutral-50 border-r border-neutral-200'}
+              ${theme === 'snow-white'
+                ? 'bg-white border-r border-black'
+                : effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-neutral-50 border-r border-neutral-200'}
+              layout-sidebar
             `}
+            style={theme === 'snow-white' ? { backgroundColor: '#ffffff', borderRightColor: '#000000' } : undefined}
           >
             {/* Fixed width container to prevent squashing */}
             <div className="w-64 h-full flex flex-col">
@@ -638,156 +810,134 @@ export function Layout({ sidebar, children }: LayoutProps) {
         />
 
         {/* 调试面板 - 需求: 6.1 */}
-        <DebugPanel
-          isOpen={isDebugPanelOpen}
-          onClose={handleCloseDebugPanel}
-        />
+        {isDebugPanelOpen && (
+          <DebugPanel
+            isOpen={isDebugPanelOpen}
+            onClose={handleCloseDebugPanel}
+          />
+        )}
 
         {/* 图片预览模态框 - 需求: 5.2 */}
-        <ImagePreviewModal
-          image={previewImage}
-          isOpen={previewImage !== null}
-          onClose={handleCloseImagePreview}
-        />
+        {previewImage && (
+          <ImagePreviewModal
+            isOpen={!!previewImage}
+            image={previewImage}
+            onClose={handleCloseImagePreview}
+          />
+        )}
 
-        {/* 模板编辑器模态框 - 需求: 2.5, 2.8 */}
-        <TemplateEditorModal
-          isOpen={isTemplateEditorOpen}
-          onClose={handleCloseTemplateEditor}
-          template={editingTemplate}
-          onSave={handleSaveTemplate}
-        />
+        {/* 模板编辑器模态框 - 需求: 2.5, 2.6 */}
+        {isTemplateEditorOpen && (
+          <TemplateEditorModal
+            isOpen={isTemplateEditorOpen}
+            onClose={handleCloseTemplateEditor}
+            onSave={handleSaveTemplate}
+            template={editingTemplate}
+          />
+        )}
       </div>
     </SidebarContext.Provider>
   );
 }
 
-// ============ 导航图标按钮组件 ============
+// ============ 图标组件 ============
 
-interface NavIconButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  isActive?: boolean;
-  onClick: () => void;
-}
+function NavIconButton({ icon, label, onClick, isActive }: { icon: React.ReactNode, label: string, onClick: () => void, isActive?: boolean }) {
+  // Icon button styles
+  const activeClass = isActive
+    ? 'bg-black/20 text-white'
+    : 'text-white/70 hover:text-white hover:bg-black/10';
 
-function NavIconButton({ icon, label, isActive, onClick }: NavIconButtonProps) {
   return (
     <button
       onClick={onClick}
       className={`
-        w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200
-        ${isActive
-          ? 'bg-white/25 text-white shadow-sm'
-          : 'text-white/70 hover:bg-white/15 hover:text-white'
-        }
-      `}
+          w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200
+          ${activeClass}
+        `}
       title={label}
-      aria-label={label}
     >
-      <span className="w-5 h-5">{icon}</span>
+      <div className="w-5 h-5">
+        {icon}
+      </div>
     </button>
   );
 }
 
-// ============ 图标组件 ============
+
+
+
+// Icons (Simple SVGs)
 
 function ChatIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
     </svg>
   );
 }
 
-function SettingsIcon() {
+function TemplateNavIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
     </svg>
   );
 }
 
-function SunIcon() {
+function BookmarkNavIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
     </svg>
   );
 }
 
 function ImageGalleryIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
   );
 }
 
-/**
- * 模板导航图标
- * 需求: 5.1
- */
-function TemplateNavIcon() {
+function SettingsIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   );
 }
 
-/**
- * 书签导航图标
- * 需求: 3.3
- */
-function BookmarkNavIcon() {
-  return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-    </svg>
-  );
-}
-
-/**
- * 调试图标
- * 需求: 6.1
- */
 function DebugIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
     </svg>
   );
 }
 
-/**
- * Live 实时对话图标
- * 需求: 1.1 - Live API 导航入口
- */
+function SunIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  );
+}
+
 function LiveIcon() {
   return (
-    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   );
 }
-
-export default Layout;
