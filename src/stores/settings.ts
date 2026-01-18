@@ -46,6 +46,8 @@ interface SettingsState {
   streamingEnabled: boolean;
   /** 是否启用 Files API 上传模式 - Requirements: 1.2, 1.5 */
   filesApiEnabled: boolean;
+  /** 自定义主题色 */
+  customThemeColor?: string;
 
   // 状态标志
   /** 是否已初始化 */
@@ -101,6 +103,8 @@ interface SettingsActions {
   setStreamingEnabled: (enabled: boolean) => void;
   /** 设置 Files API 开关 - Requirements: 1.2, 1.5 */
   setFilesApiEnabled: (enabled: boolean) => void;
+  /** 设置自定义主题色 */
+  setCustomThemeColor: (color: string) => void;
 
   // 连接测试
   /** 测试 API 连接，可指定测试模型 */
@@ -136,6 +140,7 @@ async function persistSettings(state: SettingsState): Promise<void> {
     sidebarCollapsed: state.sidebarCollapsed,
     streamingEnabled: state.streamingEnabled,
     filesApiEnabled: state.filesApiEnabled,
+    customThemeColor: state.customThemeColor,
   };
   await saveSettings(settings);
 }
@@ -157,6 +162,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   sidebarCollapsed: DEFAULT_APP_SETTINGS.sidebarCollapsed,
   streamingEnabled: DEFAULT_APP_SETTINGS.streamingEnabled,
   filesApiEnabled: DEFAULT_APP_SETTINGS.filesApiEnabled,
+  customThemeColor: DEFAULT_APP_SETTINGS.customThemeColor,
   initialized: false,
   isLoading: false,
   connectionStatus: 'idle',
@@ -178,6 +184,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         sidebarCollapsed: settings.sidebarCollapsed,
         streamingEnabled: settings.streamingEnabled ?? DEFAULT_APP_SETTINGS.streamingEnabled,
         filesApiEnabled: settings.filesApiEnabled ?? DEFAULT_APP_SETTINGS.filesApiEnabled,
+        customThemeColor: settings.customThemeColor,
         initialized: true,
         isLoading: false,
       });
@@ -338,6 +345,17 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     });
   },
 
+  // 设置自定义主题色
+  setCustomThemeColor: (color: string) => {
+    set({ customThemeColor: color });
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化自定义主题色失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
+  },
+
   // 测试连接
   // 需求: 1.4 - 支持指定模型进行测试
   testConnection: async (modelId?: string) => {
@@ -347,8 +365,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       // 需求: 1.5 - 使用规范化后的端点进行测试（支持空端点使用官方地址）
       const normalizedEndpoint = normalizeApiEndpoint(config.endpoint);
       // 如果指定了模型 ID，使用指定的模型进行测试
-      const testConfig = modelId 
-        ? { ...config, endpoint: normalizedEndpoint, model: modelId } 
+      const testConfig = modelId
+        ? { ...config, endpoint: normalizedEndpoint, model: modelId }
         : { ...config, endpoint: normalizedEndpoint };
       const result = await testApiConnection(testConfig);
       if (result.success) {
@@ -389,6 +407,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       sidebarCollapsed: state.sidebarCollapsed,
       streamingEnabled: state.streamingEnabled,
       filesApiEnabled: state.filesApiEnabled,
+      customThemeColor: state.customThemeColor,
     };
   },
 
@@ -405,6 +424,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       sidebarCollapsed: DEFAULT_APP_SETTINGS.sidebarCollapsed,
       streamingEnabled: DEFAULT_APP_SETTINGS.streamingEnabled,
       filesApiEnabled: DEFAULT_APP_SETTINGS.filesApiEnabled,
+      customThemeColor: DEFAULT_APP_SETTINGS.customThemeColor,
       connectionStatus: 'idle',
       connectionError: null,
     });

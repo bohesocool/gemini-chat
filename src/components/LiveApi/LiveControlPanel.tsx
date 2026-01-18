@@ -67,10 +67,10 @@ export function LiveControlPanel({
       {/* 连接状态和说话方指示 */}
       <div className="flex items-center justify-between">
         <ConnectionStatusBadge status={connectionStatus} />
-        
+
         {/* 当前说话方指示 - 需求: 9.2 */}
         {isConnected && (
-          <SpeakerIndicator 
+          <SpeakerIndicator
             speaker={currentSpeaker}
             inputLevel={inputLevel}
             outputLevel={outputLevel}
@@ -91,7 +91,7 @@ export function LiveControlPanel({
         {isDisconnected || hasError ? (
           <button
             onClick={onStartSession}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium transition-colors"
           >
             <PlayIcon className="w-5 h-5" />
             开始会话
@@ -120,8 +120,8 @@ export function LiveControlPanel({
             onClick={onToggleMute}
             className={`
               flex items-center justify-center w-12 h-12 rounded-xl transition-colors
-              ${isMuted 
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50' 
+              ${isMuted
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
                 : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
               }
             `}
@@ -139,15 +139,15 @@ export function LiveControlPanel({
           <div className="flex items-center gap-3">
             <span className="text-xs text-neutral-500 dark:text-neutral-400 w-12">输入</span>
             <div className="flex-1 flex items-center gap-2">
-              <CircularAudioLevel 
-                level={inputLevel} 
-                isActive={!isMuted && currentSpeaker === 'user'} 
+              <CircularAudioLevel
+                level={inputLevel}
+                isActive={!isMuted && currentSpeaker === 'user'}
                 type="input"
                 size="sm"
               />
-              <AudioLevelIndicator 
-                level={inputLevel} 
-                isActive={!isMuted} 
+              <AudioLevelIndicator
+                level={inputLevel}
+                isActive={!isMuted}
                 type="input"
                 barCount={8}
                 className="flex-1"
@@ -200,15 +200,15 @@ export function LiveControlPanel({
           <div className="flex items-center gap-3">
             <span className="text-xs text-neutral-500 dark:text-neutral-400 w-12">输出</span>
             <div className="flex-1 flex items-center gap-2">
-              <CircularAudioLevel 
-                level={outputLevel} 
-                isActive={currentSpeaker === 'model'} 
+              <CircularAudioLevel
+                level={outputLevel}
+                isActive={currentSpeaker === 'model'}
                 type="output"
                 size="sm"
               />
-              <AudioLevelIndicator 
-                level={outputLevel} 
-                isActive={currentSpeaker === 'model'} 
+              <AudioLevelIndicator
+                level={outputLevel}
+                isActive={currentSpeaker === 'model'}
                 type="output"
                 barCount={8}
                 className="flex-1"
@@ -238,7 +238,7 @@ function SpeakerIndicator({ speaker, inputLevel, outputLevel }: SpeakerIndicator
   const getSpeakerInfo = () => {
     switch (speaker) {
       case 'user':
-        return { text: '你正在说话', color: 'text-green-600 dark:text-green-400', level: inputLevel };
+        return { text: '你正在说话', color: 'text-primary-600 dark:text-primary-400', level: inputLevel };
       case 'model':
         return { text: 'AI 正在说话', color: 'text-blue-600 dark:text-blue-400', level: outputLevel };
       default:
@@ -251,7 +251,7 @@ function SpeakerIndicator({ speaker, inputLevel, outputLevel }: SpeakerIndicator
   return (
     <div className="flex items-center gap-2">
       {speaker !== 'none' && (
-        <span className={`w-2 h-2 rounded-full ${speaker === 'user' ? 'bg-green-500' : 'bg-blue-500'} animate-pulse`} />
+        <span className={`w-2 h-2 rounded-full ${speaker === 'user' ? 'bg-primary-500' : 'bg-blue-500'} animate-pulse`} />
       )}
       <span className={`text-xs font-medium ${info.color}`}>
         {info.text}

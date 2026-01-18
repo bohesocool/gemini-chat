@@ -1,5 +1,6 @@
 /* 导入设计系统变量 - 必须在 @tailwind 之前 */
 @import './design/variables.css';
+@import './snow-white.css';
 
 @tailwind base;
 @tailwind components;

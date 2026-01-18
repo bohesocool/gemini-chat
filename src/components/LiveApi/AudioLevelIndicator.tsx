@@ -44,14 +44,14 @@ export function AudioLevelIndicator({
   }, [level, barCount, isActive]);
 
   // 根据类型选择颜色
-  const activeColor = type === 'input' 
-    ? 'bg-green-500' 
+  const activeColor = type === 'input'
+    ? 'bg-primary-500'
     : 'bg-blue-500';
-  
+
   const inactiveColor = 'bg-neutral-300 dark:bg-neutral-600';
 
   return (
-    <div 
+    <div
       className={`flex items-end gap-0.5 h-4 ${className}`}
       role="meter"
       aria-label={type === 'input' ? '输入音频电平' : '输出音频电平'}
@@ -113,17 +113,17 @@ export function CircularAudioLevel({
   };
 
   // 根据类型选择颜色
-  const activeColor = type === 'input' 
-    ? 'bg-green-500' 
+  const activeColor = type === 'input'
+    ? 'bg-primary-500'
     : 'bg-blue-500';
-  
+
   const inactiveColor = 'bg-neutral-400 dark:bg-neutral-500';
 
   // 计算脉冲动画的缩放比例
   const pulseScale = isActive ? 1 + level * 0.5 : 1;
 
   return (
-    <div 
+    <div
       className={`relative ${sizeClasses[size]} ${className}`}
       role="meter"
       aria-label={type === 'input' ? '输入音频电平' : '输出音频电平'}
@@ -181,10 +181,10 @@ export function WaveformAudioLevel({
   className = '',
 }: WaveformAudioLevelProps): JSX.Element {
   // 根据类型选择颜色
-  const activeColor = type === 'input' 
-    ? 'bg-green-500' 
+  const activeColor = type === 'input'
+    ? 'bg-primary-500'
     : 'bg-blue-500';
-  
+
   const inactiveColor = 'bg-neutral-300 dark:bg-neutral-600';
 
   // 生成波形条
@@ -193,10 +193,10 @@ export function WaveformAudioLevel({
       // 为每个条形添加不同的相位偏移，创造波动效果
       const phaseOffset = index * 0.2;
       const baseHeight = 0.3;
-      const dynamicHeight = isActive 
+      const dynamicHeight = isActive
         ? baseHeight + level * 0.7 * Math.sin((Date.now() / 200) + phaseOffset * Math.PI)
         : baseHeight;
-      
+
       return {
         index,
         height: Math.max(0.2, Math.min(1, Math.abs(dynamicHeight))),
@@ -205,7 +205,7 @@ export function WaveformAudioLevel({
   }, [level, isActive, waveCount]);
 
   return (
-    <div 
+    <div
       className={`flex items-center gap-0.5 h-5 ${className}`}
       role="meter"
       aria-label={type === 'input' ? '输入音频电平' : '输出音频电平'}

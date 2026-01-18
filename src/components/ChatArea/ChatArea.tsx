@@ -71,7 +71,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
 
   // 获取模型能力 - 需求: 4.6
   const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
-  
+
   // 获取模型列表 - 需求: 1.2
   const models = useModelStore(state => state.models);
 
@@ -80,7 +80,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
 
   // 确定当前窗口 ID
   const currentWindowId = propWindowId || activeWindowId;
-  
+
   // 获取当前窗口
   const currentWindow = currentWindowId
     ? windows.find((w) => w.id === currentWindowId)
@@ -98,7 +98,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
       if (!currentWindowId || !currentWindow) return;
 
       const subTopicId = currentWindow.activeSubTopicId;
-      
+
       // 发送消息，包含文件引用
       await sendMessage(
         currentWindowId,
@@ -281,7 +281,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
       if (!currentWindowId || !currentWindow) return;
 
       const subTopicId = currentWindow.activeSubTopicId;
-      
+
       if (resend) {
         // 保存并重新发送：editMessage 内部会截断消息并调用 sendMessage
         // 不需要再调用 regenerateMessage，因为 editMessage 已经处理了重新发送
@@ -297,14 +297,14 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
   // 处理重试（消息级别错误后重新发送）
   const handleRetry = useCallback(async (messageId: string) => {
     if (!currentWindowId || !currentWindow || !currentSubTopic) return;
-    
+
     // 找到对应的消息
     const message = currentSubTopic.messages.find(m => m.id === messageId);
     if (!message) return;
-    
+
     // 先清除消息的错误状态
     await updateMessageError(currentWindowId, currentWindow.activeSubTopicId, messageId, null);
-    
+
     if (message.role === 'model') {
       // 如果是 AI 消息，重新生成它
       setRegeneratingMessageId(messageId);
@@ -450,18 +450,19 @@ function EmptyWindowState() {
         bg-gradient-to-br from-primary-400 to-primary-600
         flex items-center justify-center
         shadow-lg shadow-primary-500/30
+        start-new-program-icon
       ">
         <GeminiIcon className="w-10 h-10 text-white" />
       </div>
-      
+
       <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
         开始新程序
       </h2>
-      
+
       <p className="text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
         选择一个现有的程序，或创建一个新的程序开始与 AI 交流
       </p>
-      
+
       <button
         onClick={handleCreateWindow}
         className="
