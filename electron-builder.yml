@@ -1,5 +1,5 @@
 # electron-builder 配置文件
-# 用于构建 Windows exe 安装包
+# 用于构建 Windows exe 和 macOS dmg 安装包
 
 # 应用基本信息
 appId: com.gemini.chat
@@ -21,7 +21,7 @@ win:
     - target: nsis
       arch:
         - x64
-  icon: build/icon.ico
+  icon: public/logo.png
   # 禁用代码签名（本地开发时不需要）
   signAndEditExecutable: false
 
@@ -39,3 +39,31 @@ nsis:
   artifactName: "${productName}-Setup-${version}.${ext}"
   # 卸载时显示的名称
   uninstallDisplayName: "${productName}"
+
+# macOS 平台配置
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: public/logo.png
+  category: public.app-category.productivity
+  # 安装包名称
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+
+# DMG 安装包配置
+dmg:
+  # DMG 窗口设置
+  window:
+    width: 540
+    height: 380
+  # 显示应用图标和 Applications 文件夹链接
+  contents:
+    - x: 130
+      y: 220
+      type: file
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
