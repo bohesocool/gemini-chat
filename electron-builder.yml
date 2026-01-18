@@ -51,6 +51,8 @@ mac:
   category: public.app-category.productivity
   # 安装包名称
   artifactName: "${productName}-${version}-${arch}.${ext}"
+  # 禁用代码签名（本地开发时不需要）
+  identity: null
 
 # DMG 安装包配置
 dmg:
