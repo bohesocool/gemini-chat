@@ -5,55 +5,105 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  release:
-    # 使用 Windows 环境构建
-    runs-on: windows-latest
-    
-    permissions:
-      contents: write
-    
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            args: --win
+          - os: macos-latest
+            platform: mac
+            args: --mac
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      # 检出代码，获取完整历史用于生成 changelog
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
-      # 设置 Node.js 环境
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      # 安装依赖
+
       - name: Install dependencies
         run: npm ci
-      
-      # 从 git tag 提取版本号并更新 package.json（如果版本不同）
-      - name: Set version from tag
+
+      # 从 git tag 提取版本号并更新 package.json
+      - name: Set version from tag (Windows)
+        if: matrix.platform == 'win' && startsWith(github.ref, 'refs/tags/')
         run: |
           $version = "${{ github.ref_name }}" -replace '^v', ''
           $currentVersion = (Get-Content package.json | ConvertFrom-Json).version
           if ($currentVersion -ne $version) {
             npm version $version --no-git-tag-version
-          } else {
-            Write-Host "Version already matches: $version"
           }
         shell: pwsh
-      
-      # 构建 Vite 应用
+
+      - name: Set version from tag (macOS)
+        if: matrix.platform == 'mac' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          current_version=$(node -p "require('./package.json').version")
+          if [ "$current_version" != "$version" ]; then
+            npm version $version --no-git-tag-version
+          fi
+        shell: bash
+
       - name: Build Vite app
         run: npm run build
-      
-      # 构建 Electron 安装包（禁用自动发布避免创建 draft）
+
       - name: Build Electron app
-        run: npx electron-builder --win --publish never
-      
-      # 创建 GitHub Release 并上传 Assets
-      # 生成 Release Notes (基于 commit message)
+        run: npx electron-builder ${{ matrix.args }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-build
+          path: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/*.dmg
+            release/*.dmg.blockmap
+            release/*.yml
+          if-no-files-found: ignore
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: win-build
+          path: release
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-build
+          path: release
+
       - name: Build Changelog
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v5
@@ -63,7 +113,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 创建 GitHub Release 并上传 Assets
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
@@ -71,7 +120,9 @@ jobs:
           files: |
             release/*.exe
             release/*.exe.blockmap
-            release/latest.yml
+            release/*.dmg
+            release/*.dmg.blockmap
+            release/*.yml
           draft: false
           prerelease: false
         env:

@@ -409,8 +409,15 @@ export async function fetchOpenAIModels(
   }
 
   // 构建请求 URL
+  // 移除末尾斜杠
   const normalizedEndpoint = endpoint.replace(/\/+$/, '');
-  const url = `${normalizedEndpoint}/v1/models`;
+  
+  // 检查 endpoint 是否已经包含版本路径（如 /v1、/v1beta 等）
+  // 如果已包含，直接追加 /models；否则追加 /v1/models
+  const hasVersionPath = /\/v\d+(?:beta)?(?:\/|$)/i.test(normalizedEndpoint);
+  const url = hasVersionPath 
+    ? `${normalizedEndpoint}/models`
+    : `${normalizedEndpoint}/v1/models`;
 
   try {
     const response = await fetch(url, {
