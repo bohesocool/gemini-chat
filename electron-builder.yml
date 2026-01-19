@@ -35,8 +35,8 @@ nsis:
   createDesktopShortcut: true
   # 创建开始菜单快捷方式
   createStartMenuShortcut: true
-  # 安装包名称
-  artifactName: "${productName}-Setup-${version}.${ext}"
+  # 安装包名称（使用固定名称避免空格问题）
+  artifactName: "Gemini-Chat-Setup-${version}.${ext}"
   # 卸载时显示的名称
   uninstallDisplayName: "${productName}"
 
