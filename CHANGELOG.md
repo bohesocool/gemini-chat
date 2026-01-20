@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/bohesocool/gemini-chat/compare/v0.2.3...v0.2.4) (2026-01-20)
+
+
+### ✨ 新功能 (Features)
+
+* **ui:** enhance cross-platform UI consistency and navigation UX ([2376481](https://github.com/bohesocool/gemini-chat/commit/23764813308071a361e72ee601a24b27a54fc08c))
+
 ### [0.2.3](https://github.com/bohesocool/gemini-chat/compare/v0.2.2...v0.2.3) (2026-01-19)
 
 

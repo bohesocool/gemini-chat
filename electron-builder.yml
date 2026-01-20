@@ -8,7 +8,6 @@ productName: Gemini Chat
 # 输出目录配置
 directories:
   output: release
-  buildResources: build
 
 # 包含的文件
 files:

@@ -24,10 +24,23 @@ export function VersionDisplay({ onCheckUpdate }: VersionDisplayProps) {
   const appVersion = getAppVersion();
   const formattedVersion = formatVersion(appVersion.version);
 
+  // 处理点击下载（跳转到 release 页面）
+  const handleDownload = useCallback(() => {
+    if (updateResult?.updateInfo?.downloadUrl) {
+      window.open(updateResult.updateInfo.downloadUrl, '_blank');
+    }
+  }, [updateResult]);
+
   // 处理点击检查更新
   const handleClick = useCallback(async () => {
     // 如果正在检查中，不重复触发
     if (updateStatus === 'checking') return;
+
+    // 如果已经检测到有新版本，点击直接跳转到下载页面
+    if (updateStatus === 'available' && updateResult?.updateInfo?.downloadUrl) {
+      handleDownload();
+      return;
+    }
 
     // 调用外部回调
     onCheckUpdate?.();
@@ -47,7 +60,7 @@ export function VersionDisplay({ onCheckUpdate }: VersionDisplayProps) {
         error: '检查更新失败',
       });
     }
-  }, [appVersion.version, updateStatus, onCheckUpdate]);
+  }, [appVersion.version, updateStatus, updateResult, onCheckUpdate, handleDownload]);
 
   // 渲染状态指示器
   const renderStatusIndicator = () => {
@@ -60,7 +73,7 @@ export function VersionDisplay({ onCheckUpdate }: VersionDisplayProps) {
         );
       case 'available':
         return (
-          <span className="ml-1.5 inline-flex items-center text-amber-500" title={`新版本: ${updateResult?.updateInfo?.latestVersion}`}>
+          <span className="ml-1.5 inline-flex items-center text-amber-500" title={`新版本: ${updateResult?.updateInfo?.latestVersion}，点击下载`}>
             <UpdateIcon className="h-3 w-3" />
           </span>
         );
