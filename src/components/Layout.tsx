@@ -654,15 +654,15 @@ export function Layout({ sidebar, children }: LayoutProps) {
         {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
         {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
         <nav className={`
-          flex flex-col w-12 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
+          flex flex-col w-20   flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
           ${theme === 'snow-white'
             ? 'bg-white border-r border-black'
             : effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-primary-600'}
           layout-nav
         `}>
           {/* 顶部 Logo - 替换为图片 */}
-          <div className="flex items-center justify-center h-12 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
+          <div className="flex items-center justify-center h-12 mb-2 mt-5">
+            <div className="w-10 h-10  rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
               <img src={logoImage} alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
@@ -852,12 +852,12 @@ function NavIconButton({ icon, label, onClick, isActive }: { icon: React.ReactNo
     <button
       onClick={onClick}
       className={`
-          w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200
+          w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
           ${activeClass}
         `}
       title={label}
     >
-      <div className="w-5 h-5">
+      <div className="w-6 h-6">
         {icon}
       </div>
     </button>

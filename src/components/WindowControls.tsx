@@ -1,10 +1,45 @@
 
 
 /**
+ * 判断是否在 Electron 环境中运行
+ */
+const isElectronEnvironment = (): boolean => {
+  return typeof window !== 'undefined' && 
+    'electronAPI' in window && 
+    (window as { electronAPI?: unknown }).electronAPI !== undefined;
+};
+
+/**
+ * 判断是否为 macOS 平台
+ */
+const isMacOS = (): boolean => {
+  if (isElectronEnvironment()) {
+    // Electron 环境下通过 electronAPI 获取平台信息
+    return (window as any).electronAPI?.platform === 'darwin';
+  }
+  // 网页环境下通过 userAgent 检测
+  return /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+};
+
+/**
+ * 判断是否应该显示窗口控制按钮
+ * macOS 版本不显示，Windows 版本和网页版本显示
+ */
+const shouldShowWindowControls = (): boolean => {
+  return !isMacOS();
+};
+
+/**
  * 自定义窗口控制按钮组件
  * 包含：最小化、最大化、关闭
+ * 在 macOS 版本中不显示，在 Windows 版本和网页版本中显示
  */
 export function WindowControls() {
+    // 如果是 macOS，不渲染任何内容
+    if (!shouldShowWindowControls()) {
+        return null;
+    }
+
     const handleMinimize = () => {
         window.electronAPI?.send('window-minimize');
     };
