@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/bohesocool/gemini-chat/compare/v0.2.4...v0.2.5) (2026-01-21)
+
+
+### ✨ 新功能 (Features)
+
+* 添加国际化支持并删除测试文件 ([ec46ed6](https://github.com/bohesocool/gemini-chat/commit/ec46ed68b5207e6680e9caafe122c5eb88bef09b))
+
 ### [0.2.4](https://github.com/bohesocool/gemini-chat/compare/v0.2.3...v0.2.4) (2026-01-20)
 
 
