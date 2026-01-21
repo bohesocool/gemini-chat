@@ -165,7 +165,7 @@ interface SessionItemProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: (e: React.MouseEvent) => void;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 /**
@@ -258,7 +258,7 @@ function SessionItem({
 interface DeleteConfirmDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 /**

@@ -41,7 +41,7 @@ export interface TranslationResource {
  * - t('common.confirm') => '确定'
  * - t('chat.messageCount', { count: '5' }) => '共 5 条消息'
  */
-export type TranslateFunction = (key: string, params?: Record<string, string>) => string;
+export type TranslateFunction = (key: string, params?: Record<string, string | number>) => string;
 
 /**
  * i18n Store 状态接口

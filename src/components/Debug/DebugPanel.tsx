@@ -173,7 +173,7 @@ interface RequestHistoryListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   debugEnabled: boolean;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 /**

@@ -201,7 +201,7 @@ interface ModelListItemProps {
   /** 切换模型启用状态回调 - 需求: 4.1, 4.5 */
   onToggleEnabled?: (modelId: string, enabled: boolean) => void;
   /** 翻译函数 */
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 function ModelListItem({

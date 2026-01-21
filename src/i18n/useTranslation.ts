@@ -78,7 +78,7 @@ export function getNestedValue(obj: TranslationResource, path: string): string |
  * - interpolate('Hello {name}!', { name: 'World' }) => 'Hello World!'
  * - interpolate('Missing {key}', {}) => 'Missing {key}' （未找到的占位符保持原样）
  */
-export function interpolate(template: string, params?: Record<string, string>): string {
+export function interpolate(template: string, params?: Record<string, string | number>): string {
   // 如果没有参数，直接返回模板
   if (!params) return template;
   
@@ -86,7 +86,8 @@ export function interpolate(template: string, params?: Record<string, string>): 
   // \w+ 匹配一个或多个单词字符（字母、数字、下划线）
   return template.replace(/\{(\w+)\}/g, (_, key) => {
     // 如果参数中存在该键，返回对应值；否则保持原占位符
-    return params[key] ?? `{${key}}`;
+    const value = params[key];
+    return value !== undefined ? String(value) : `{${key}}`;
   });
 }
 
@@ -131,7 +132,7 @@ export function useTranslation() {
    * @param params - 可选的参数对象，用于替换占位符
    * @returns 翻译后的字符串，如果键不存在则返回键本身
    */
-  const t: TranslateFunction = useCallback((key: string, params?: Record<string, string>) => {
+  const t: TranslateFunction = useCallback((key: string, params?: Record<string, string | number>) => {
     // 获取当前语言的翻译资源
     const resource = translations[locale];
     
