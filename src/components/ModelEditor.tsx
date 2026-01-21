@@ -15,6 +15,7 @@ import type { ModelConfig, MediaResolution, ModelCapabilities } from '../types/m
 import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../types/models';
 import { getEffectiveCapabilities, detectModelCapabilities } from '../services/model';
 import { ThinkingLevelSelector, ThinkingBudgetSlider, ImageConfigPanel } from './ModelParams';
+import { useTranslation } from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -33,10 +34,11 @@ interface ModelEditorProps {
 
 // ============ 常量定义 ============
 
-const MEDIA_RESOLUTIONS: { value: MediaResolution; label: string; description: string }[] = [
-  { value: 'MEDIA_RESOLUTION_LOW', label: '低', description: '快速处理，较低质量' },
-  { value: 'MEDIA_RESOLUTION_MEDIUM', label: '中', description: '平衡速度和质量' },
-  { value: 'MEDIA_RESOLUTION_HIGH', label: '高', description: '高质量处理' },
+// 媒体分辨率选项（翻译键）
+const MEDIA_RESOLUTION_OPTIONS: { value: MediaResolution; labelKey: string; descKey: string }[] = [
+  { value: 'MEDIA_RESOLUTION_LOW', labelKey: 'modelEditor.mediaResolutionLow', descKey: 'modelEditor.mediaResolutionLowDesc' },
+  { value: 'MEDIA_RESOLUTION_MEDIUM', labelKey: 'modelEditor.mediaResolutionMedium', descKey: 'modelEditor.mediaResolutionMediumDesc' },
+  { value: 'MEDIA_RESOLUTION_HIGH', labelKey: 'modelEditor.mediaResolutionHigh', descKey: 'modelEditor.mediaResolutionHighDesc' },
 ];
 
 // ============ 主组件 ============
@@ -48,6 +50,8 @@ export function ModelEditor({
   onSave,
   onCancel,
 }: ModelEditorProps) {
+  const { t } = useTranslation();
+  
   // 表单状态
   const [formData, setFormData] = useState<ModelConfig>({
     id: '',
@@ -158,26 +162,26 @@ export function ModelEditor({
     const newErrors: Record<string, string> = {};
 
     if (!formData.id.trim()) {
-      newErrors.id = '模型 ID 不能为空';
+      newErrors.id = t('modelEditor.modelIdRequired');
     } else if (isNew && allModels.some(m => m.id === formData.id.trim())) {
-      newErrors.id = '模型 ID 已存在';
+      newErrors.id = t('modelEditor.modelIdExists');
     }
 
     if (!formData.name.trim()) {
-      newErrors.name = '模型名称不能为空';
+      newErrors.name = t('modelEditor.displayNameRequired');
     }
 
     // 检查重定向循环
     if (formData.redirectTo) {
       if (formData.redirectTo === formData.id) {
-        newErrors.redirectTo = '不能重定向到自身';
+        newErrors.redirectTo = t('modelEditor.redirectSelfError');
       } else {
         // 检查是否会造成循环
         const visited = new Set<string>();
         let currentId: string | undefined = formData.redirectTo;
         while (currentId) {
           if (currentId === formData.id) {
-            newErrors.redirectTo = '检测到循环重定向';
+            newErrors.redirectTo = t('modelEditor.redirectLoopError');
             break;
           }
           if (visited.has(currentId)) {
@@ -248,19 +252,19 @@ export function ModelEditor({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* 基本信息 */}
       <div className="space-y-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100">基本信息</h4>
+        <h4 className="font-medium text-slate-900 dark:text-slate-100">{t('modelEditor.basicInfo')}</h4>
         
         {/* 模型 ID */}
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            模型 ID <span className="text-red-500">*</span>
+            {t('modelEditor.modelId')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={formData.id}
             onChange={handleIdChange}
             disabled={!isNew}
-            placeholder="例如: gemini-custom-model"
+            placeholder={t('modelEditor.modelIdPlaceholder')}
             className={`w-full px-3 py-2 rounded-lg border 
               ${errors.id ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}
               bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
@@ -276,13 +280,13 @@ export function ModelEditor({
         {/* 模型名称 */}
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            显示名称 <span className="text-red-500">*</span>
+            {t('modelEditor.displayName')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={formData.name}
             onChange={handleNameChange}
-            placeholder="例如: 自定义 Gemini 模型"
+            placeholder={t('modelEditor.displayNamePlaceholder')}
             className={`w-full px-3 py-2 rounded-lg border 
               ${errors.name ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}
               bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
@@ -297,12 +301,12 @@ export function ModelEditor({
         {/* 模型描述 */}
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            描述
+            {t('modelEditor.description')}
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => updateField('description', e.target.value)}
-            placeholder="模型的简要描述..."
+            placeholder={t('modelEditor.descriptionPlaceholder')}
             rows={2}
             className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600
               bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
@@ -314,14 +318,14 @@ export function ModelEditor({
 
       {/* 重定向设置 */}
       <div className="space-y-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100">重定向设置</h4>
+        <h4 className="font-medium text-slate-900 dark:text-slate-100">{t('modelEditor.redirectSettings')}</h4>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          设置重定向后，此模型将继承目标模型的能力配置
+          {t('modelEditor.redirectHint')}
         </p>
         
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            重定向到
+            {t('modelEditor.redirectTo')}
           </label>
           <select
             value={formData.redirectTo || ''}
@@ -332,7 +336,7 @@ export function ModelEditor({
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
               text-sm`}
           >
-            <option value="">不重定向（使用自身配置）</option>
+            <option value="">{t('modelEditor.noRedirect')}</option>
             {redirectTargets.map(m => (
               <option key={m.id} value={m.id}>
                 {m.name} ({m.id})
@@ -349,10 +353,10 @@ export function ModelEditor({
       {showAdvancedParams && (
         <div className="space-y-4">
           <h4 className="font-medium text-slate-900 dark:text-slate-100">
-            高级参数
+            {t('modelEditor.advancedParams')}
             {formData.redirectTo && (
               <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
-                (继承自 {formData.redirectTo})
+                ({t('modelEditor.inheritedFrom')} {formData.redirectTo})
               </span>
             )}
           </h4>
@@ -382,10 +386,10 @@ export function ModelEditor({
             <div className="flex items-center justify-between">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  显示思维链
+                  {t('modelEditor.showThinkingChain')}
                 </label>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  在回复中显示模型的思考过程
+                  {t('modelEditor.showThinkingChainDesc')}
                 </p>
               </div>
               <button
@@ -422,7 +426,7 @@ export function ModelEditor({
           {showMediaResolution && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                媒体分辨率 (Media Resolution)
+                {t('modelEditor.mediaResolution')}
               </label>
               <select
                 value={formData.advancedConfig?.mediaResolution || ''}
@@ -435,10 +439,10 @@ export function ModelEditor({
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                   text-sm"
               >
-                <option value="">默认</option>
-                {MEDIA_RESOLUTIONS.map(res => (
+                <option value="">{t('modelEditor.mediaResolutionDefault')}</option>
+                {MEDIA_RESOLUTION_OPTIONS.map(res => (
                   <option key={res.value} value={res.value}>
-                    {res.label} - {res.description}
+                    {t(res.labelKey)} - {t(res.descKey)}
                   </option>
                 ))}
               </select>
@@ -451,7 +455,7 @@ export function ModelEditor({
       {formData.redirectTo && (
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            已设置重定向到 "{formData.redirectTo}"，高级参数配置将基于目标模型的能力
+            {t('modelEditor.redirectNotice', { target: formData.redirectTo })}
           </p>
         </div>
       )}
@@ -464,14 +468,14 @@ export function ModelEditor({
           className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300
             hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
         >
-          取消
+          {t('modelEditor.cancel')}
         </button>
         <button
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-blue-500 
             hover:bg-blue-600 rounded-lg transition-colors"
         >
-          {isNew ? '添加模型' : '保存更改'}
+          {isNew ? t('modelEditor.addModel') : t('modelEditor.saveChanges')}
         </button>
       </div>
     </form>

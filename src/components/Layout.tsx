@@ -42,6 +42,7 @@ import { WindowControls } from './WindowControls';
 import logoImage from '../assets/logo.png';
 import { LiveApiView } from './LiveApi';
 import { generatePalette, generateDarkPalette } from '../utils/color';
+import { useTranslation } from '../i18n/useTranslation';
 
 /** 侧边栏视图类型 */
 export type SidebarView = 'assistants' | 'settings' | 'images' | 'templates' | 'bookmarks' | 'live';
@@ -490,6 +491,12 @@ export function Layout({ sidebar, children }: LayoutProps) {
     setTheme(newTheme);
   }, [effectiveTheme, setTheme]);
 
+  // 语言切换 - 需求: 3.1, 3.3
+  const { t, locale, toggleLocale } = useTranslation();
+  const handleLanguageToggle = useCallback(() => {
+    toggleLocale();
+  }, [toggleLocale]);
+
   // 点击助手按钮
   const handleAssistantsClick = useCallback(() => {
     setCurrentView('assistants');
@@ -581,13 +588,17 @@ export function Layout({ sidebar, children }: LayoutProps) {
 
   // 使用模板创建新对话 - 需求: 2.7
   const handleUseTemplate = useCallback((template: PromptTemplate) => {
-    createWindow({
-      model: currentModel,
-      systemInstruction: template.systemInstruction,
-    });
+    createWindow(
+      {
+        model: currentModel,
+        systemInstruction: template.systemInstruction,
+      },
+      t('chat.defaultChatName'),
+      t('sidebar.mainTopic')
+    );
     // 切换到助手视图
     setCurrentView('assistants');
-  }, [createWindow, currentModel]);
+  }, [createWindow, currentModel, t]);
 
   // 保存模板（新建或编辑）
   const handleSaveTemplate = useCallback(async (data: CreateTemplateInput | { id: string; updates: UpdateTemplateInput }) => {
@@ -671,53 +682,59 @@ export function Layout({ sidebar, children }: LayoutProps) {
           <div className="flex-1 flex flex-col items-center py-3 gap-2">
             <NavIconButton
               icon={<ChatIcon />}
-              label="助手"
+              label={t('sidebar.assistants')}
               isActive={currentView === 'assistants' && !sidebarCollapsed}
               onClick={handleAssistantsClick}
             />
             <NavIconButton
               icon={<TemplateNavIcon />}
-              label="模板"
+              label={t('sidebar.templates')}
               isActive={currentView === 'templates' && !sidebarCollapsed}
               onClick={handleTemplatesClick}
             />
             <NavIconButton
               icon={<BookmarkNavIcon />}
-              label="书签"
+              label={t('sidebar.bookmarks')}
               isActive={currentView === 'bookmarks' && !sidebarCollapsed}
               onClick={handleBookmarksClick}
             />
             <NavIconButton
               icon={<ImageGalleryIcon />}
-              label="图片库"
+              label={t('sidebar.gallery')}
               isActive={currentView === 'images' && !sidebarCollapsed}
               onClick={handleImagesClick}
             />
             <NavIconButton
               icon={<LiveIcon />}
-              label="实时对话"
+              label={t('sidebar.live')}
               isActive={currentView === 'live'}
               onClick={handleLiveClick}
             />
           </div>
 
-          {/* 底部工具 - 调试、主题切换和设置 */}
+          {/* 底部工具 - 调试、语言切换、主题切换和设置 */}
           <div className="flex flex-col items-center py-3 gap-2 border-t border-primary-500/30">
             {/* 调试面板入口按钮 - 需求: 6.1 */}
             <NavIconButton
               icon={<DebugIcon />}
-              label="API 调试"
+              label={t('nav.apiDebug')}
               isActive={isDebugPanelOpen}
               onClick={handleDebugClick}
             />
             <NavIconButton
               icon={effectiveTheme === 'dark' ? <MoonIcon /> : <SunIcon />}
-              label={effectiveTheme === 'dark' ? '切换到浅色' : '切换到深色'}
+              label={effectiveTheme === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
               onClick={handleThemeToggle}
+            />
+            {/* 语言切换按钮 - 需求: 3.1 */}
+            <NavIconButton
+              icon={<LanguageIcon />}
+              label={locale === 'zh-CN' ? 'Switch to English' : '切换到中文'}
+              onClick={handleLanguageToggle}
             />
             <NavIconButton
               icon={<SettingsIcon />}
-              label="设置"
+              label={t('settings.title')}
               isActive={isSettingsModalOpen}
               onClick={handleSettingsClick}
             />
@@ -759,7 +776,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
                 <button
                   onClick={() => setSidebarCollapsed(false)}
                   className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 no-drag focus:outline-none"
-                  title="展开侧边栏"
+                  title={t('nav.expandSidebar')}
                 >
                   {/* Menu Icon */}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -930,6 +947,15 @@ function MoonIcon() {
   return (
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  );
+}
+
+// 语言切换图标 - 需求: 3.2
+function LanguageIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
     </svg>
   );
 }

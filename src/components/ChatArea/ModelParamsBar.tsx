@@ -9,6 +9,7 @@ import { useCallback } from 'react';
 import type { ModelAdvancedConfig, ThinkingLevel, ImageGenerationConfig } from '../../types/models';
 import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
 import { useModelCapabilities, ThinkingLevelSelector, ImageConfigPanel } from '../ModelParams';
+import { useTranslation } from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -33,6 +34,7 @@ export interface ModelParamsBarProps {
  * - 9.3: 在输入框上方显示模型特定参数
  */
 export function ModelParamsBar({ modelId, advancedConfig, onConfigChange }: ModelParamsBarProps) {
+  const { t } = useTranslation();
   const capabilities = useModelCapabilities(modelId);
 
   // 处理思考程度变更
@@ -89,8 +91,8 @@ export function ModelParamsBar({ modelId, advancedConfig, onConfigChange }: Mode
 
       {/* 右侧：提示信息 */}
       <div className="text-xs text-neutral-400 dark:text-neutral-500">
-        {capabilities.supportsThinking && '调整思考程度以平衡速度和质量'}
-        {capabilities.supportsImageGeneration && '设置图片生成参数'}
+        {capabilities.supportsThinking && t('chat.adjustThinkingHint')}
+        {capabilities.supportsImageGeneration && t('chat.imageParamsHint')}
       </div>
     </div>
   );

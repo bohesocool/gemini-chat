@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '@/i18n';
 import { touchTargets } from '../../design/tokens';
 import type { ModelConfig } from '../../types/models';
 import type { Message } from '../../types';
@@ -54,6 +55,7 @@ interface ModelSelectorProps {
 function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // 获取当前模型的显示名称
   const currentModelConfig = models.find(m => m.id === currentModel);
@@ -97,8 +99,8 @@ function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
           hover:text-neutral-900 dark:hover:text-neutral-200
           transition-colors
         "
-        title="切换模型"
-        aria-label="切换模型"
+        title={t('chat.switchModel')}
+        aria-label={t('chat.switchModel')}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
@@ -117,11 +119,11 @@ function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
             rounded-lg shadow-lg
           "
           role="listbox"
-          aria-label="选择模型"
+          aria-label={t('chat.switchModel')}
         >
           {enabledModels.length === 0 ? (
             <div className="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400">
-              无可用模型
+              {t('common.noData')}
             </div>
           ) : (
             enabledModels.map((model) => (
@@ -142,7 +144,7 @@ function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
                 <div className="font-medium">{model.name}</div>
                 {model.description && (
                   <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1">
-                    {model.description}
+                    {model.description.startsWith('models.') ? t(model.description) : model.description}
                   </div>
                 )}
               </button>
@@ -179,10 +181,14 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   // 导出对话框状态
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const { t } = useTranslation();
   
   // 获取当前模型名称
   const currentModelConfig = models?.find(m => m.id === currentModel);
-  const modelName = currentModelConfig?.name || currentModel || '未知模型';
+  const modelName = currentModelConfig?.name || currentModel || t('common.unknownError');
+
+  // 显示标题，如果是默认的"新对话"则使用翻译
+  const displayTitle = title === '新对话' ? t('chat.defaultChatName') : (title || t('chat.defaultChatName'));
 
   return (
     <div className="
@@ -193,7 +199,7 @@ export function ChatHeader({
       {/* 左侧：标题和模型选择器 */}
       <div className="flex items-center gap-3">
         <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-md">
-          {title || '新程序'}
+          {displayTitle}
         </h1>
         
         {/* 模型选择器 - Requirements: 1.1, 1.2, 1.3, 1.4, 1.5 */}
@@ -224,8 +230,8 @@ export function ChatHeader({
             disabled:opacity-50 disabled:cursor-not-allowed
           "
           style={{ minHeight: touchTargets.minimum, minWidth: touchTargets.minimum }}
-          title="导出对话"
-          aria-label="导出对话"
+          title={t('chat.exportChat')}
+          aria-label={t('chat.exportChat')}
         >
           <ExportIcon className="w-5 h-5" />
         </button>
@@ -241,8 +247,8 @@ export function ChatHeader({
             transition-colors
           "
           style={{ minHeight: touchTargets.minimum, minWidth: touchTargets.minimum }}
-          title="打开配置面板"
-          aria-label="打开配置面板"
+          title={t('chat.openConfig')}
+          aria-label={t('chat.openConfig')}
         >
           <SettingsIcon className="w-5 h-5" />
         </button>
@@ -253,7 +259,7 @@ export function ChatHeader({
         isOpen={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
         windowId={windowId}
-        windowTitle={title}
+        windowTitle={displayTitle}
         messages={messages}
         modelName={modelName}
       />

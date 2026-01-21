@@ -7,6 +7,7 @@
 import { useEffect, useCallback } from 'react';
 import { useImageStore } from '../../stores/image';
 import type { GeneratedImage } from '../../types';
+import { useTranslation } from '@/i18n';
 
 interface ImageGalleryProps {
   /** 点击图片时的回调 */
@@ -20,6 +21,7 @@ interface ImageGalleryProps {
  * 显示图片缩略图网格，支持点击查看大图
  */
 export function ImageGallery({ onImageClick, windowId }: ImageGalleryProps) {
+  const { t, locale } = useTranslation();
   const { images, isLoading, loadImages, getImagesByWindow } = useImageStore();
 
   // 加载图片
@@ -34,6 +36,25 @@ export function ImageGallery({ onImageClick, windowId }: ImageGalleryProps) {
   const handleImageClick = useCallback((image: GeneratedImage) => {
     onImageClick(image);
   }, [onImageClick]);
+
+  // 格式化时间
+  const formatTime = useCallback((timestamp: number) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const localeStr = locale === 'zh-CN' ? 'zh-CN' : 'en-US';
+
+    if (diffDays === 0) {
+      return date.toLocaleTimeString(localeStr, { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return t('common.yesterday');
+    } else if (diffDays < 7) {
+      return locale === 'zh-CN' ? `${diffDays}天前` : `${diffDays}d ago`;
+    } else {
+      return date.toLocaleDateString(localeStr, { month: 'short', day: 'numeric' });
+    }
+  }, [locale, t]);
 
   // 加载中状态
   if (isLoading) {
@@ -51,10 +72,10 @@ export function ImageGallery({ onImageClick, windowId }: ImageGalleryProps) {
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <ImageIcon className="h-16 w-16 text-neutral-300 dark:text-neutral-600 mb-4" />
         <p className="text-neutral-500 dark:text-neutral-400 font-medium">
-          暂无图片
+          {t('gallery.noImages')}
         </p>
         <p className="text-sm text-neutral-400 dark:text-neutral-500 mt-1">
-          AI 生成的图片将显示在这里
+          {t('gallery.imageHint')}
         </p>
       </div>
     );
@@ -70,6 +91,7 @@ export function ImageGallery({ onImageClick, windowId }: ImageGalleryProps) {
             key={image.id}
             image={image}
             onClick={() => handleImageClick(image)}
+            formatTime={formatTime}
           />
         ))}
       </div>
@@ -80,32 +102,16 @@ export function ImageGallery({ onImageClick, windowId }: ImageGalleryProps) {
 interface ImageThumbnailProps {
   image: GeneratedImage;
   onClick: () => void;
+  formatTime: (timestamp: number) => string;
 }
 
 /**
  * 图片缩略图组件
  */
-function ImageThumbnail({ image, onClick }: ImageThumbnailProps) {
+function ImageThumbnail({ image, onClick, formatTime }: ImageThumbnailProps) {
+  const { t } = useTranslation();
   // 构建图片 URL
   const imageUrl = `data:${image.mimeType};base64,${image.data}`;
-
-  // 格式化时间
-  const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
-      return '昨天';
-    } else if (diffDays < 7) {
-      return `${diffDays}天前`;
-    } else {
-      return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-    }
-  };
 
   return (
     <button
@@ -114,7 +120,7 @@ function ImageThumbnail({ image, onClick }: ImageThumbnailProps) {
     >
       <img
         src={imageUrl}
-        alt={image.prompt || '生成的图片'}
+        alt={image.prompt || t('gallery.generatedImage')}
         className="w-full h-full object-cover"
         loading="lazy"
       />

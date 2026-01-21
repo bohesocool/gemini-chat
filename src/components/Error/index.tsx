@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { useReducedMotion } from '../motion';
+import { useTranslation } from '@/i18n';
 
 // ============================================
 // 错误图标组件
@@ -79,15 +80,20 @@ export interface ErrorMessageProps {
  * Requirements: 11.6 - 加载失败时显示友好的错误提示和重试按钮
  */
 export function ErrorMessage({
-  title = '出错了',
+  title,
   message,
   onRetry,
-  retryText = '重试',
+  retryText,
   isRetrying = false,
   size = 'md',
   className = '',
 }: ErrorMessageProps) {
+  const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
+  
+  // 使用翻译后的默认值
+  const displayTitle = title ?? t('common.somethingWentWrong');
+  const displayRetryText = retryText ?? t('common.retry');
   
   const sizeClasses = {
     sm: {
@@ -141,7 +147,7 @@ export function ErrorMessage({
           mb-2
         `}
       >
-        {title}
+        {displayTitle}
       </h3>
       
       {/* 错误描述 */}
@@ -178,7 +184,7 @@ export function ErrorMessage({
               ${isRetrying && !prefersReducedMotion ? 'animate-spin' : ''}
             `}
           />
-          {isRetrying ? '重试中...' : retryText}
+          {isRetrying ? t('common.retrying') : displayRetryText}
         </button>
       )}
     </div>
@@ -202,6 +208,31 @@ export interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+}
+
+/**
+ * 错误边界默认 UI 组件
+ * 用于在类组件中使用翻译 Hook
+ */
+function ErrorBoundaryFallback({ 
+  error, 
+  onReset 
+}: { 
+  error: Error; 
+  onReset: () => void;
+}) {
+  const { t } = useTranslation();
+  
+  return (
+    <ErrorMessage
+      title={t('common.appError')}
+      message={error.message || t('common.unknownErrorMessage')}
+      onRetry={onReset}
+      retryText={t('common.reload')}
+      size="lg"
+      className="min-h-[300px]"
+    />
+  );
 }
 
 /**
@@ -237,13 +268,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       }
 
       return (
-        <ErrorMessage
-          title="应用出错了"
-          message={this.state.error.message || '发生了未知错误，请刷新页面重试。'}
-          onRetry={this.handleReset}
-          retryText="重新加载"
-          size="lg"
-          className="min-h-[300px]"
+        <ErrorBoundaryFallback 
+          error={this.state.error} 
+          onReset={this.handleReset} 
         />
       );
     }
@@ -277,6 +304,7 @@ export function InlineError({
   onDismiss,
   className = '',
 }: InlineErrorProps) {
+  const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -305,7 +333,7 @@ export function InlineError({
               hover:bg-red-100 dark:hover:bg-red-900/30
               ${prefersReducedMotion ? '' : 'transition-colors duration-200'}
             `}
-            title="重试"
+            title={t('common.retry')}
           >
             <RetryIcon className="w-4 h-4" />
           </button>
@@ -320,7 +348,7 @@ export function InlineError({
               hover:bg-red-100 dark:hover:bg-red-900/30
               ${prefersReducedMotion ? '' : 'transition-colors duration-200'}
             `}
-            title="关闭"
+            title={t('common.close')}
           >
             <svg
               className="w-4 h-4"
@@ -366,13 +394,17 @@ export interface EmptyStateProps {
  * 当列表为空或没有数据时显示
  */
 export function EmptyState({
-  title = '暂无数据',
+  title,
   description,
   icon,
   action,
   className = '',
 }: EmptyStateProps) {
+  const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
+  
+  // 使用翻译后的默认值
+  const displayTitle = title ?? t('common.noData');
 
   return (
     <div
@@ -404,7 +436,7 @@ export function EmptyState({
       
       {/* 标题 */}
       <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
-        {title}
+        {displayTitle}
       </h3>
       
       {/* 描述 */}

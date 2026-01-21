@@ -7,6 +7,7 @@ import React, { useState, useRef } from 'react';
 import { useSettingsStore } from '../stores/settings';
 import { useChatWindowStore } from '../stores/chatWindow';
 import { exportAllData, importData } from '../services/storage';
+import { useTranslation } from '../i18n/useTranslation';
 
 import { HARM_CATEGORIES, HARM_BLOCK_THRESHOLDS, type HarmCategory, type HarmBlockThreshold, type SafetySetting } from '../types/gemini';
 
@@ -23,6 +24,7 @@ interface SettingsProps {
 export function Settings({ isOpen, onClose }: SettingsProps) {
   // 当前激活的设置分组
   const [activeTab, setActiveTab] = useState<'api' | 'model' | 'generation' | 'system' | 'safety' | 'data'>('api');
+  const { t } = useTranslation();
   
   if (!isOpen) return null;
 
@@ -39,11 +41,11 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
       <div className="relative w-full h-full sm:h-auto sm:max-w-3xl sm:max-h-[90vh] bg-white dark:bg-slate-800 sm:rounded-xl shadow-2xl overflow-hidden flex flex-col sm:mx-4">
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100">设置</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100">{t('settings.title')}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            aria-label="关闭设置"
+            aria-label={t('settings.closeSettings')}
           >
             <CloseIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
           </button>
@@ -58,42 +60,42 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
               onClick={() => setActiveTab('api')}
               icon={<KeyIcon className="h-4 w-4" />}
             >
-              API 配置
+              {t('settings.apiConfig')}
             </TabButton>
             <TabButton 
               active={activeTab === 'model'} 
               onClick={() => setActiveTab('model')}
               icon={<CpuIcon className="h-4 w-4" />}
             >
-              模型选择
+              {t('settings.modelSelect')}
             </TabButton>
             <TabButton 
               active={activeTab === 'generation'} 
               onClick={() => setActiveTab('generation')}
               icon={<SlidersIcon className="h-4 w-4" />}
             >
-              生成参数
+              {t('settings.generation')}
             </TabButton>
             <TabButton 
               active={activeTab === 'system'} 
               onClick={() => setActiveTab('system')}
               icon={<MessageIcon className="h-4 w-4" />}
             >
-              系统指令
+              {t('settings.systemInstruction')}
             </TabButton>
             <TabButton 
               active={activeTab === 'safety'} 
               onClick={() => setActiveTab('safety')}
               icon={<ShieldIcon className="h-4 w-4" />}
             >
-              安全设置
+              {t('settings.safety')}
             </TabButton>
             <TabButton 
               active={activeTab === 'data'} 
               onClick={() => setActiveTab('data')}
               icon={<DatabaseIcon className="h-4 w-4" />}
             >
-              数据管理
+              {t('settings.dataManagement')}
             </TabButton>
           </nav>
 
@@ -146,6 +148,7 @@ function TabButton({ active, onClick, icon, children }: TabButtonProps) {
 // 需求: 1.1, 1.2, 1.3, 1.4, 1.5
 
 function ApiConfigSection() {
+  const { t } = useTranslation();
   const { 
     apiEndpoint, 
     apiKey, 
@@ -163,16 +166,16 @@ function ApiConfigSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">API 配置</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.apiConfig')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          配置 Gemini API 的连接信息，支持官方 API 和第三方代理服务。
+          {t('settings.apiConfigDesc')}
         </p>
       </div>
 
       {/* API 端点 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          API 端点地址
+          {t('settings.apiEndpointLabel')}
         </label>
         <input
           type="url"
@@ -184,26 +187,26 @@ function ApiConfigSection() {
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          默认为 Google 官方 API 地址，也可以使用自定义代理地址
+          {t('settings.apiEndpointHint')}
         </p>
       </div>
 
       {/* API 密钥 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          API 密钥
+          {t('settings.apiKey')}
         </label>
         <input
           type="password"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
-          placeholder="输入您的 API 密钥"
+          placeholder={t('settings.apiKeyPlaceholder')}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 
             bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          API 密钥将安全存储在本地，不会上传到任何服务器
+          {t('settings.apiKeyHint')}
         </p>
       </div>
 
@@ -215,20 +218,20 @@ function ApiConfigSection() {
           className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 dark:disabled:bg-slate-600
             text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
         >
-          {connectionStatus === 'testing' ? '测试中...' : '测试连接'}
+          {connectionStatus === 'testing' ? t('settings.testing') : t('settings.testConnection')}
         </button>
         
         {/* 连接状态显示 */}
         {connectionStatus === 'success' && (
           <span className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
             <CheckIcon className="h-4 w-4" />
-            连接成功
+            {t('settings.connectionSuccess', { model: '' })}
           </span>
         )}
         {connectionStatus === 'error' && (
           <span className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
             <XIcon className="h-4 w-4" />
-            {connectionError || '连接失败'}
+            {connectionError || t('settings.connectionFailed', { model: '', error: '' })}
           </span>
         )}
       </div>
@@ -246,6 +249,7 @@ import { ModelEditor } from './ModelEditor';
 import type { ModelConfig } from '../types/models';
 
 function ModelSelectSection() {
+  const { t } = useTranslation();
   const { currentModel, setCurrentModel, apiEndpoint, apiKey } = useSettingsStore();
   const { 
     models, 
@@ -330,9 +334,9 @@ function ModelSelectSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">模型管理</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.modelManagement')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          管理可用的 AI 模型，支持从 API 获取、添加自定义模型和配置高级参数。
+          {t('settings.modelManagementDesc')}
         </p>
       </div>
 
@@ -351,7 +355,7 @@ function ModelSelectSection() {
           ) : (
             <RefreshIcon className="h-4 w-4" />
           )}
-          获取模型
+          {t('settings.fetchModels')}
         </button>
 
         {/* 添加自定义模型按钮 */}
@@ -361,7 +365,7 @@ function ModelSelectSection() {
             text-white text-sm rounded-lg font-medium transition-colors"
         >
           <PlusIcon className="h-4 w-4" />
-          添加自定义模型
+          {t('settings.addCustomModel')}
         </button>
 
         {/* 重置模型按钮 */}
@@ -372,7 +376,7 @@ function ModelSelectSection() {
             text-slate-700 dark:text-slate-200 text-sm rounded-lg font-medium transition-colors"
         >
           <ResetIcon className="h-4 w-4" />
-          重置模型
+          {t('settings.resetModels')}
         </button>
       </div>
 
@@ -380,7 +384,7 @@ function ModelSelectSection() {
       {(!apiEndpoint || !apiKey) && (
         <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
           <p className="text-sm text-amber-700 dark:text-amber-300">
-            请先在"API 配置"中设置 API 端点和密钥，才能获取远程模型列表。
+            {t('settings.apiKeyRequired')}
           </p>
         </div>
       )}
@@ -402,7 +406,7 @@ function ModelSelectSection() {
       {editorMode !== 'closed' && (
         <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
           <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
-            {editorMode === 'new' ? '添加自定义模型' : '编辑模型'}
+            {editorMode === 'new' ? t('settings.addCustomModelTitle') : t('settings.editModel')}
           </h4>
           <ModelEditor
             model={editingModel}
@@ -431,10 +435,10 @@ function ModelSelectSection() {
       {/* 重置确认对话框 */}
       {showResetConfirm && (
         <ConfirmDialog
-          title="重置模型配置"
-          message="确定要重置所有模型配置吗？这将删除所有自定义模型并恢复默认设置。"
-          confirmText="重置"
-          cancelText="取消"
+          title={t('settings.resetModelConfig')}
+          message={t('settings.resetModelConfigConfirm')}
+          confirmText={t('common.reset')}
+          cancelText={t('common.cancel')}
           onConfirm={handleResetModels}
           onCancel={() => setShowResetConfirm(false)}
           variant="danger"
@@ -444,10 +448,10 @@ function ModelSelectSection() {
       {/* 删除确认对话框 */}
       {showDeleteConfirm && (
         <ConfirmDialog
-          title="删除模型"
-          message={`确定要删除模型 "${showDeleteConfirm}" 吗？此操作无法撤销。`}
-          confirmText="删除"
-          cancelText="取消"
+          title={t('settings.deleteModel')}
+          message={t('settings.deleteModelConfirm', { model: showDeleteConfirm })}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
           onConfirm={confirmDelete}
           onCancel={() => setShowDeleteConfirm(null)}
           variant="danger"
@@ -467,6 +471,7 @@ interface CurrentModelInfoProps {
 
 function CurrentModelInfo({ currentModel, models }: CurrentModelInfoProps) {
   const { getEffectiveConfig } = useModelStore();
+  const { t } = useTranslation();
   
   // 获取当前模型配置
   const currentModelConfig = models.find(m => m.id === currentModel);
@@ -481,18 +486,33 @@ function CurrentModelInfo({ currentModel, models }: CurrentModelInfoProps) {
   const targetModel = hasRedirect 
     ? models.find(m => m.id === currentModelConfig.redirectTo)
     : null;
+  
+  // 获取翻译后的描述
+  const translatedDescription = currentModelConfig?.description?.startsWith('models.')
+    ? t(currentModelConfig.description)
+    : currentModelConfig?.description;
+  
+  // 获取媒体分辨率的显示标签
+  const getMediaResolutionLabel = (resolution: string): string => {
+    const labels: Record<string, string> = {
+      'MEDIA_RESOLUTION_LOW': t('settings.mediaResolutionLow'),
+      'MEDIA_RESOLUTION_MEDIUM': t('settings.mediaResolutionMedium'),
+      'MEDIA_RESOLUTION_HIGH': t('settings.mediaResolutionHigh'),
+    };
+    return labels[resolution] || resolution;
+  };
 
   return (
     <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg space-y-3">
       {/* 需求 2.3: 显示模型的原始 ID */}
       <div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">当前使用模型</div>
+        <div className="text-sm text-slate-500 dark:text-slate-400">{t('settings.currentUsingModel')}</div>
         <div className="font-medium text-slate-900 dark:text-slate-100 mt-1 font-mono">
           {currentModel}
         </div>
-        {currentModelConfig?.description && (
+        {translatedDescription && (
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {currentModelConfig.description}
+            {translatedDescription}
           </div>
         )}
       </div>
@@ -502,7 +522,7 @@ function CurrentModelInfo({ currentModel, models }: CurrentModelInfoProps) {
         <div className="pt-2 border-t border-slate-200 dark:border-slate-600">
           <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
             <ArrowRightIcon className="h-4 w-4" />
-            <span>参数重定向到: <span className="font-mono">{targetModel.id}</span></span>
+            <span>{t('settings.redirectTo')}: <span className="font-mono">{targetModel.id}</span></span>
           </div>
         </div>
       )}
@@ -511,20 +531,20 @@ function CurrentModelInfo({ currentModel, models }: CurrentModelInfoProps) {
       {(effectiveConfig.thinkingLevel || effectiveConfig.mediaResolution) && (
         <div className="pt-2 border-t border-slate-200 dark:border-slate-600">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-            {hasRedirect ? '生效的高级参数（来自目标模型）' : '高级参数配置'}
+            {hasRedirect ? t('settings.advancedParamsFromTarget') : t('settings.advancedParamsConfig')}
           </div>
           <div className="space-y-1">
             {effectiveConfig.thinkingLevel && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-600 dark:text-slate-300">思考深度:</span>
+                <span className="text-slate-600 dark:text-slate-300">{t('settings.thinkingDepth')}:</span>
                 <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
-                  {effectiveConfig.thinkingLevel === 'high' ? '高' : '低'}
+                  {effectiveConfig.thinkingLevel === 'high' ? t('settings.thinkingDepthHigh') : t('settings.thinkingDepthLow')}
                 </span>
               </div>
             )}
             {effectiveConfig.mediaResolution && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-600 dark:text-slate-300">媒体分辨率:</span>
+                <span className="text-slate-600 dark:text-slate-300">{t('settings.mediaResolution')}:</span>
                 <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs">
                   {getMediaResolutionLabel(effectiveConfig.mediaResolution)}
                 </span>
@@ -535,16 +555,6 @@ function CurrentModelInfo({ currentModel, models }: CurrentModelInfoProps) {
       )}
     </div>
   );
-}
-
-// 获取媒体分辨率的显示标签
-function getMediaResolutionLabel(resolution: string): string {
-  const labels: Record<string, string> = {
-    'MEDIA_RESOLUTION_LOW': '低',
-    'MEDIA_RESOLUTION_MEDIUM': '中',
-    'MEDIA_RESOLUTION_HIGH': '高',
-  };
-  return labels[resolution] || resolution;
 }
 
 // 箭头图标（用于重定向显示）

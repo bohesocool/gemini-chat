@@ -1,3 +1,5 @@
+中文文档 | [English](README_EN.md)
+
 # Gemini Chat
 
 <p align="center">

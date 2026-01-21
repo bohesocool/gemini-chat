@@ -9,15 +9,16 @@ import { memo } from 'react';
 import type { ThinkingLevel, ModelCapabilities } from '../../types/models';
 import { useReducedMotion } from '../motion';
 import { durationValues, easings } from '../../design/tokens';
+import { useTranslation } from '@/i18n';
 
 /**
- * 思考程度显示名称映射
+ * 思考程度显示名称映射键
  */
-const THINKING_LEVEL_LABELS: Record<ThinkingLevel, string> = {
-  minimal: '最少',
-  low: '低',
-  medium: '中',
-  high: '高',
+const THINKING_LEVEL_KEYS: Record<ThinkingLevel, string> = {
+  minimal: 'chat.thinkingLevelMinimal',
+  low: 'chat.thinkingLevelLow',
+  medium: 'chat.thinkingLevelMedium',
+  high: 'chat.thinkingLevelHigh',
 };
 
 /**
@@ -178,6 +179,7 @@ const ThinkingLevelSelector = memo(function ThinkingLevelSelector({
   disabled = false,
   supportedLevels = DEFAULT_SUPPORTED_LEVELS,
 }: ThinkingLevelSelectorProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const transitionStyle = reducedMotion
     ? {}
@@ -196,6 +198,8 @@ const ThinkingLevelSelector = memo(function ThinkingLevelSelector({
     onChange(nextLevel);
   };
 
+  const levelLabel = t(THINKING_LEVEL_KEYS[effectiveLevel]);
+
   return (
     <button
       type="button"
@@ -212,9 +216,9 @@ const ThinkingLevelSelector = memo(function ThinkingLevelSelector({
         disabled:opacity-50 disabled:cursor-not-allowed
       `}
       style={transitionStyle}
-      title={`思考程度: ${THINKING_LEVEL_LABELS[effectiveLevel]}（点击切换）`}
+      title={`${t('chat.thinkingLevel')}: ${levelLabel} ${t('chat.thinkingLevelHint')}`}
     >
-      思考: {THINKING_LEVEL_LABELS[effectiveLevel]}
+      {t('chat.thinking')}: {levelLabel}
     </button>
   );
 });
@@ -233,6 +237,7 @@ const ThinkingBudgetBadge = memo(function ThinkingBudgetBadge({
   onClick,
   disabled = false,
 }: ThinkingBudgetBadgeProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const transitionStyle = reducedMotion
     ? {}
@@ -240,8 +245,8 @@ const ThinkingBudgetBadge = memo(function ThinkingBudgetBadge({
 
   // 格式化预算显示
   const formatBudget = (value: number): string => {
-    if (value === -1) return '动态';
-    if (value === 0) return '关闭';
+    if (value === -1) return t('chat.budgetDynamic');
+    if (value === 0) return t('chat.budgetOff');
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
     return value.toString();
   };
@@ -264,9 +269,9 @@ const ThinkingBudgetBadge = memo(function ThinkingBudgetBadge({
         disabled:opacity-50 disabled:cursor-not-allowed
       `}
       style={transitionStyle}
-      title={`思考预算: ${formatBudget(budget)} tokens`}
+      title={`${t('chat.budget')}: ${formatBudget(budget)} ${t('chat.budgetTokens')}`}
     >
-      预算: {formatBudget(budget)}
+      {t('chat.budget')}: {formatBudget(budget)}
     </button>
   );
 });
@@ -295,6 +300,8 @@ export const StatusIndicators = memo(function StatusIndicators({
   disabled = false,
   supportedThinkingLevels,
 }: StatusIndicatorsProps) {
+  const { t } = useTranslation();
+  
   // 判断是否显示各个指示器
   const showThoughtsToggle = capabilities.supportsThoughtSummary === true;
   const showThinkingLevel = capabilities.thinkingConfigType === 'level';
@@ -304,21 +311,21 @@ export const StatusIndicators = memo(function StatusIndicators({
     <div className="flex items-center gap-1.5 flex-wrap">
       {/* 流式/非流式指示器 - Requirements: 4.1 */}
       <StatusBadge
-        label={streamingEnabled ? '流式' : '非流式'}
+        label={streamingEnabled ? t('chat.streaming') : t('chat.nonStreaming')}
         active={streamingEnabled}
         onClick={onStreamingToggle}
         disabled={disabled}
-        title={streamingEnabled ? '点击切换为非流式输出' : '点击切换为流式输出'}
+        title={streamingEnabled ? t('chat.streamingOn') : t('chat.streamingOff')}
       />
 
       {/* 思维链状态指示器 - Requirements: 4.2, 4.6 */}
       {showThoughtsToggle && (
         <StatusBadge
-          label={includeThoughts ? '思维链开' : '思维链关'}
+          label={includeThoughts ? t('chat.thinkingChainOn') : t('chat.thinkingChainOff')}
           active={includeThoughts}
           onClick={onThoughtsToggle}
           disabled={disabled}
-          title={includeThoughts ? '点击关闭思维链显示' : '点击开启思维链显示'}
+          title={includeThoughts ? t('chat.thinkingChainOnHint') : t('chat.thinkingChainOffHint')}
         />
       )}
 

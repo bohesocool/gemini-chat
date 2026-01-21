@@ -12,6 +12,7 @@ import { useModelStore } from '../../stores/model';
 import { exportAllData, importData } from '../../services/storage';
 import { ModelList } from '../ModelList';
 import { ModelEditor } from '../ModelEditor';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { ModelConfig } from '../../types/models';
 import {
   HARM_CATEGORIES,
@@ -36,6 +37,7 @@ export function filterEnabledModels(models: ModelConfig[]): ModelConfig[] {
 }
 
 export function ApiConfigSection() {
+  const { t } = useTranslation();
   const {
     apiEndpoint,
     apiKey,
@@ -68,16 +70,16 @@ export function ApiConfigSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">API 配置</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.apiConfig')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          配置 Gemini API 的连接信息，支持官方 API 和第三方代理服务。
+          {t('settings.apiConfigDesc')}
         </p>
       </div>
 
       {/* API 端点 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          API 端点地址
+          {t('settings.apiEndpointLabel')}
         </label>
         <input
           type="url"
@@ -89,26 +91,26 @@ export function ApiConfigSection() {
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          留空使用 Google 官方 API 地址，也可以填写自定义代理地址（系统会自动添加 /v1beta 后缀）
+          {t('settings.apiEndpointHint')}
         </p>
       </div>
 
       {/* API 密钥 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          API 密钥
+          {t('settings.apiKey')}
         </label>
         <input
           type="password"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
-          placeholder="输入您的 API 密钥"
+          placeholder={t('settings.apiKeyPlaceholder')}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 
             bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          API 密钥将安全存储在本地，不会上传到任何服务器
+          {t('settings.apiKeyHint')}
         </p>
       </div>
 
@@ -139,7 +141,7 @@ export function ApiConfigSection() {
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 dark:disabled:bg-slate-600
               text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {connectionStatus === 'testing' ? '测试中...' : '测试连接'}
+            {connectionStatus === 'testing' ? t('settings.testing') : t('settings.testConnection')}
           </button>
         </div>
 
@@ -147,13 +149,13 @@ export function ApiConfigSection() {
         {connectionStatus === 'success' && testedModelName && (
           <span className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
             <CheckIcon className="h-4 w-4" />
-            模型 {testedModelName} 连接成功
+            {t('settings.connectionSuccess', { model: testedModelName })}
           </span>
         )}
         {connectionStatus === 'error' && testedModelName && (
           <span className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
             <XIcon className="h-4 w-4" />
-            模型 {testedModelName} 连接失败: {connectionError || '未知错误'}
+            {t('settings.connectionFailed', { model: testedModelName, error: connectionError || t('common.unknownError') })}
           </span>
         )}
       </div>
@@ -167,6 +169,7 @@ export function ApiConfigSection() {
 // ============================================
 
 export function ModelSelectSection() {
+  const { t } = useTranslation();
   const { currentModel, setCurrentModel, apiEndpoint, apiKey } = useSettingsStore();
   const {
     models,
@@ -250,9 +253,9 @@ export function ModelSelectSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">模型管理</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.modelManagement')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          管理可用的 AI 模型，支持从 API 获取、添加自定义模型和配置高级参数。
+          {t('settings.modelManagementDesc')}
         </p>
       </div>
 
@@ -266,7 +269,7 @@ export function ModelSelectSection() {
             text-white text-sm rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
         >
           {isLoading ? <LoadingSpinner className="h-4 w-4" /> : <RefreshIcon className="h-4 w-4" />}
-          获取模型
+          {t('settings.fetchModels')}
         </button>
 
         <button
@@ -275,7 +278,7 @@ export function ModelSelectSection() {
             text-white text-sm rounded-lg font-medium transition-colors"
         >
           <PlusIcon className="h-4 w-4" />
-          添加自定义模型
+          {t('settings.addCustomModel')}
         </button>
 
         <button
@@ -285,7 +288,7 @@ export function ModelSelectSection() {
             text-slate-700 dark:text-slate-200 text-sm rounded-lg font-medium transition-colors"
         >
           <ResetIcon className="h-4 w-4" />
-          重置模型
+          {t('settings.resetModels')}
         </button>
       </div>
 
@@ -293,7 +296,7 @@ export function ModelSelectSection() {
       {!apiKey && (
         <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
           <p className="text-sm text-amber-700 dark:text-amber-300">
-            请先在"API 配置"中设置 API 密钥，才能获取远程模型列表。
+            {t('settings.apiKeyRequired')}
           </p>
         </div>
       )}
@@ -312,7 +315,7 @@ export function ModelSelectSection() {
       {editorMode !== 'closed' && (
         <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
           <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
-            {editorMode === 'new' ? '添加自定义模型' : '编辑模型'}
+            {editorMode === 'new' ? t('settings.addCustomModelTitle') : t('settings.editModel')}
           </h4>
           <ModelEditor
             model={editingModel}
@@ -351,10 +354,10 @@ export function ModelSelectSection() {
       {/* 重置确认对话框 */}
       {showResetConfirm && (
         <ConfirmDialog
-          title="重置模型配置"
-          message="确定要重置所有模型配置吗？这将删除所有自定义模型并恢复默认设置。"
-          confirmText="重置"
-          cancelText="取消"
+          title={t('settings.resetModelConfig')}
+          message={t('settings.resetModelConfigConfirm')}
+          confirmText={t('common.reset')}
+          cancelText={t('common.cancel')}
           onConfirm={handleResetModels}
           onCancel={() => setShowResetConfirm(false)}
           variant="danger"
@@ -364,10 +367,10 @@ export function ModelSelectSection() {
       {/* 删除确认对话框 */}
       {showDeleteConfirm && (
         <ConfirmDialog
-          title="删除模型"
-          message={`确定要删除模型 "${showDeleteConfirm}" 吗？此操作无法撤销。`}
-          confirmText="删除"
-          cancelText="取消"
+          title={t('settings.deleteModel')}
+          message={t('settings.deleteModelConfirm', { model: showDeleteConfirm })}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
           onConfirm={confirmDelete}
           onCancel={() => setShowDeleteConfirm(null)}
           variant="danger"
@@ -396,11 +399,18 @@ function CurrentModelInfo({
   hasRedirect,
   targetModel,
 }: CurrentModelInfoProps) {
+  const { t } = useTranslation();
+  
+  // 获取翻译后的描述
+  const translatedDescription = currentModelConfig?.description?.startsWith('models.')
+    ? t(currentModelConfig.description)
+    : currentModelConfig?.description;
+  
   const getMediaResolutionLabel = (resolution: string): string => {
     const labels: Record<string, string> = {
-      MEDIA_RESOLUTION_LOW: '低',
-      MEDIA_RESOLUTION_MEDIUM: '中',
-      MEDIA_RESOLUTION_HIGH: '高',
+      MEDIA_RESOLUTION_LOW: t('settings.mediaResolutionLow'),
+      MEDIA_RESOLUTION_MEDIUM: t('settings.mediaResolutionMedium'),
+      MEDIA_RESOLUTION_HIGH: t('settings.mediaResolutionHigh'),
     };
     return labels[resolution] || resolution;
   };
@@ -409,13 +419,13 @@ function CurrentModelInfo({
     <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg space-y-3">
       {/* 需求: 2.3 - 显示模型的原始 ID */}
       <div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">当前使用模型</div>
+        <div className="text-sm text-slate-500 dark:text-slate-400">{t('settings.currentUsingModel')}</div>
         <div className="font-medium text-slate-900 dark:text-slate-100 mt-1 font-mono">
           {currentModel}
         </div>
-        {currentModelConfig?.description && (
+        {translatedDescription && (
           <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {currentModelConfig.description}
+            {translatedDescription}
           </div>
         )}
       </div>
@@ -424,7 +434,7 @@ function CurrentModelInfo({
         <div className="pt-2 border-t border-slate-200 dark:border-slate-600">
           <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
             <ArrowRightIcon className="h-4 w-4" />
-            <span>参数重定向到: <span className="font-mono">{targetModel.id}</span></span>
+            <span>{t('settings.redirectTo')}: <span className="font-mono">{targetModel.id}</span></span>
           </div>
         </div>
       )}
@@ -432,20 +442,20 @@ function CurrentModelInfo({
       {(effectiveConfig.thinkingLevel || effectiveConfig.mediaResolution) && (
         <div className="pt-2 border-t border-slate-200 dark:border-slate-600">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-            {hasRedirect ? '生效的高级参数（来自目标模型）' : '高级参数配置'}
+            {hasRedirect ? t('settings.advancedParamsFromTarget') : t('settings.advancedParamsConfig')}
           </div>
           <div className="space-y-1">
             {effectiveConfig.thinkingLevel && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-600 dark:text-slate-300">思考深度:</span>
+                <span className="text-slate-600 dark:text-slate-300">{t('settings.thinkingDepth')}:</span>
                 <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
-                  {effectiveConfig.thinkingLevel === 'high' ? '高' : '低'}
+                  {effectiveConfig.thinkingLevel === 'high' ? t('settings.thinkingDepthHigh') : t('settings.thinkingDepthLow')}
                 </span>
               </div>
             )}
             {effectiveConfig.mediaResolution && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-600 dark:text-slate-300">媒体分辨率:</span>
+                <span className="text-slate-600 dark:text-slate-300">{t('settings.mediaResolution')}:</span>
                 <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs">
                   {getMediaResolutionLabel(effectiveConfig.mediaResolution)}
                 </span>
@@ -464,6 +474,7 @@ function CurrentModelInfo({
 // ============================================
 
 export function GenerationConfigSection() {
+  const { t } = useTranslation();
   const { generationConfig, updateGenerationConfig, streamingEnabled, setStreamingEnabled } = useSettingsStore();
   const [stopSequencesInput, setStopSequencesInput] = useState(
     generationConfig.stopSequences?.join(', ') || ''
@@ -481,9 +492,9 @@ export function GenerationConfigSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">生成参数</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.generation')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          调整 AI 生成内容的参数，控制输出的随机性和长度。
+          {t('settings.generationConfigDesc')}
         </p>
       </div>
 
@@ -492,12 +503,12 @@ export function GenerationConfigSection() {
         <div className="flex items-center justify-between">
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              流式输出
+              {t('settings.streamingOutput')}
             </label>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {streamingEnabled
-                ? '开启：AI 响应逐字逐句实时显示'
-                : '关闭：AI 响应完整生成后一次性显示'}
+                ? t('settings.streamingEnabled')
+                : t('settings.streamingDisabled')}
             </p>
           </div>
           <button
@@ -510,7 +521,7 @@ export function GenerationConfigSection() {
             `}
             role="switch"
             aria-checked={streamingEnabled}
-            aria-label="流式输出开关"
+            aria-label={t('settings.streamingOutput')}
           >
             <span
               className={`
@@ -526,7 +537,7 @@ export function GenerationConfigSection() {
       <div>
         <div className="flex justify-between items-center mb-2">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Temperature（温度）
+            {t('settings.temperature')}
           </label>
           <span className="text-sm text-slate-500 dark:text-slate-400">
             {generationConfig.temperature ?? 1}
@@ -542,9 +553,9 @@ export function GenerationConfigSection() {
           className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
         />
         <div className="flex justify-between text-xs text-slate-400 mt-1">
-          <span>精确 (0)</span>
-          <span>平衡 (1)</span>
-          <span>创意 (2)</span>
+          <span>{t('settings.temperaturePrecise')}</span>
+          <span>{t('settings.temperatureBalanced')}</span>
+          <span>{t('settings.temperatureCreative')}</span>
         </div>
       </div>
 
@@ -552,7 +563,7 @@ export function GenerationConfigSection() {
       <div>
         <div className="flex justify-between items-center mb-2">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Top P
+            {t('settings.topP')}
           </label>
           <span className="text-sm text-slate-500 dark:text-slate-400">
             {generationConfig.topP ?? 0.95}
@@ -576,7 +587,7 @@ export function GenerationConfigSection() {
       {/* Top K 输入框 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Top K
+          {t('settings.topK')}
         </label>
         <input
           type="number"
@@ -589,14 +600,14 @@ export function GenerationConfigSection() {
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          控制每次采样考虑的候选词数量，默认 40
+          {t('settings.topKHint')}
         </p>
       </div>
 
       {/* Max Output Tokens 输入框 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          最大输出 Token 数
+          {t('settings.maxOutputTokens')}
         </label>
         <input
           type="number"
@@ -606,32 +617,32 @@ export function GenerationConfigSection() {
           onChange={(e) => updateGenerationConfig({
             maxOutputTokens: e.target.value ? parseInt(e.target.value) : undefined
           })}
-          placeholder="留空使用默认值"
+          placeholder={t('settings.maxOutputTokensPlaceholder')}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 
             bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          限制 AI 回复的最大长度，留空使用模型默认值
+          {t('settings.maxOutputTokensHint')}
         </p>
       </div>
 
       {/* Stop Sequences 输入 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          停止序列
+          {t('settings.stopSequences')}
         </label>
         <input
           type="text"
           value={stopSequencesInput}
           onChange={(e) => handleStopSequencesChange(e.target.value)}
-          placeholder="用逗号分隔多个序列"
+          placeholder={t('settings.stopSequencesPlaceholder')}
           className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 
             bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          当 AI 生成这些序列时会停止输出，用逗号分隔多个序列
+          {t('settings.stopSequencesHint')}
         </p>
       </div>
     </div>
@@ -643,6 +654,7 @@ export function GenerationConfigSection() {
 // ============================================
 
 export function SystemInstructionSection() {
+  const { t } = useTranslation();
   const { systemInstruction, updateSystemInstruction } = useSettingsStore();
   const { activeWindowId, windows, updateWindowConfig } = useChatWindowStore();
 
@@ -660,28 +672,28 @@ export function SystemInstructionSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">系统指令</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.systemInstruction')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          设置 AI 的角色和行为方式，系统指令会在每次对话开始时发送给 AI。
+          {t('settings.systemInstructionDesc')}
         </p>
       </div>
 
       {/* 全局系统指令 */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          全局系统指令
+          {t('settings.globalSystemInstructionLabel')}
         </label>
         <textarea
           value={systemInstruction}
           onChange={(e) => updateSystemInstruction(e.target.value)}
-          placeholder="例如：你是一个专业的编程助手，擅长解答技术问题..."
+          placeholder={t('settings.systemInstructionPlaceholder')}
           rows={4}
           className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 
             bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          全局系统指令会应用于所有新对话
+          {t('settings.globalSystemInstructionHint')}
         </p>
       </div>
 
@@ -689,15 +701,15 @@ export function SystemInstructionSection() {
       {currentWindow && (
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            当前聊天窗口系统指令
+            {t('settings.windowSystemInstruction')}
             <span className="ml-2 text-xs text-slate-400 font-normal">
-              （仅对当前窗口生效）
+              {t('settings.windowSystemInstructionNote')}
             </span>
           </label>
           <textarea
             value={windowInstruction}
             onChange={(e) => setWindowInstruction(e.target.value)}
-            placeholder="为当前聊天窗口设置独立的系统指令..."
+            placeholder={t('settings.windowSystemInstructionPlaceholder')}
             rows={4}
             className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 
               bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
@@ -705,13 +717,13 @@ export function SystemInstructionSection() {
           />
           <div className="flex justify-between items-center mt-2">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              窗口级别的系统指令会覆盖全局设置
+              {t('settings.windowSystemInstructionHint')}
             </p>
             <button
               onClick={handleWindowInstructionSave}
               className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
             >
-              保存
+              {t('common.save')}
             </button>
           </div>
         </div>
@@ -724,22 +736,30 @@ export function SystemInstructionSection() {
 // 安全设置
 // ============================================
 
-const HARM_CATEGORY_LABELS: Record<HarmCategory, string> = {
-  'HARM_CATEGORY_HARASSMENT': '骚扰内容',
-  'HARM_CATEGORY_HATE_SPEECH': '仇恨言论',
-  'HARM_CATEGORY_SEXUALLY_EXPLICIT': '色情内容',
-  'HARM_CATEGORY_DANGEROUS_CONTENT': '危险内容',
-};
-
-const THRESHOLD_LABELS: Record<HarmBlockThreshold, string> = {
-  'BLOCK_NONE': '不阻止',
-  'BLOCK_LOW_AND_ABOVE': '阻止低及以上',
-  'BLOCK_MEDIUM_AND_ABOVE': '阻止中及以上',
-  'BLOCK_ONLY_HIGH': '仅阻止高风险',
-};
-
 export function SafetySettingsSection() {
+  const { t } = useTranslation();
   const { safetySettings, updateSafetySettings } = useSettingsStore();
+
+  // 使用翻译函数获取标签
+  const getHarmCategoryLabel = (category: HarmCategory): string => {
+    const labels: Record<HarmCategory, string> = {
+      'HARM_CATEGORY_HARASSMENT': t('settings.harmCategoryHarassment'),
+      'HARM_CATEGORY_HATE_SPEECH': t('settings.harmCategoryHateSpeech'),
+      'HARM_CATEGORY_SEXUALLY_EXPLICIT': t('settings.harmCategorySexuallyExplicit'),
+      'HARM_CATEGORY_DANGEROUS_CONTENT': t('settings.harmCategoryDangerousContent'),
+    };
+    return labels[category];
+  };
+
+  const getThresholdLabel = (threshold: HarmBlockThreshold): string => {
+    const labels: Record<HarmBlockThreshold, string> = {
+      'BLOCK_NONE': t('settings.thresholdBlockNone'),
+      'BLOCK_LOW_AND_ABOVE': t('settings.thresholdBlockLowAndAbove'),
+      'BLOCK_MEDIUM_AND_ABOVE': t('settings.thresholdBlockMediumAndAbove'),
+      'BLOCK_ONLY_HIGH': t('settings.thresholdBlockOnlyHigh'),
+    };
+    return labels[threshold];
+  };
 
   const getThresholdForCategory = (category: HarmCategory): HarmBlockThreshold | '' => {
     const setting = safetySettings.find(s => s.category === category);
@@ -769,9 +789,9 @@ export function SafetySettingsSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">安全设置</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.safety')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          配置内容过滤级别，控制 AI 对不同类型内容的处理方式。
+          {t('settings.safetySettingsDesc')}
         </p>
       </div>
 
@@ -779,7 +799,7 @@ export function SafetySettingsSection() {
         {HARM_CATEGORIES.map((category) => (
           <div key={category} className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {HARM_CATEGORY_LABELS[category]}
+              {getHarmCategoryLabel(category)}
             </label>
             <select
               value={getThresholdForCategory(category)}
@@ -788,10 +808,10 @@ export function SafetySettingsSection() {
                 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">使用默认设置</option>
+              <option value="">{t('settings.thresholdDefault')}</option>
               {HARM_BLOCK_THRESHOLDS.map((threshold) => (
                 <option key={threshold} value={threshold}>
-                  {THRESHOLD_LABELS[threshold]}
+                  {getThresholdLabel(threshold)}
                 </option>
               ))}
             </select>
@@ -801,7 +821,7 @@ export function SafetySettingsSection() {
 
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
         <p className="text-sm text-amber-700 dark:text-amber-300">
-          <strong>注意：</strong>降低安全过滤级别可能导致 AI 生成不适当的内容。请谨慎调整。
+          <strong>{t('common.note')}：</strong>{t('settings.safetyWarning')}
         </p>
       </div>
     </div>
@@ -813,6 +833,7 @@ export function SafetySettingsSection() {
 // ============================================
 
 export function DataManagementSection() {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [importMessage, setImportMessage] = useState('');
@@ -849,10 +870,10 @@ export function DataManagementSection() {
       await loadWindows();
       await loadSettings();
       setImportStatus('success');
-      setImportMessage('数据导入成功！');
+      setImportMessage(t('settings.importSuccess'));
     } catch (error) {
       setImportStatus('error');
-      setImportMessage(error instanceof Error ? error.message : '导入失败');
+      setImportMessage(error instanceof Error ? error.message : t('settings.importFailed'));
     }
 
     // 清空文件输入
@@ -870,32 +891,32 @@ export function DataManagementSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">数据管理</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.dataManagement')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          导出或导入您的对话数据和设置，方便备份和迁移。
+          {t('settings.dataManagementDesc')}
         </p>
       </div>
 
       {/* 导出 */}
       <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">导出数据</h4>
+        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">{t('settings.exportData')}</h4>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          将所有对话和设置导出为 JSON 文件
+          {t('settings.exportDataDesc')}
         </p>
         <button
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
         >
           <DownloadIcon className="h-4 w-4" />
-          导出数据
+          {t('settings.exportData')}
         </button>
       </div>
 
       {/* 导入 */}
       <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">导入数据</h4>
+        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">{t('settings.importData')}</h4>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          从 JSON 文件恢复对话和设置（将覆盖现有数据）
+          {t('settings.importDataDesc')}
         </p>
         <input
           ref={fileInputRef}
@@ -909,7 +930,7 @@ export function DataManagementSection() {
           className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors"
         >
           <UploadIcon className="h-4 w-4" />
-          选择文件导入
+          {t('settings.selectFileToImport')}
         </button>
 
         {/* 导入状态提示 */}
@@ -926,7 +947,7 @@ export function DataManagementSection() {
       {/* 警告 */}
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
         <p className="text-sm text-amber-700 dark:text-amber-300">
-          <strong>注意：</strong>导入数据会覆盖现有的所有对话和设置，请先导出备份。
+          <strong>{t('common.note')}：</strong>{t('settings.importWarning')}
         </p>
       </div>
     </div>
@@ -1083,14 +1104,15 @@ function UploadIcon({ className }: { className?: string }) {
 // ============================================
 
 export function AppearanceSettingsSection() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useSettingsStore();
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">外观设置</h3>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.appearance')}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          自定义应用程序的外观和主题。
+          {t('settings.appearanceDesc')}
         </p>
       </div>
 
@@ -1111,8 +1133,8 @@ export function AppearanceSettingsSection() {
             </div>
             {theme === 'light' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />}
           </div>
-          <div className="font-medium text-slate-900 dark:text-slate-100">浅色模式</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">清新明亮的界面风格</div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">{t('settings.lightMode')}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.lightModeDesc')}</div>
         </button>
 
         {/* 深色主题 */}
@@ -1131,8 +1153,8 @@ export function AppearanceSettingsSection() {
             </div>
             {theme === 'dark' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />}
           </div>
-          <div className="font-medium text-slate-900 dark:text-slate-100">深色模式</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">舒适护眼的暗色界面</div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">{t('settings.darkMode')}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.darkModeDesc')}</div>
         </button>
 
         {/* 午夜薄荷主题 */}
@@ -1151,17 +1173,15 @@ export function AppearanceSettingsSection() {
             </div>
             {theme === 'midnight' && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />}
           </div>
-          <div className="font-medium text-slate-900 dark:text-slate-100">午夜薄荷</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">极客风格的纯黑体验</div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">{t('settings.midnightMint')}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.midnightMintDesc')}</div>
         </button>
 
-        {/* 雪白主题 (Snow White) */}
         {/* 雪白主题 (Snow White) */}
         <button
           onClick={() => {
             setTheme('snow-white');
-            // We do NOT touch customThemeColor here, allowing user to keep their custom preference
-            // when switching back to Light/Dark.
+            // 切换回浅色/深色时保留用户的自定义颜色偏好
           }}
           className={`
             relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
@@ -1176,8 +1196,8 @@ export function AppearanceSettingsSection() {
             </div>
             {theme === 'snow-white' && <div className="w-2.5 h-2.5 rounded-full bg-neutral-900 ring-2 ring-white" />}
           </div>
-          <div className="font-medium text-slate-900 dark:text-slate-100">雪白主题 (Pure)</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">几近纯白，极简边框风格</div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">{t('settings.snowWhite')}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.snowWhiteDesc')}</div>
         </button>
 
         {/* 跟随系统 */}
@@ -1196,8 +1216,8 @@ export function AppearanceSettingsSection() {
             </div>
             {theme === 'system' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />}
           </div>
-          <div className="font-medium text-slate-900 dark:text-slate-100">跟随系统</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">自动适应系统设置</div>
+          <div className="font-medium text-slate-900 dark:text-slate-100">{t('settings.followSystem')}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.followSystemDesc')}</div>
         </button>
 
         {/* 自定义颜色 */}
@@ -1208,6 +1228,7 @@ export function AppearanceSettingsSection() {
 }
 
 function CustomColorSelector() {
+  const { t } = useTranslation();
   const { customThemeColor, setCustomThemeColor } = useSettingsStore();
 
   return (
@@ -1229,20 +1250,20 @@ function CustomColorSelector() {
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              setCustomThemeColor(''); // Clean
+              setCustomThemeColor(''); // 清除
             }}
             className="text-xs text-slate-500 hover:text-red-500 underline z-10"
           >
-            重置
+            {t('settings.resetColor')}
           </button>
         )}
       </div>
 
       <div className="font-medium text-slate-900 dark:text-slate-100">
-        {customThemeColor ? '自定义颜色' : '选择颜色'}
+        {customThemeColor ? t('settings.customColor') : t('settings.selectColor')}
       </div>
       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-        {customThemeColor ? customThemeColor : '点击选择主题色'}
+        {customThemeColor ? customThemeColor : t('settings.selectCustomColor')}
       </div>
 
       <input
@@ -1250,7 +1271,7 @@ function CustomColorSelector() {
         value={customThemeColor || '#22c55e'}
         onChange={(e) => setCustomThemeColor(e.target.value)}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
-        title="选择自定义主题色"
+        title={t('settings.selectCustomThemeColor')}
       />
     </div>
   );

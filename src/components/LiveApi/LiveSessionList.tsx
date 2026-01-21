@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import type { LiveSessionSummary } from '../../types/liveApi';
+import { useTranslation } from '@/i18n';
 
 /**
  * 会话列表组件属性
@@ -72,6 +73,8 @@ export function LiveSessionList({
   onDeleteSession,
   className = '',
 }: LiveSessionListProps): JSX.Element {
+  const { t } = useTranslation();
+  
   // 删除确认对话框状态
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -102,7 +105,7 @@ export function LiveSessionList({
       {/* 需求: 1.7 - 开始会话按钮在底部控制面板中 */}
       <div className="flex items-center px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-          历史会话
+          {t('live.historySessions')}
         </h2>
       </div>
 
@@ -113,15 +116,15 @@ export function LiveSessionList({
           <div className="flex items-center justify-center h-32">
             <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
               <LoadingSpinner className="w-5 h-5" />
-              <span className="text-sm">加载中...</span>
+              <span className="text-sm">{t('common.loading')}</span>
             </div>
           </div>
         ) : sessions.length === 0 ? (
           // 空状态
           <div className="flex flex-col items-center justify-center h-32 text-neutral-400 dark:text-neutral-500">
             <EmptyIcon className="w-10 h-10 mb-2 opacity-50" />
-            <p className="text-sm">暂无历史会话</p>
-            <p className="text-xs mt-1">点击上方按钮开始新会话</p>
+            <p className="text-sm">{t('live.noHistorySessions')}</p>
+            <p className="text-xs mt-1">{t('live.clickToStartSession')}</p>
           </div>
         ) : (
           // 会话列表
@@ -134,6 +137,7 @@ export function LiveSessionList({
                 isSelected={session.id === selectedSessionId}
                 onSelect={() => onSelectSession(session.id)}
                 onDelete={(e) => handleDeleteClick(e, session.id)}
+                t={t}
               />
             ))}
           </div>
@@ -146,6 +150,7 @@ export function LiveSessionList({
         <DeleteConfirmDialog
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}
+          t={t}
         />
       )}
     </div>
@@ -160,6 +165,7 @@ interface SessionItemProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: (e: React.MouseEvent) => void;
+  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
 /**
@@ -172,6 +178,7 @@ function SessionItem({
   isSelected,
   onSelect,
   onDelete,
+  t,
 }: SessionItemProps): JSX.Element {
   return (
     <div
@@ -211,7 +218,7 @@ function SessionItem({
             }
           `}
         >
-          {session.summary || '（无消息）'}
+          {session.summary || t('live.noMessages')}
         </p>
         {/* 需求: 1.3 - 显示创建时间 */}
         <div className="flex items-center gap-2 mt-1">
@@ -220,7 +227,7 @@ function SessionItem({
           </span>
           <span className="text-xs text-neutral-300 dark:text-neutral-600">•</span>
           <span className="text-xs text-neutral-400 dark:text-neutral-500">
-            {session.messageCount} 条消息
+            {session.messageCount} {t('live.messages')}
           </span>
         </div>
       </div>
@@ -236,7 +243,7 @@ function SessionItem({
           text-neutral-400 hover:text-red-500 dark:hover:text-red-400
           transition-all
         "
-        title="删除会话"
+        title={t('live.deleteSession')}
         data-testid={`delete-session-${session.id}`}
       >
         <TrashIcon className="w-4 h-4" />
@@ -251,6 +258,7 @@ function SessionItem({
 interface DeleteConfirmDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
+  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
 /**
@@ -260,6 +268,7 @@ interface DeleteConfirmDialogProps {
 function DeleteConfirmDialog({
   onConfirm,
   onCancel,
+  t,
 }: DeleteConfirmDialogProps): JSX.Element {
   return (
     <div
@@ -274,10 +283,10 @@ function DeleteConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-2">
-          确认删除
+          {t('live.confirmDelete')}
         </h3>
         <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-          删除后将无法恢复此会话及其语音记录，确定要删除吗？
+          {t('live.deleteSessionConfirm')}
         </p>
         <div className="flex justify-end gap-3">
           <button
@@ -290,7 +299,7 @@ function DeleteConfirmDialog({
               transition-colors text-sm font-medium
             "
           >
-            取消
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -302,7 +311,7 @@ function DeleteConfirmDialog({
             "
             data-testid="confirm-delete-btn"
           >
-            删除
+            {t('common.delete')}
           </button>
         </div>
       </div>

@@ -6,6 +6,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import type { ThinkingBudgetConfig } from '../../types/models';
+import { useTranslation } from '../../i18n/useTranslation';
 
 /**
  * 思考预算滑块属性
@@ -24,22 +25,6 @@ export interface ThinkingBudgetSliderProps {
 }
 
 /**
- * 格式化显示值
- * @param value 当前值
- * @returns 格式化后的显示文本
- */
-function formatDisplayValue(value: number): string {
-  if (value === -1) {
-    return '动态';
-  }
-  if (value === 0) {
-    return '关闭';
-  }
-  // 格式化数字，添加千位分隔符
-  return value.toLocaleString('zh-CN');
-}
-
-/**
  * 思考预算滑块组件
  * 支持 full 和 compact 两种显示模式
  */
@@ -50,7 +35,24 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
   disabled = false,
   variant = 'full',
 }) => {
+  const { t } = useTranslation();
   const { min, max, canDisable } = config;
+
+  /**
+   * 格式化显示值
+   * @param val 当前值
+   * @returns 格式化后的显示文本
+   */
+  const formatDisplayValue = useCallback((val: number): string => {
+    if (val === -1) {
+      return t('modelParams.thinkingBudgetDynamic');
+    }
+    if (val === 0) {
+      return t('modelParams.thinkingBudgetOff');
+    }
+    // 格式化数字，添加千位分隔符
+    return val.toLocaleString();
+  }, [t]);
 
   // 计算滑块的实际最小值（如果支持禁用，则从 0 开始，否则从 min 开始）
   const sliderMin = canDisable ? 0 : min;
@@ -95,7 +97,7 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">
-          思考预算:
+          {t('modelParams.thinkingBudget')}:
         </span>
         <div className="flex items-center gap-1">
           {/* 动态按钮 */}
@@ -111,9 +113,9 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
               }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
-            title="让模型根据请求复杂度自动调整思考量"
+            title={t('modelParams.thinkingBudgetDynamicDesc')}
           >
-            动态
+            {t('modelParams.thinkingBudgetDynamic')}
           </button>
           {/* 关闭按钮（仅当 canDisable 为 true 时显示） */}
           {canDisable && (
@@ -129,9 +131,9 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
-              title="禁用思考功能"
+              title={t('modelParams.thinkingBudgetOffDesc')}
             >
-              关闭
+              {t('modelParams.thinkingBudgetOff')}
             </button>
           )}
         </div>
@@ -148,11 +150,11 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-medium text-[var(--text-primary)]">
-          思考预算
+          {t('modelParams.thinkingBudget')}
         </label>
         <span className="text-sm text-[var(--text-secondary)]">
           {formatDisplayValue(value)}
-          {!isDynamic && !isOff && ' tokens'}
+          {!isDynamic && !isOff && ` ${t('modelParams.thinkingBudgetTokens')}`}
         </span>
       </div>
 
@@ -170,9 +172,9 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
-          title="让模型根据请求复杂度自动调整思考量"
+          title={t('modelParams.thinkingBudgetDynamicDesc')}
         >
-          动态
+          {t('modelParams.thinkingBudgetDynamic')}
         </button>
         {canDisable && (
           <button
@@ -187,9 +189,9 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
               }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
-            title="禁用思考功能"
+            title={t('modelParams.thinkingBudgetOffDesc')}
           >
-            关闭
+            {t('modelParams.thinkingBudgetOff')}
           </button>
         )}
       </div>
@@ -225,18 +227,18 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
           `}
         />
         <div className="flex justify-between text-xs text-[var(--text-tertiary)]">
-          <span>{canDisable ? '0' : min.toLocaleString('zh-CN')}</span>
-          <span>{max.toLocaleString('zh-CN')}</span>
+          <span>{canDisable ? '0' : min.toLocaleString()}</span>
+          <span>{max.toLocaleString()}</span>
         </div>
       </div>
 
       {/* 说明文字 */}
       <p className="text-xs text-[var(--text-tertiary)]">
         {isDynamic
-          ? '动态模式：模型根据请求复杂度自动调整思考量'
+          ? t('modelParams.thinkingBudgetDynamicDesc')
           : isOff
-          ? '关闭模式：禁用思考功能，直接生成响应'
-          : `手动模式：限制思考使用 ${value.toLocaleString('zh-CN')} tokens`}
+          ? t('modelParams.thinkingBudgetOffDesc')
+          : t('modelParams.thinkingBudgetManualDesc', { count: value.toLocaleString() })}
       </p>
     </div>
   );

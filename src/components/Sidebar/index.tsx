@@ -8,6 +8,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useChatWindowStore } from '../../stores/chatWindow';
 import { useSettingsStore } from '../../stores/settings';
 import { useSidebarView } from '../Layout';
+import { useTranslation } from '../../i18n';
 import { ChatWindowCard } from './ChatWindowCard';
 import { SearchBar, filterChatWindows } from './SearchBar';
 import { DragDropList } from './DragDropList';
@@ -39,6 +40,7 @@ export function Sidebar() {
 
   const { currentModel, systemInstruction, toggleSidebar } = useSettingsStore();
   const { currentView } = useSidebarView();
+  const { t } = useTranslation();
 
   // 搜索关键词
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,11 +59,15 @@ export function Sidebar() {
 
   // 创建新聊天窗口 - 直接创建，不弹出模板选择
   const handleCreateWindow = useCallback(() => {
-    createWindow({
-      model: currentModel,
-      systemInstruction: systemInstruction || undefined,
-    });
-  }, [createWindow, currentModel, systemInstruction]);
+    createWindow(
+      {
+        model: currentModel,
+        systemInstruction: systemInstruction || undefined,
+      },
+      t('chat.defaultChatName'),
+      t('sidebar.mainTopic')
+    );
+  }, [createWindow, currentModel, systemInstruction, t]);
 
   // 选择聊天窗口
   const handleSelectWindow = useCallback((id: string) => {
@@ -154,8 +160,8 @@ export function Sidebar() {
             onClick={(e) => e.stopPropagation()}
           />
           <div className="flex gap-2 mt-2">
-            <button onClick={handleSaveEdit} className="flex-1 px-3 py-1 text-xs bg-primary-500 hover:bg-primary-600 text-white rounded transition-colors">保存</button>
-            <button onClick={handleCancelEdit} className="flex-1 px-3 py-1 text-xs bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-neutral-300 rounded transition-colors">取消</button>
+            <button onClick={handleSaveEdit} className="flex-1 px-3 py-1 text-xs bg-primary-500 hover:bg-primary-600 text-white rounded transition-colors">{t('common.save')}</button>
+            <button onClick={handleCancelEdit} className="flex-1 px-3 py-1 text-xs bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-neutral-300 rounded transition-colors">{t('common.cancel')}</button>
           </div>
         </div>
       );
@@ -179,12 +185,12 @@ export function Sidebar() {
     <div className="flex h-full flex-col bg-neutral-50 dark:bg-neutral-800 transition-colors duration-300">
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
         <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
-          {currentView === 'assistants' ? '助手' : currentView === 'images' ? '图片库' : currentView === 'templates' ? '模板' : currentView === 'bookmarks' ? '书签' : currentView === 'live' ? '实时对话' : '设置'}
+          {currentView === 'assistants' ? t('sidebar.assistants') : currentView === 'images' ? t('sidebar.gallery') : currentView === 'templates' ? t('sidebar.templates') : currentView === 'bookmarks' ? t('sidebar.bookmarks') : currentView === 'live' ? t('sidebar.live') : t('settings.title')}
         </h2>
         <button
           onClick={toggleSidebar}
           className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors"
-          title="折叠侧边栏"
+          title={t('sidebar.collapseSidebar')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -201,17 +207,17 @@ export function Sidebar() {
               style={{ minHeight: touchTargets.minimum }}
             >
               <PlusIcon className="h-5 w-5" />
-              新建程序
+              {t('sidebar.newChat')}
             </button>
           </div>
           <div className="px-3 pb-2">
-            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="搜索程序..." />
+            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('sidebar.searchPlaceholder')} />
           </div>
           <div className="flex-1 overflow-y-auto px-2 custom-scrollbar">
             {filteredWindows.length === 0 ? (
               <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
                 <ChatIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                {searchTerm ? (<><p>未找到匹配的程序</p><p className="text-sm mt-1">尝试其他搜索词</p></>) : (<><p>暂无程序</p><p className="text-sm mt-1">点击上方按钮开始新程序</p></>)}
+                {searchTerm ? (<><p>{t('sidebar.noMatchingChats')}</p><p className="text-sm mt-1">{t('sidebar.tryOtherKeywords')}</p></>) : (<><p>{t('sidebar.noChats')}</p><p className="text-sm mt-1">{t('sidebar.startNewChat')}</p></>)}
               </div>
             ) : (
               <DragDropList items={filteredWindows} keyExtractor={(window) => window.id} renderItem={renderWindowCard} onReorder={handleReorder} />
@@ -219,7 +225,7 @@ export function Sidebar() {
           </div>
           <div className="p-3 border-t border-neutral-200 dark:border-neutral-700">
             <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
-              {filteredWindows.length === windows.length ? `${windows.length} 个程序` : `显示 ${filteredWindows.length} / ${windows.length} 个程序`}
+              {filteredWindows.length === windows.length ? `${windows.length} ${t('sidebar.chatCount')}` : `${t('sidebar.showing')} ${filteredWindows.length} / ${windows.length} ${t('sidebar.chatCount')}`}
             </p>
             <div className="mt-2 text-center">
               <VersionDisplay />

@@ -9,6 +9,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { SubTopic } from '../../types/chatWindow';
 import { useReducedMotion } from '../motion';
 import { durationValues, easings, touchTargets } from '../../design/tokens';
+import { useTranslation } from '../../i18n/useTranslation';
 
 // ============ 类型定义 ============
 
@@ -50,6 +51,7 @@ function TabItem({
   onRename,
   reducedMotion,
 }: TabItemProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(subTopic.title);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -201,7 +203,7 @@ function TabItem({
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
-              确定删除此话题？
+              {t('sidebar.deleteSubTopicConfirm')}
             </p>
             <div className="flex gap-2">
               <button
@@ -212,7 +214,7 @@ function TabItem({
                   transition-colors
                 "
               >
-                删除
+                {t('common.delete')}
               </button>
               <button
                 onClick={handleCancelDelete}
@@ -223,7 +225,7 @@ function TabItem({
                   transition-colors
                 "
               >
-                取消
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -252,6 +254,7 @@ export function SubTopicTabs({
   onDelete,
   onRename,
 }: SubTopicTabsProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -280,7 +283,7 @@ export function SubTopicTabs({
         bg-white dark:bg-neutral-900
       "
       role="tablist"
-      aria-label="子话题列表"
+      aria-label={t('sidebar.subTopicList')}
     >
       {/* 标签滚动容器 */}
       <div
@@ -312,8 +315,8 @@ export function SubTopicTabs({
           hover:text-primary-600 dark:hover:text-primary-400
         "
         style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-        aria-label="新建子话题"
-        title="新建子话题"
+        aria-label={t('sidebar.newSubTopic')}
+        title={t('sidebar.newSubTopic')}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

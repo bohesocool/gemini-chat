@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from '@/i18n';
 import type { ChatWindowConfig } from '../../types/chatWindow';
 import type { ModelConfig, ThinkingLevel, ModelAdvancedConfig } from '../../types/models';
 import { useModelStore } from '../../stores/model';
@@ -44,10 +45,12 @@ interface ModelSelectorProps {
 }
 
 function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        模型
+        {t('live.model')}
       </label>
       {/* 需求 2.1: 使用模型的原始 ID 作为主要显示名称 */}
       <select
@@ -135,6 +138,7 @@ interface SystemInstructionEditorProps {
 }
 
 function SystemInstructionEditor({ value, onChange }: SystemInstructionEditorProps) {
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 自动调整高度
@@ -148,13 +152,13 @@ function SystemInstructionEditor({ value, onChange }: SystemInstructionEditorPro
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        系统指令
+        {t('settings.systemInstruction')}
       </label>
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="设置 AI 的角色和行为方式..."
+        placeholder={t('settings.systemInstructionPlaceholder')}
         rows={2}
         className="
           w-full px-3 py-2 rounded-lg
@@ -166,7 +170,7 @@ function SystemInstructionEditor({ value, onChange }: SystemInstructionEditorPro
         "
       />
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
-        系统指令会在每次对话时发送给 AI
+        {t('settings.systemInstructionDesc')}
       </p>
     </div>
   );
@@ -192,6 +196,7 @@ export function InlineConfigPanel({
   onToggle,
   onConfigChange,
 }: InlineConfigPanelProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const { models } = useModelStore();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -328,7 +333,7 @@ export function InlineConfigPanel({
               {modelName}
             </div>
             <div className="text-xs text-neutral-500 dark:text-neutral-400">
-              点击配置模型和参数
+              {t('chat.openConfig')}
             </div>
           </div>
         </div>
@@ -369,47 +374,47 @@ export function InlineConfigPanel({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Temperature */}
             <ParameterSlider
-              label="Temperature"
+              label={t('settings.temperature')}
               value={config.generationConfig.temperature ?? 1}
               min={0}
               max={2}
               step={0.1}
               onChange={(v) => handleGenerationConfigChange('temperature', v)}
-              description="控制输出的随机性"
+              description={t('settings.temperatureDesc')}
             />
 
             {/* Top P */}
             <ParameterSlider
-              label="Top P"
+              label={t('settings.topP')}
               value={config.generationConfig.topP ?? 0.95}
               min={0}
               max={1}
               step={0.05}
               onChange={(v) => handleGenerationConfigChange('topP', v)}
-              description="核采样概率阈值"
+              description={t('settings.topPDesc')}
             />
 
             {/* Top K */}
             <ParameterSlider
-              label="Top K"
+              label={t('settings.topK')}
               value={config.generationConfig.topK ?? 40}
               min={1}
               max={100}
               step={1}
               onChange={(v) => handleGenerationConfigChange('topK', v)}
-              description="候选词数量"
+              description={t('settings.topKDesc')}
             />
 
             {/* Max Output Tokens - Requirements: 2.10 */}
             <ParameterSlider
-              label="最大输出长度"
+              label={t('settings.maxOutputTokensLabel')}
               value={config.generationConfig.maxOutputTokens ?? modelCapabilities.maxOutputTokens ?? 8192}
               min={256}
               max={modelCapabilities.maxOutputTokens ?? 8192}
               step={256}
               onChange={(v) => handleGenerationConfigChange('maxOutputTokens', v)}
               formatValue={(v) => `${v} tokens`}
-              description="限制回复长度"
+              description={t('settings.maxOutputTokensDesc')}
             />
           </div>
 
@@ -436,10 +441,10 @@ export function InlineConfigPanel({
             <div className="flex items-center justify-between">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  显示思维链
+                  {t('settings.showThinkingChain')}
                 </label>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  显示模型的推理过程
+                  {t('settings.showReasoningProcess')}
                 </p>
               </div>
               <button

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useChatWindowStore } from '../stores/chatWindow';
 import { useSettingsStore } from '../stores/settings';
+import { useTranslation } from '../i18n/useTranslation';
 
 /**
  * 格式化时间戳为相对时间
@@ -30,6 +31,7 @@ function formatRelativeTime(timestamp: number): string {
  * 对话列表侧边栏
  */
 export function Sidebar() {
+  const { t } = useTranslation();
   const {
     windows,
     activeWindowId,
@@ -50,10 +52,14 @@ export function Sidebar() {
 
   // 创建新聊天窗口
   const handleCreateWindow = () => {
-    createWindow({
-      model: currentModel,
-      systemInstruction: systemInstruction || undefined,
-    });
+    createWindow(
+      {
+        model: currentModel,
+        systemInstruction: systemInstruction || undefined,
+      },
+      t('chat.defaultChatName'),
+      t('sidebar.mainTopic')
+    );
   };
 
   // 选择聊天窗口

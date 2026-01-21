@@ -12,12 +12,14 @@ import { useSidebarView } from '../Layout';
 import type { PromptTemplate, CreateTemplateInput, UpdateTemplateInput } from '../../stores/template';
 import { touchTargets } from '../../design/tokens';
 import { TemplateEditorModal } from './TemplateEditorModal';
+import { useTranslation } from '@/i18n';
 
 /**
  * 模板管理器组件
  * 显示简洁的模板列表，点击选中模板
  */
 export function TemplateManager() {
+  const { t } = useTranslation();
   const { templates, initialized, loadTemplates, addTemplate, updateTemplate } = useTemplateStore();
   const { selectedTemplateId, setSelectedTemplateId } = useSidebarView();
   
@@ -72,7 +74,7 @@ export function TemplateManager() {
           style={{ minHeight: touchTargets.minimum }}
         >
           <PlusIcon className="h-5 w-5" />
-          新建模板
+          {t('template.newTemplate')}
         </button>
       </div>
 
@@ -82,7 +84,7 @@ export function TemplateManager() {
         {builtInTemplates.length > 0 && (
           <div className="mb-4">
             <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-1">
-              内置模板
+              {t('template.builtIn')}
             </h3>
             <div className="space-y-2">
               {builtInTemplates.map(template => (
@@ -101,7 +103,7 @@ export function TemplateManager() {
         {userTemplates.length > 0 && (
           <div>
             <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-1">
-              我的模板
+              {t('template.myTemplates')}
             </h3>
             <div className="space-y-2">
               {userTemplates.map(template => (
@@ -120,8 +122,8 @@ export function TemplateManager() {
         {templates.length === 0 && (
           <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
             <TemplateIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>暂无模板</p>
-            <p className="text-sm mt-1">在详情页面创建新模板</p>
+            <p>{t('template.noTemplates')}</p>
+            <p className="text-sm mt-1">{t('template.createHint')}</p>
           </div>
         )}
       </div>
@@ -129,7 +131,7 @@ export function TemplateManager() {
       {/* 底部统计 */}
       <div className="p-3 border-t border-neutral-200 dark:border-neutral-700">
         <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
-          {templates.length} 个模板
+          {templates.length} {t('sidebar.templates').toLowerCase()}
         </p>
       </div>
 
@@ -158,6 +160,8 @@ interface TemplateCardProps {
  * 需求: 2.12 - 选中状态高亮
  */
 function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
+  const { t } = useTranslation();
+  
   return (
     <button
       onClick={onSelect}
@@ -185,7 +189,7 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
             </h4>
             {template.isBuiltIn && (
               <span className="flex-shrink-0 px-1.5 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
-                内置
+                {t('template.builtInTag')}
               </span>
             )}
           </div>

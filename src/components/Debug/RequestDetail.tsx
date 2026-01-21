@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react';
 import type { ApiRequestRecord } from '../../stores/debug';
 import { TokenUsageDisplay } from './TokenUsageDisplay';
 import { TimingDisplay } from './TimingDisplay';
+import { useTranslation } from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -27,6 +28,7 @@ type TabId = 'headers' | 'body' | 'response';
  * 修复: 详情信息溢出/截断问题，响应式布局
  */
 export function RequestDetail({ request }: RequestDetailProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('response');
 
   return (
@@ -48,7 +50,7 @@ export function RequestDetail({ request }: RequestDetailProps) {
           {/* 状态码 */}
           {request.statusCode !== undefined && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">状态:</span>
+              <span className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">{t('debug.status')}:</span>
               <StatusBadge statusCode={request.statusCode} />
             </div>
           )}
@@ -75,17 +77,17 @@ export function RequestDetail({ request }: RequestDetailProps) {
       {/* 标签页 - 修复响应式布局 */}
       <div className="flex-shrink-0 flex border-b border-neutral-200 dark:border-neutral-700 overflow-x-auto">
         <TabButton
-          label="响应"
+          label={t('debug.response')}
           isActive={activeTab === 'response'}
           onClick={() => setActiveTab('response')}
         />
         <TabButton
-          label="请求体"
+          label={t('debug.body')}
           isActive={activeTab === 'body'}
           onClick={() => setActiveTab('body')}
         />
         <TabButton
-          label="请求头"
+          label={t('debug.headers')}
           isActive={activeTab === 'headers'}
           onClick={() => setActiveTab('headers')}
         />
@@ -94,13 +96,13 @@ export function RequestDetail({ request }: RequestDetailProps) {
       {/* 内容区 */}
       <div className="flex-1 overflow-hidden min-h-0">
         {activeTab === 'headers' && (
-          <JsonViewer data={request.headers} title="请求头" />
+          <JsonViewer data={request.headers} title={t('debug.headers')} />
         )}
         {activeTab === 'body' && (
-          <JsonViewer data={request.body} title="请求体" />
+          <JsonViewer data={request.body} title={t('debug.body')} />
         )}
         {activeTab === 'response' && (
-          <JsonViewer data={request.response} title="响应内容" />
+          <JsonViewer data={request.response} title={t('debug.response')} />
         )}
       </div>
     </div>

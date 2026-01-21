@@ -141,16 +141,18 @@ export function createDefaultSubTopic(id: string, title: string = '主话题'): 
  * @param title 窗口标题
  * @param config 窗口配置（可选，使用默认配置）
  * @param subTopicId 默认子话题 ID
+ * @param subTopicTitle 默认子话题标题（可选）
  * @returns 新的聊天窗口对象
  */
 export function createDefaultChatWindow(
   id: string,
   title: string,
   config: Partial<ChatWindowConfig> = {},
-  subTopicId: string
+  subTopicId: string,
+  subTopicTitle?: string
 ): ChatWindow {
   const now = Date.now();
-  const defaultSubTopic = createDefaultSubTopic(subTopicId);
+  const defaultSubTopic = createDefaultSubTopic(subTopicId, subTopicTitle);
   
   return {
     id,

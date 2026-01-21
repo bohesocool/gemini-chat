@@ -9,6 +9,7 @@
 import React, { useCallback, useMemo } from 'react';
 import type { LiveSessionConfig, ResponseModality, VadSensitivity } from '../../types/liveApi';
 import { AVAILABLE_VOICES, LIVE_API_MODELS } from '../../constants/liveApi';
+import { useTranslation } from '@/i18n';
 
 /**
  * 配置面板属性
@@ -33,6 +34,8 @@ export function LiveConfigPanel({
   disabled = false,
   className = '',
 }: LiveConfigPanelProps): JSX.Element {
+  const { t } = useTranslation();
+  
   // 获取当前选中模型的信息
   const currentModel = useMemo(() => {
     return LIVE_API_MODELS.find((m) => m.id === config.model) || LIVE_API_MODELS[0];
@@ -118,13 +121,13 @@ export function LiveConfigPanel({
       {disabled && (
         <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <p className="text-xs text-yellow-600 dark:text-yellow-400">
-            会话进行中，配置不可修改
+            {t('live.sessionInProgress')}
           </p>
         </div>
       )}
 
       {/* 模型选择 */}
-      <ConfigSection title="模型">
+      <ConfigSection title={t('live.model')}>
         <select
           value={config.model}
           onChange={(e) => handleModelChange(e.target.value)}
@@ -143,17 +146,17 @@ export function LiveConfigPanel({
       </ConfigSection>
 
       {/* 响应模态选择 - 需求: 7.1 */}
-      <ConfigSection title="响应模态">
+      <ConfigSection title={t('live.responseModality')}>
         <div className="flex gap-2">
           <ModalityButton
-            label="音频"
+            label={t('live.audio')}
             icon={<AudioIcon />}
             isActive={config.responseModality === 'AUDIO'}
             onClick={() => handleModalityChange('AUDIO')}
             disabled={disabled}
           />
           <ModalityButton
-            label="文本"
+            label={t('live.text')}
             icon={<TextIcon />}
             isActive={config.responseModality === 'TEXT'}
             onClick={() => handleModalityChange('TEXT')}
@@ -164,7 +167,7 @@ export function LiveConfigPanel({
 
       {/* 语音选择 - 需求: 7.2 */}
       {config.responseModality === 'AUDIO' && (
-        <ConfigSection title="语音">
+        <ConfigSection title={t('live.voice')}>
           <select
             value={config.voiceName}
             onChange={(e) => handleVoiceChange(e.target.value)}
@@ -173,7 +176,7 @@ export function LiveConfigPanel({
           >
             {AVAILABLE_VOICES.map((voice) => (
               <option key={voice.id} value={voice.id}>
-                {voice.name} - {voice.description}
+                {voice.name} - {t(`live.voice${voice.id}`)}
               </option>
             ))}
           </select>
@@ -182,7 +185,7 @@ export function LiveConfigPanel({
 
       {/* 思考预算 - 需求: 7.4 */}
       {currentModel?.supportsThinking && (
-        <ConfigSection title="思考预算">
+        <ConfigSection title={t('live.thinkingBudget')}>
           <div className="flex items-center gap-3">
             <input
               type="range"
@@ -202,34 +205,34 @@ export function LiveConfigPanel({
               "
             />
             <span className="text-sm text-neutral-600 dark:text-neutral-400 w-16 text-right">
-              {config.thinkingBudget === 0 ? '关闭' : `${config.thinkingBudget}`}
+              {config.thinkingBudget === 0 ? t('live.thinkingBudgetOff') : `${config.thinkingBudget}`}
             </span>
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            控制模型思考时使用的 token 数量，0 表示关闭思考能力
+            {t('live.thinkingBudgetHint')}
           </p>
         </ConfigSection>
       )}
 
       {/* 系统指令 - 需求: 7.3 */}
-      <ConfigSection title="系统指令">
+      <ConfigSection title={t('live.systemInstruction')}>
         <textarea
           value={config.systemInstruction}
           onChange={(e) => handleSystemInstructionChange(e.target.value)}
           disabled={disabled}
-          placeholder="输入系统指令，定义 AI 的行为和角色..."
+          placeholder={t('live.systemInstructionPlaceholder')}
           rows={3}
           className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </ConfigSection>
 
       {/* 高级选项 */}
-      <ConfigSection title="高级选项">
+      <ConfigSection title={t('live.advancedOptions')}>
         <div className="flex flex-col gap-3">
           {/* 情感对话 - 需求: 7.5 */}
           <ToggleSwitch
-            label="情感对话"
-            description="模型根据输入的表达和语调调整响应风格"
+            label={t('live.affectiveDialog')}
+            description={t('live.affectiveDialogDesc')}
             checked={config.enableAffectiveDialog}
             onChange={handleAffectiveDialogChange}
             disabled={disabled}
@@ -237,8 +240,8 @@ export function LiveConfigPanel({
 
           {/* 主动音频 - 需求: 7.6 */}
           <ToggleSwitch
-            label="主动音频"
-            description="模型智能决定何时响应输入"
+            label={t('live.proactiveAudio')}
+            description={t('live.proactiveAudioDesc')}
             checked={config.enableProactiveAudio}
             onChange={handleProactiveAudioChange}
             disabled={disabled}
@@ -247,18 +250,18 @@ export function LiveConfigPanel({
       </ConfigSection>
 
       {/* 转录选项 - 需求: 7.7 */}
-      <ConfigSection title="转录">
+      <ConfigSection title={t('live.transcription')}>
         <div className="flex flex-col gap-3">
           <ToggleSwitch
-            label="输入转录"
-            description="显示用户语音的文本转录"
+            label={t('live.inputTranscription')}
+            description={t('live.inputTranscriptionDesc')}
             checked={config.enableInputTranscription}
             onChange={handleInputTranscriptionChange}
             disabled={disabled}
           />
           <ToggleSwitch
-            label="输出转录"
-            description="显示 AI 回复的文本转录"
+            label={t('live.outputTranscription')}
+            description={t('live.outputTranscriptionDesc')}
             checked={config.enableOutputTranscription}
             onChange={handleOutputTranscriptionChange}
             disabled={disabled}
@@ -267,11 +270,11 @@ export function LiveConfigPanel({
       </ConfigSection>
 
       {/* VAD 配置 */}
-      <ConfigSection title="语音检测 (VAD)">
+      <ConfigSection title={t('live.vad')}>
         <div className="flex flex-col gap-3">
           <ToggleSwitch
-            label="自动语音检测"
-            description="自动检测用户开始和结束说话"
+            label={t('live.autoVad')}
+            description={t('live.autoVadDesc')}
             checked={config.vadConfig.enabled}
             onChange={handleVadEnabledChange}
             disabled={disabled}
@@ -282,55 +285,55 @@ export function LiveConfigPanel({
               {/* 开始说话灵敏度 */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-neutral-600 dark:text-neutral-400">
-                  开始说话灵敏度
+                  {t('live.startSensitivity')}
                 </label>
                 <div className="flex gap-2">
                   <SensitivityButton
-                    label="低"
+                    label={t('live.sensitivityLow')}
                     isActive={config.vadConfig.startSensitivity === 'low'}
                     onClick={() => handleStartSensitivityChange('low')}
                     disabled={disabled}
                   />
                   <SensitivityButton
-                    label="高"
+                    label={t('live.sensitivityHigh')}
                     isActive={config.vadConfig.startSensitivity === 'high'}
                     onClick={() => handleStartSensitivityChange('high')}
                     disabled={disabled}
                   />
                 </div>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  高灵敏度更容易检测到说话开始
+                  {t('live.startSensitivityHint')}
                 </p>
               </div>
 
               {/* 结束说话灵敏度 */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-neutral-600 dark:text-neutral-400">
-                  结束说话灵敏度
+                  {t('live.endSensitivity')}
                 </label>
                 <div className="flex gap-2">
                   <SensitivityButton
-                    label="低"
+                    label={t('live.sensitivityLow')}
                     isActive={config.vadConfig.endSensitivity === 'low'}
                     onClick={() => handleEndSensitivityChange('low')}
                     disabled={disabled}
                   />
                   <SensitivityButton
-                    label="高"
+                    label={t('live.sensitivityHigh')}
                     isActive={config.vadConfig.endSensitivity === 'high'}
                     onClick={() => handleEndSensitivityChange('high')}
                     disabled={disabled}
                   />
                 </div>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  高灵敏度更容易检测到说话结束
+                  {t('live.endSensitivityHint')}
                 </p>
               </div>
 
               {/* 静音持续时间 */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-neutral-600 dark:text-neutral-400">
-                  静音持续时间: {config.vadConfig.silenceDurationMs}ms
+                  {t('live.silenceDuration')}: {config.vadConfig.silenceDurationMs}ms
                 </label>
                 <input
                   type="range"
@@ -350,7 +353,7 @@ export function LiveConfigPanel({
                   "
                 />
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  检测到静音后等待多久判定说话结束
+                  {t('live.silenceDurationHint')}
                 </p>
               </div>
             </>

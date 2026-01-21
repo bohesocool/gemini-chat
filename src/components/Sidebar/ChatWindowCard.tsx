@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from '@/i18n';
 import { touchTargets } from '../../design/tokens';
 import type { ChatWindow, SubTopic } from '../../types/chatWindow';
 import { ModelBadge } from './ModelBadge';
@@ -14,20 +15,33 @@ import { ModelBadge } from './ModelBadge';
 /**
  * 格式化时间戳为相对时间
  */
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
+function useFormatRelativeTime() {
+  const { t, locale } = useTranslation();
   
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes} 分钟前`;
-  if (hours < 24) return `${hours} 小时前`;
-  if (days < 7) return `${days} 天前`;
-  
-  return new Date(timestamp).toLocaleDateString('zh-CN');
+  return (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (locale === 'zh-CN') {
+      if (minutes < 1) return '刚刚';
+      if (minutes < 60) return `${minutes} 分钟前`;
+      if (hours < 24) return `${hours} 小时前`;
+      if (days === 1) return t('common.yesterday');
+      if (days < 7) return t('common.daysAgo', { days: String(days) });
+      return new Date(timestamp).toLocaleDateString('zh-CN');
+    } else {
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes} min ago`;
+      if (hours < 24) return `${hours} hr ago`;
+      if (days === 1) return t('common.yesterday');
+      if (days < 7) return t('common.daysAgo', { days: String(days) });
+      return new Date(timestamp).toLocaleDateString('en-US');
+    }
+  };
 }
 
 // ============ 组件接口 ============
@@ -93,6 +107,9 @@ export function ChatWindowCard({
   onDelete,
   onSelectSubTopic,
 }: ChatWindowCardProps) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useFormatRelativeTime();
+  
   // 子话题列表展开状态
   const [isExpanded, setIsExpanded] = useState(false);
   // 是否显示删除确认
@@ -128,25 +145,28 @@ export function ChatWindowCard({
     0
   );
 
+  // 显示标题，如果是默认的"新对话"则使用翻译
+  const displayTitle = window.title === '新对话' ? t('chat.defaultChatName') : window.title;
+
   // 删除确认视图
   if (showDeleteConfirm) {
     return (
       <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
         <p className="text-sm text-red-600 dark:text-red-400 mb-2">
-          确定删除此对话？
+          {t('sidebar.deleteChat')}
         </p>
         <div className="flex gap-2">
           <button
             onClick={handleConfirmDelete}
             className="flex-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded transition-colors"
           >
-            删除
+            {t('common.delete')}
           </button>
           <button
             onClick={handleCancelDelete}
             className="flex-1 px-3 py-1.5 bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-neutral-300 text-sm rounded transition-colors"
           >
-            取消
+            {t('common.cancel')}
           </button>
         </div>
       </div>
@@ -182,13 +202,13 @@ export function ChatWindowCard({
               : 'text-neutral-800 dark:text-neutral-200'
             }
           `}>
-            {window.title}
+            {displayTitle}
           </h3>
           
           {/* 消息数量提示 */}
           {totalMessages > 0 && (
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              {totalMessages} 条消息 · {formatRelativeTime(window.updatedAt)}
+              {totalMessages} {t('sidebar.chatCount')} · {formatRelativeTime(window.updatedAt)}
             </p>
           )}
         </div>
@@ -212,7 +232,7 @@ export function ChatWindowCard({
                 onEdit();
               }}
               className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors"
-              title="重命名"
+              title={t('sidebar.rename')}
             >
               <EditIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
             </button>
@@ -222,7 +242,7 @@ export function ChatWindowCard({
                 setShowDeleteConfirm(true);
               }}
               className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-              title="删除"
+              title={t('common.delete')}
             >
               <TrashIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400 hover:text-red-500" />
             </button>
@@ -239,7 +259,7 @@ export function ChatWindowCard({
           <ChevronIcon 
             className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
           />
-          <span>{window.subTopics.length} 个子话题</span>
+          <span>{window.subTopics.length} {t('sidebar.subTopics')}</span>
         </button>
       )}
 

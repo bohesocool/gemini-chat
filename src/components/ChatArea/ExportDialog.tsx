@@ -10,6 +10,7 @@ import { exportChat, type ExportFormat, type ExportOptions } from '../../service
 import { exportChatToImage } from '../../services/imageExport';
 import { LongImageRenderer } from './LongImageRenderer';
 import type { Message } from '../../types';
+import { useTranslation } from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -46,6 +47,8 @@ export function ExportDialog({
   messages,
   modelName,
 }: ExportDialogProps) {
+  const { t } = useTranslation();
+  
   // 导出选项状态
   const [format, setFormat] = useState<ExportFormat>('markdown');
   const [includeTimestamps, setIncludeTimestamps] = useState(true);
@@ -210,13 +213,13 @@ export function ExportDialog({
           {/* 标题栏 */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
             <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              导出对话
+              {t('export.title')}
             </h2>
             <button
               onClick={handleClose}
               disabled={isExporting}
               className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors disabled:opacity-50"
-              aria-label="关闭"
+              aria-label={t('common.close')}
             >
               <CloseIcon className="w-5 h-5" />
             </button>
@@ -226,14 +229,14 @@ export function ExportDialog({
           <div className="px-6 py-4 space-y-6">
             {/* 对话信息 */}
             <div className="text-sm text-neutral-600 dark:text-neutral-400">
-              <p>标题: <span className="text-neutral-900 dark:text-neutral-100">{windowTitle || '未命名对话'}</span></p>
-              <p>消息数: <span className="text-neutral-900 dark:text-neutral-100">{messages.length}</span></p>
+              <p>{t('export.chatTitle')}: <span className="text-neutral-900 dark:text-neutral-100">{windowTitle || t('export.untitledChat')}</span></p>
+              <p>{t('export.messageCount')}: <span className="text-neutral-900 dark:text-neutral-100">{messages.length}</span></p>
             </div>
             
             {/* 格式选择 - Requirements: 1.1, 1.3 */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                导出格式
+                {t('export.format')}
               </label>
               <div className="flex gap-3">
                 <FormatButton
@@ -242,15 +245,15 @@ export function ExportDialog({
                   onClick={() => setFormat('markdown')}
                   icon={<MarkdownIcon className="w-5 h-5" />}
                   label="Markdown"
-                  description=".md 文件"
+                  description={t('export.markdownDesc')}
                 />
                 <FormatButton
                   format="image"
                   currentFormat={format}
                   onClick={() => setFormat('image')}
                   icon={<ImageIcon className="w-5 h-5" />}
-                  label="长图"
-                  description=".png 文件"
+                  label={t('export.longImage')}
+                  description={t('export.imageDesc')}
                 />
               </div>
             </div>
@@ -258,20 +261,20 @@ export function ExportDialog({
             {/* 导出选项 - Requirements: 1.6 */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                导出选项
+                {t('export.options')}
               </label>
               <div className="space-y-3">
                 <OptionCheckbox
                   checked={includeTimestamps}
                   onChange={setIncludeTimestamps}
-                  label="包含时间戳"
-                  description="在每条消息旁显示发送时间"
+                  label={t('export.includeTimestamps')}
+                  description={t('export.includeTimestampsDesc')}
                 />
                 <OptionCheckbox
                   checked={includeThoughts}
                   onChange={setIncludeThoughts}
-                  label="包含思维链"
-                  description="导出 AI 的思考过程（如有）"
+                  label={t('export.includeThoughts')}
+                  description={t('export.includeThoughtsDesc')}
                 />
               </div>
             </div>
@@ -288,7 +291,7 @@ export function ExportDialog({
             {success && (
               <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-sm">
                 <SuccessIcon className="w-5 h-5 flex-shrink-0" />
-                <span>导出成功！文件已开始下载</span>
+                <span>{t('export.success')}</span>
               </div>
             )}
           </div>
@@ -300,7 +303,7 @@ export function ExportDialog({
               disabled={isExporting}
               className="px-4 py-2 rounded-lg text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
             >
-              取消
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleExport}
@@ -310,12 +313,12 @@ export function ExportDialog({
               {isExporting ? (
                 <>
                   <LoadingSpinner className="w-4 h-4" />
-                  <span>导出中...</span>
+                  <span>{t('export.exporting')}</span>
                 </>
               ) : (
                 <>
                   <ExportIcon className="w-4 h-4" />
-                  <span>导出</span>
+                  <span>{t('export.export')}</span>
                 </>
               )}
             </button>

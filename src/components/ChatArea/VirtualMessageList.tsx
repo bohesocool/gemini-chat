@@ -13,6 +13,7 @@ import { InlineMessageEditor } from './InlineMessageEditor';
 import { ImageGrid } from '../shared/ImageGrid';
 import { ImagePreviewModal } from '../ImagePreviewModal';
 import { FileReferenceList } from '../MessageList/FileReferenceList';
+import { useTranslation } from '../../i18n/useTranslation';
 
 // ============ 类型定义 ============
 
@@ -929,6 +930,7 @@ const AttachmentPreview = memo(function AttachmentPreview({ attachment }: { atta
  * 性能优化：使用 memo 避免不必要的重渲染
  */
 const EmptyState = memo(function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center text-center pt-24 pb-12">
       <div className="
@@ -941,10 +943,10 @@ const EmptyState = memo(function EmptyState() {
         <BotIcon className="w-8 h-8 text-white" />
       </div>
       <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
-        开始新对话
+        {t('chat.emptyState')}
       </h3>
       <p className="text-neutral-500 dark:text-neutral-400 max-w-sm">
-        在下方输入消息，开始与 Gemini AI 对话。支持发送图片和文件。
+        {t('chat.emptyStateHint')}
       </p>
     </div>
   );

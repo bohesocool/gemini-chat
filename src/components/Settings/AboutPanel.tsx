@@ -10,12 +10,14 @@ import { APP_CONFIG } from '../../constants/app';
 import { getAppVersion, formatVersion } from '../../services/version';
 import { checkForUpdates, type UpdateStatus, type UpdateCheckResult } from '../../services/updateChecker';
 import logoImage from '../../assets/logo.png';
+import { useTranslation } from '@/i18n';
 
 /**
  * 关于面板组件
  * 显示应用信息、Logo、版本号、检查更新按钮和官方网站链接
  */
 export function AboutPanel(): JSX.Element {
+  const { t } = useTranslation();
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const [logoError, setLogoError] = useState(false);
@@ -56,7 +58,7 @@ export function AboutPanel(): JSX.Element {
       return (
         <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
           <LoadingSpinner className="h-4 w-4" />
-          <span className="text-sm">正在检查更新...</span>
+          <span className="text-sm">{t('about.checkingUpdate')}</span>
         </div>
       );
     }
@@ -67,7 +69,7 @@ export function AboutPanel(): JSX.Element {
           <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
             <NewVersionIcon className="h-4 w-4" />
             <span className="text-sm">
-              发现新版本: {updateResult.updateInfo.latestVersion}
+              {t('about.newVersionFound').replace('{version}', updateResult.updateInfo.latestVersion)}
             </span>
           </div>
           <a
@@ -76,7 +78,7 @@ export function AboutPanel(): JSX.Element {
             rel="noopener noreferrer"
             className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
           >
-            立即下载
+            {t('about.downloadNow')}
           </a>
         </div>
       );
@@ -86,7 +88,7 @@ export function AboutPanel(): JSX.Element {
       return (
         <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
           <CheckIcon className="h-4 w-4" />
-          <span className="text-sm">已是最新版本</span>
+          <span className="text-sm">{t('about.alreadyLatest')}</span>
         </div>
       );
     }
@@ -95,7 +97,7 @@ export function AboutPanel(): JSX.Element {
       return (
         <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
           <ErrorIcon className="h-4 w-4" />
-          <span className="text-sm">{updateResult?.error || '检查更新失败'}</span>
+          <span className="text-sm">{updateResult?.error || t('about.checkFailed')}</span>
         </div>
       );
     }
@@ -144,7 +146,7 @@ export function AboutPanel(): JSX.Element {
           ) : (
             <RefreshIcon className="h-4 w-4" />
           )}
-          检查更新
+          {t('about.checkUpdate')}
         </button>
 
         {/* 官方网站链接 */}
@@ -157,7 +159,7 @@ export function AboutPanel(): JSX.Element {
             text-neutral-700 dark:text-neutral-200 rounded-lg font-medium transition-colors"
         >
           <ExternalLinkIcon className="h-4 w-4" />
-          官方网站
+          {t('about.officialWebsite')}
         </a>
       </div>
 

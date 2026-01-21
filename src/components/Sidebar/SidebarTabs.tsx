@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { durations, easings, touchTargets } from '../../design/tokens';
+import { useTranslation } from '../../i18n/useTranslation';
 
 // ============ 类型定义 ============
 
@@ -32,7 +33,7 @@ export interface SidebarTabsProps {
 
 // ============ 常量定义 ============
 
-/** 标签页配置列表 */
+/** 标签页配置列表（用于导出，但不包含翻译） */
 export const SIDEBAR_TABS: SidebarTab[] = [
   { id: 'assistants', label: '助手', icon: <ChatIcon /> },
   { id: 'topics', label: '话题', icon: <TopicsIcon /> },
@@ -46,13 +47,22 @@ export const SIDEBAR_TABS: SidebarTab[] = [
  * 使用主题色高亮当前标签，添加标签切换动画
  */
 export function SidebarTabs({ activeTab, onTabChange }: SidebarTabsProps) {
+  const { t } = useTranslation();
+  
+  // 动态生成带翻译的标签配置
+  const tabs: SidebarTab[] = [
+    { id: 'assistants', label: t('sidebar.assistants'), icon: <ChatIcon /> },
+    { id: 'topics', label: t('sidebar.topics'), icon: <TopicsIcon /> },
+    { id: 'settings', label: t('sidebar.settings'), icon: <SettingsIcon /> },
+  ];
+  
   return (
     <div 
       className="flex border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100/50 dark:bg-neutral-800/50"
       role="tablist"
-      aria-label="侧边栏导航"
+      aria-label={t('sidebar.sidebarNav')}
     >
-      {SIDEBAR_TABS.map((tab) => (
+      {tabs.map((tab) => (
         <SidebarTabButton
           key={tab.id}
           tab={tab}

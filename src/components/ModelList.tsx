@@ -11,6 +11,7 @@
 import { useState, useMemo } from 'react';
 import type { ModelConfig } from '../types/models';
 import { sortModels } from '../services/model';
+import { useTranslation } from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -35,10 +36,10 @@ interface ModelListProps {
  * 获取模型来源标签 - 需求: 3.4, 3.6
  * 为预设模型和自定义模型提供不同的视觉标识
  */
-function getModelSourceLabel(model: ModelConfig): { text: string; color: string; icon: 'preset' | 'custom' | 'openai' } {
+function getModelSourceLabel(model: ModelConfig, t: (key: string) => string): { text: string; color: string; icon: 'preset' | 'custom' | 'openai' } {
   if (model.isCustom) {
     return { 
-      text: '自定义', 
+      text: t('modelList.custom'), 
       color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
       icon: 'custom'
     };
@@ -51,7 +52,7 @@ function getModelSourceLabel(model: ModelConfig): { text: string; color: string;
     };
   }
   return { 
-    text: '预设', 
+    text: t('modelList.preset'), 
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
     icon: 'preset'
   };
@@ -60,16 +61,16 @@ function getModelSourceLabel(model: ModelConfig): { text: string; color: string;
 /**
  * 获取模型能力标签
  */
-function getCapabilityTags(model: ModelConfig): string[] {
+function getCapabilityTags(model: ModelConfig, t: (key: string) => string): string[] {
   const tags: string[] = [];
   if (model.capabilities?.supportsThinking) {
-    tags.push('思考');
+    tags.push(t('modelList.thinking'));
   }
   if (model.capabilities?.supportsImageGeneration) {
-    tags.push('图像生成');
+    tags.push(t('modelList.imageGeneration'));
   }
   if (model.redirectTo) {
-    tags.push('重定向');
+    tags.push(t('modelList.redirect'));
   }
   return tags;
 }
@@ -84,6 +85,8 @@ export function ModelList({
   onDeleteModel,
   onToggleEnabled,
 }: ModelListProps) {
+  const { t } = useTranslation();
+  
   // 搜索关键词
   const [searchQuery, setSearchQuery] = useState('');
   // 筛选条件
@@ -97,7 +100,11 @@ export function ModelList({
       if (query) {
         const matchesId = model.id.toLowerCase().includes(query);
         const matchesName = model.name.toLowerCase().includes(query);
-        const matchesDesc = model.description?.toLowerCase().includes(query);
+        // 对于预设模型，描述是翻译键，需要翻译后再搜索
+        const translatedDesc = model.description?.startsWith('models.') 
+          ? t(model.description) 
+          : model.description;
+        const matchesDesc = translatedDesc?.toLowerCase().includes(query);
         if (!matchesId && !matchesName && !matchesDesc) {
           return false;
         }
@@ -116,7 +123,7 @@ export function ModelList({
     
     // 排序：启用的模型在前，禁用的在后
     return sortModels(filtered);
-  }, [models, searchQuery, filterSource]);
+  }, [models, searchQuery, filterSource, t]);
 
   return (
     <div className="space-y-4">
@@ -129,7 +136,7 @@ export function ModelList({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索模型..."
+            placeholder={t('modelList.searchPlaceholder')}
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 
               bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
@@ -146,23 +153,23 @@ export function ModelList({
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             text-sm"
         >
-          <option value="all">全部来源</option>
-          <option value="preset">预设模型</option>
-          <option value="custom">自定义模型</option>
+          <option value="all">{t('modelList.allSources')}</option>
+          <option value="preset">{t('modelList.presetModels')}</option>
+          <option value="custom">{t('modelList.customModels')}</option>
         </select>
       </div>
 
       {/* 模型数量统计 */}
       <div className="text-sm text-slate-500 dark:text-slate-400">
-        共 {filteredModels.length} 个模型
-        {searchQuery && ` (搜索: "${searchQuery}")`}
+        {t('modelList.totalModels', { count: filteredModels.length })}
+        {searchQuery && ` (${t('modelList.search')}: "${searchQuery}")`}
       </div>
 
       {/* 模型列表 */}
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
         {filteredModels.length === 0 ? (
           <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-            {searchQuery ? '没有找到匹配的模型' : '暂无模型'}
+            {searchQuery ? t('modelList.noMatchingModels') : t('modelList.noModels')}
           </div>
         ) : (
           filteredModels.map((model) => (
@@ -174,6 +181,7 @@ export function ModelList({
               onEdit={onEditModel}
               onDelete={onDeleteModel}
               onToggleEnabled={onToggleEnabled}
+              t={t}
             />
           ))
         )}
@@ -192,6 +200,8 @@ interface ModelListItemProps {
   onDelete?: (modelId: string) => void;
   /** 切换模型启用状态回调 - 需求: 4.1, 4.5 */
   onToggleEnabled?: (modelId: string, enabled: boolean) => void;
+  /** 翻译函数 */
+  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
 function ModelListItem({
@@ -201,10 +211,16 @@ function ModelListItem({
   onEdit,
   onDelete,
   onToggleEnabled,
+  t,
 }: ModelListItemProps) {
-  const sourceLabel = getModelSourceLabel(model);
-  const capabilityTags = getCapabilityTags(model);
+  const sourceLabel = getModelSourceLabel(model, t);
+  const capabilityTags = getCapabilityTags(model, t);
   const isEnabled = model.enabled !== false;
+  
+  // 获取翻译后的描述
+  const translatedDescription = model.description?.startsWith('models.') 
+    ? t(model.description) 
+    : model.description;
 
   return (
     <div
@@ -239,9 +255,9 @@ function ModelListItem({
           </div>
           
           {/* 描述信息 - 需求: 2.2 */}
-          {model.description && (
+          {translatedDescription && (
             <div className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
-              {model.description}
+              {translatedDescription}
             </div>
           )}
 
@@ -264,7 +280,7 @@ function ModelListItem({
           {model.redirectTo && (
             <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
               <ArrowRightIcon className="h-3 w-3" />
-              重定向到: {model.redirectTo}
+              {t('modelList.redirectTo')}: {model.redirectTo}
             </div>
           )}
         </div>
@@ -286,8 +302,8 @@ function ModelListItem({
               `}
               role="switch"
               aria-checked={isEnabled}
-              aria-label={isEnabled ? '禁用模型' : '启用模型'}
-              title={isEnabled ? '点击禁用' : '点击启用'}
+              aria-label={isEnabled ? t('modelList.disableModel') : t('modelList.enableModel')}
+              title={isEnabled ? t('modelList.clickToDisable') : t('modelList.clickToEnable')}
             >
               <span
                 className={`
@@ -304,7 +320,7 @@ function ModelListItem({
                 onEdit(model);
               }}
               className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-              title="编辑模型"
+              title={t('modelList.editModel')}
             >
               <EditIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             </button>
@@ -316,7 +332,7 @@ function ModelListItem({
                 onDelete(model.id);
               }}
               className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-              title="删除模型"
+              title={t('modelList.deleteModel')}
             >
               <TrashIcon className="h-4 w-4 text-red-500 dark:text-red-400" />
             </button>

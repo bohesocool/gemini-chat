@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useReducedMotion } from '../motion';
+import { useTranslation } from '@/i18n';
 
 // ============================================
 // 品牌加载动画组件
@@ -28,11 +29,15 @@ export interface BrandLoaderProps {
  * Requirements: 11.1 - 应用初始化加载时显示品牌加载动画
  */
 export function BrandLoader({
-  text = '加载中...',
+  text,
   size = 'md',
   className = '',
 }: BrandLoaderProps) {
   const prefersReducedMotion = useReducedMotion();
+  const { t } = useTranslation();
+  
+  // 如果没有传入 text，使用国际化的默认值
+  const displayText = text ?? t('common.loading');
   
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -77,13 +82,13 @@ export function BrandLoader({
       </div>
       
       {/* 加载文本 */}
-      {text && (
+      {displayText && (
         <p className={`
           text-slate-600 dark:text-slate-400
           ${textSizeClasses[size]}
           ${prefersReducedMotion ? '' : 'animate-pulse'}
         `}>
-          {text}
+          {displayText}
         </p>
       )}
     </div>
@@ -116,13 +121,17 @@ export interface LoadingOverlayProps {
  */
 export function LoadingOverlay({
   isLoading,
-  text = '加载中...',
+  text,
   fullScreen = false,
   blur = true,
   className = '',
   children,
 }: LoadingOverlayProps) {
   const prefersReducedMotion = useReducedMotion();
+  const { t } = useTranslation();
+  
+  // 如果没有传入 text，使用国际化的默认值
+  const displayText = text ?? t('common.loading');
 
   if (!isLoading && children) {
     return <>{children}</>;
@@ -139,7 +148,7 @@ export function LoadingOverlay({
         ${className}
       `}
     >
-      <BrandLoader text={text} size="lg" />
+      <BrandLoader text={displayText} size="lg" />
     </div>
   );
 }
@@ -307,6 +316,7 @@ export function InlineLoader({
   className = '',
 }: InlineLoaderProps) {
   const prefersReducedMotion = useReducedMotion();
+  const { t } = useTranslation();
   
   const sizeClasses = {
     xs: 'w-3 h-3 border',
@@ -330,7 +340,7 @@ export function InlineLoader({
         ${className}
       `}
       style={{ animationDuration: '0.6s' }}
-      aria-label="加载中"
+      aria-label={t('common.loading')}
     />
   );
 }

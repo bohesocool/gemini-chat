@@ -7,6 +7,7 @@ import { useCallback, useEffect } from 'react';
 import { useBookmarkStore } from '../../stores/bookmark';
 import { useSidebarView } from '../Layout';
 import type { Bookmark } from '../../stores/bookmark';
+import { useTranslation } from '@/i18n';
 
 /**
  * 书签列表组件
@@ -15,6 +16,7 @@ import type { Bookmark } from '../../stores/bookmark';
  * 需求: 3.9 - 选中状态高亮
  */
 export function BookmarkList() {
+  const { t, locale } = useTranslation();
   const { bookmarks, initialized, loadBookmarks } = useBookmarkStore();
   const { selectedBookmarkId, setSelectedBookmarkId } = useSidebarView();
 
@@ -31,27 +33,33 @@ export function BookmarkList() {
   }, [setSelectedBookmarkId]);
 
   // 格式化时间
-  const formatTime = (timestamp: number): string => {
+  const formatTime = useCallback((timestamp: number): string => {
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
+    const localeStr = locale === 'zh-CN' ? 'zh-CN' : 'en-US';
     
     // 今天
     if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
-      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString(localeStr, { hour: '2-digit', minute: '2-digit' });
     }
     // 昨天
     if (diff < 48 * 60 * 60 * 1000) {
-      return '昨天';
+      return t('common.yesterday');
     }
     // 本周
     if (diff < 7 * 24 * 60 * 60 * 1000) {
-      const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      return days[date.getDay()] || '未知';
+      if (locale === 'zh-CN') {
+        const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        return days[date.getDay()] || '';
+      } else {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return days[date.getDay()] || '';
+      }
     }
     // 更早
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  };
+    return date.toLocaleDateString(localeStr, { month: 'short', day: 'numeric' });
+  }, [locale, t]);
 
   return (
     <div className="flex flex-col h-full">
@@ -60,8 +68,8 @@ export function BookmarkList() {
         {bookmarks.length === 0 ? (
           <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
             <BookmarkEmptyIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>暂无书签</p>
-            <p className="text-sm mt-1">在消息上点击书签图标收藏</p>
+            <p>{t('bookmark.noBookmarks')}</p>
+            <p className="text-sm mt-1">{t('bookmark.addHint')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -81,7 +89,7 @@ export function BookmarkList() {
       {/* 底部统计 */}
       <div className="p-3 border-t border-neutral-200 dark:border-neutral-700">
         <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
-          {bookmarks.length} 个书签
+          {bookmarks.length} {t('sidebar.bookmarks').toLowerCase()}
         </p>
       </div>
     </div>
@@ -103,6 +111,8 @@ interface BookmarkCardProps {
  * 需求: 3.9 - 选中状态高亮
  */
 function BookmarkCard({ bookmark, isSelected, onSelect, formatTime }: BookmarkCardProps) {
+  const { t } = useTranslation();
+  
   return (
     <div
       onClick={onSelect}
@@ -118,7 +128,7 @@ function BookmarkCard({ bookmark, isSelected, onSelect, formatTime }: BookmarkCa
         <div className="flex-1 min-w-0">
           {/* 消息预览 */}
           <p className="text-sm text-neutral-800 dark:text-neutral-200 line-clamp-2">
-            {bookmark.messagePreview || '(空消息)'}
+            {bookmark.messagePreview || t('bookmark.emptyMessage')}
           </p>
           
           {/* 元信息 */}
@@ -129,7 +139,7 @@ function BookmarkCard({ bookmark, isSelected, onSelect, formatTime }: BookmarkCa
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                 : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
             }`}>
-              {bookmark.messageRole === 'user' ? '用户' : 'AI'}
+              {bookmark.messageRole === 'user' ? t('common.user') : t('common.ai')}
             </span>
             
             {/* 来源对话 */}

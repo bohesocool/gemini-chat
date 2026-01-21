@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from '@/i18n';
 import type { ChatWindowConfig } from '../../types/chatWindow';
 import type { ModelConfig, ThinkingLevel, ImageGenerationConfig } from '../../types/models';
 import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
@@ -41,10 +42,12 @@ interface ModelSelectorProps {
 }
 
 function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        模型
+        {t('live.model')}
       </label>
       <select
         value={currentModel}
@@ -131,6 +134,7 @@ interface SystemInstructionEditorProps {
 }
 
 function SystemInstructionEditor({ value, onChange }: SystemInstructionEditorProps) {
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -143,13 +147,13 @@ function SystemInstructionEditor({ value, onChange }: SystemInstructionEditorPro
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        系统指令
+        {t('settings.systemInstruction')}
       </label>
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="设置 AI 的角色和行为方式..."
+        placeholder={t('settings.systemInstructionPlaceholder')}
         rows={2}
         className="
           w-full px-3 py-2 rounded-lg
@@ -184,6 +188,7 @@ export function ChatConfigPanel({
   config,
   onConfigChange,
 }: ChatConfigPanelProps) {
+  const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
   const { models } = useModelStore();
@@ -335,7 +340,7 @@ export function ChatConfigPanel({
         }}
         role="dialog"
         aria-modal="true"
-        aria-label="配置面板"
+        aria-label={t('settings.title')}
       >
         {/* 头部 */}
         <div className="
@@ -343,7 +348,7 @@ export function ChatConfigPanel({
           border-b border-neutral-200/50 dark:border-neutral-700/50
         ">
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-            配置
+            {t('settings.title')}
           </h2>
           <button
             onClick={onClose}
@@ -353,7 +358,7 @@ export function ChatConfigPanel({
               text-neutral-500 dark:text-neutral-400
               transition-colors
             "
-            aria-label="关闭"
+            aria-label={t('common.close')}
           >
             <CloseIcon className="w-5 h-5" />
           </button>
@@ -391,10 +396,10 @@ export function ChatConfigPanel({
             <div className="flex items-center justify-between">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  显示思维链
+                  {t('settings.showThinkingChain')}
                 </label>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  显示模型的推理过程
+                  {t('settings.showReasoningProcess')}
                 </p>
               </div>
               <button
@@ -449,45 +454,45 @@ export function ChatConfigPanel({
           {/* 参数调整区域 */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              生成参数
+              {t('settings.generation')}
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <ParameterSlider
-                label="Temperature"
+                label={t('settings.temperature')}
                 value={config.generationConfig.temperature ?? 1}
                 min={0}
                 max={2}
                 step={0.1}
                 onChange={(v) => handleGenerationConfigChange('temperature', v)}
-                description="控制输出的随机性"
+                description={t('settings.temperatureDesc')}
               />
               <ParameterSlider
-                label="Top P"
+                label={t('settings.topP')}
                 value={config.generationConfig.topP ?? 0.95}
                 min={0}
                 max={1}
                 step={0.05}
                 onChange={(v) => handleGenerationConfigChange('topP', v)}
-                description="核采样概率阈值"
+                description={t('settings.topPDesc')}
               />
               <ParameterSlider
-                label="Top K"
+                label={t('settings.topK')}
                 value={config.generationConfig.topK ?? 40}
                 min={1}
                 max={100}
                 step={1}
                 onChange={(v) => handleGenerationConfigChange('topK', v)}
-                description="候选词数量"
+                description={t('settings.topKDesc')}
               />
               <ParameterSlider
-                label="最大输出长度"
+                label={t('settings.maxOutputTokensLabel')}
                 value={config.generationConfig.maxOutputTokens ?? capabilities.maxOutputTokens ?? 8192}
                 min={256}
                 max={capabilities.maxOutputTokens ?? 8192}
                 step={256}
                 onChange={(v) => handleGenerationConfigChange('maxOutputTokens', v)}
                 formatValue={(v) => `${v} tokens`}
-                description="限制回复长度"
+                description={t('settings.maxOutputTokensDesc')}
               />
             </div>
           </div>
@@ -520,15 +525,16 @@ interface StreamingToggleProps {
  * Requirements: 1.2, 1.5
  */
 function StreamingToggle({ value, onChange }: StreamingToggleProps) {
+  const { t } = useTranslation();
   // 获取全局流式设置
   const globalStreamingEnabled = useSettingsStore((state) => state.streamingEnabled);
   
   // 获取当前状态的显示文本
   const getStatusText = () => {
     if (value === undefined) {
-      return `使用全局设置 (${globalStreamingEnabled ? '开' : '关'})`;
+      return `${t('common.default')} (${globalStreamingEnabled ? t('common.on') : t('common.off')})`;
     }
-    return value ? '启用' : '禁用';
+    return value ? t('common.on') : t('common.off');
   };
 
   // 循环切换状态：undefined -> true -> false -> undefined
@@ -558,7 +564,7 @@ function StreamingToggle({ value, onChange }: StreamingToggleProps) {
     <div className="flex items-center justify-between">
       <div>
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-          流式响应
+          {t('settings.streamingOutput')}
         </label>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           {getStatusText()}

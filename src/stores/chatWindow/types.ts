@@ -47,7 +47,7 @@ export interface ChatWindowActions {
   /** 从存储加载所有窗口 */
   loadWindows: () => Promise<void>;
   /** 创建新窗口 */
-  createWindow: (config?: Partial<ChatWindowConfig>) => ChatWindow;
+  createWindow: (config?: Partial<ChatWindowConfig>, title?: string, subTopicTitle?: string) => ChatWindow;
   /** 更新窗口 */
   updateWindow: (id: string, updates: Partial<ChatWindow>) => Promise<void>;
   /** 删除窗口 */

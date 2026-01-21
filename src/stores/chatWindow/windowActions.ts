@@ -48,7 +48,7 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
 
   // 创建新窗口
   // 需求: 4.4 - 新窗口继承全局默认配置
-  createWindow: (config?: Partial<ChatWindowConfig>) => {
+  createWindow: (config?: Partial<ChatWindowConfig>, title?: string, subTopicTitle?: string) => {
     const windowId = generateId();
     const subTopicId = generateId();
     
@@ -60,9 +60,10 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
     
     const newWindow = createDefaultChatWindow(
       windowId,
-      '新对话',
+      title || '新对话',
       windowConfig,
-      subTopicId
+      subTopicId,
+      subTopicTitle
     );
 
     set((state) => ({

@@ -18,6 +18,7 @@ import { LiveConfigPanel } from './LiveConfigPanel';
 import { TranscriptDisplay } from './TranscriptDisplay';
 import { LiveSessionList } from './LiveSessionList';
 import { LiveHistoryView } from './LiveHistoryView';
+import { useTranslation } from '@/i18n';
 
 /**
  * 视图模式类型
@@ -47,6 +48,8 @@ export function LiveApiView({
   className = '',
   initialViewMode = 'live',
 }: LiveApiViewProps): JSX.Element {
+  const { t } = useTranslation();
+  
   // 从 LiveStore 获取状态和操作
   const {
     connectionStatus,
@@ -223,7 +226,7 @@ export function LiveApiView({
                 <button
                   onClick={onBackToChat}
                   className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors"
-                  title="返回聊天"
+                  title={t('live.backToChat')}
                 >
                   <BackIcon className="w-5 h-5" />
                 </button>
@@ -231,7 +234,7 @@ export function LiveApiView({
               <div className="flex items-center gap-2">
                 <LiveIcon className="w-5 h-5 text-primary-500" />
                 <h1 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
-                  实时对话
+                  {t('live.title')}
                 </h1>
               </div>
             </div>
@@ -239,7 +242,7 @@ export function LiveApiView({
             <button
               onClick={() => setIsLeftPanelCollapsed(true)}
               className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 transition-colors"
-              title="收起面板"
+              title={t('live.collapsePanel')}
             >
               <CollapseLeftIcon className="w-4 h-4" />
             </button>
@@ -264,7 +267,7 @@ export function LiveApiView({
             <button
               onClick={onBackToChat}
               className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors mb-2"
-              title="返回聊天"
+              title={t('live.backToChat')}
             >
               <BackIcon className="w-5 h-5" />
             </button>
@@ -272,7 +275,7 @@ export function LiveApiView({
           <button
             onClick={() => setIsLeftPanelCollapsed(false)}
             className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 transition-colors"
-            title="展开面板"
+            title={t('live.expandPanel')}
           >
             <CollapseRightIcon className="w-4 h-4" />
           </button>
@@ -302,7 +305,7 @@ export function LiveApiView({
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {isConnected ? '对话中' : isConnecting ? '连接中...' : '准备就绪'}
+                  {isConnected ? t('live.inConversation') : isConnecting ? t('live.connecting') : t('live.ready')}
                 </span>
                 {isConnected && (
                   <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
@@ -316,7 +319,7 @@ export function LiveApiView({
                   <button
                     onClick={handleClearTranscripts}
                     className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors"
-                    title="清除转录"
+                    title={t('live.clearTranscript')}
                   >
                     <ClearIcon className="w-5 h-5" />
                   </button>
@@ -332,7 +335,7 @@ export function LiveApiView({
                       : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 dark:text-neutral-400'
                     }
                   `}
-                  title={isConfigExpanded ? '收起配置' : '展开配置'}
+                  title={isConfigExpanded ? t('live.collapseConfig') : t('live.expandConfig')}
                 >
                   <SettingsIcon className="w-5 h-5" />
                 </button>

@@ -14,6 +14,7 @@ import { durations, easings, touchTargets } from '../../design/tokens';
 import { ThinkingLevelSelector } from '../ModelParams/ThinkingLevelSelector';
 import { ThinkingBudgetSlider } from '../ModelParams/ThinkingBudgetSlider';
 import { ImageConfigPanel } from '../ModelParams/ImageConfigPanel';
+import { useTranslation } from '../../i18n';
 import type { ThinkingLevel, ImageGenerationConfig, ModelAdvancedConfig } from '../../types/models';
 
 // ============ 类型定义 ============
@@ -34,6 +35,8 @@ export interface SidebarSettingsProps {
  * 使用可折叠分组展示各类设置，修改后实时保存
  */
 export function SidebarSettings({ isExpanded = true }: SidebarSettingsProps) {
+  const { t } = useTranslation();
+  
   // 展开状态管理
   const [expandedGroups, setExpandedGroups] = useState<Set<SettingsGroupId>>(
     new Set(['model', 'advanced'])
@@ -61,7 +64,7 @@ export function SidebarSettings({ isExpanded = true }: SidebarSettingsProps) {
         {/* API 配置分组 */}
         <SettingsGroup
           id="api"
-          title="API 配置"
+          title={t('settings.apiConfig')}
           icon={<KeyIcon />}
           isExpanded={expandedGroups.has('api')}
           onToggle={() => toggleGroup('api')}
@@ -72,7 +75,7 @@ export function SidebarSettings({ isExpanded = true }: SidebarSettingsProps) {
         {/* 模型选择分组 */}
         <SettingsGroup
           id="model"
-          title="模型选择"
+          title={t('settings.modelSelect')}
           icon={<CpuIcon />}
           isExpanded={expandedGroups.has('model')}
           onToggle={() => toggleGroup('model')}
@@ -83,7 +86,7 @@ export function SidebarSettings({ isExpanded = true }: SidebarSettingsProps) {
         {/* 高级参数分组（思考程度、图片配置等） */}
         <SettingsGroup
           id="advanced"
-          title="高级参数"
+          title={t('settings.advanced')}
           icon={<SlidersIcon />}
           isExpanded={expandedGroups.has('advanced')}
           onToggle={() => toggleGroup('advanced')}
@@ -94,7 +97,7 @@ export function SidebarSettings({ isExpanded = true }: SidebarSettingsProps) {
         {/* 生成参数分组 */}
         <SettingsGroup
           id="generation"
-          title="生成参数"
+          title={t('settings.generation')}
           icon={<TuneIcon />}
           isExpanded={expandedGroups.has('generation')}
           onToggle={() => toggleGroup('generation')}
@@ -105,7 +108,7 @@ export function SidebarSettings({ isExpanded = true }: SidebarSettingsProps) {
         {/* 系统指令分组 */}
         <SettingsGroup
           id="system"
-          title="系统指令"
+          title={t('settings.systemInstruction')}
           icon={<MessageIcon />}
           isExpanded={expandedGroups.has('system')}
           onToggle={() => toggleGroup('system')}
@@ -188,6 +191,7 @@ function SettingsGroup({ title, icon, isExpanded, onToggle, children }: Settings
 // ============ API 配置分组 ============
 
 function ApiConfigGroup() {
+  const { t } = useTranslation();
   const { apiEndpoint, apiKey, setApiEndpoint, setApiKey, testConnection, connectionStatus } = useSettingsStore();
 
   return (
@@ -195,7 +199,7 @@ function ApiConfigGroup() {
       {/* API 端点 */}
       <div>
         <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-          API 端点
+          {t('settings.apiEndpoint')}
         </label>
         <input
           type="url"
@@ -211,13 +215,13 @@ function ApiConfigGroup() {
       {/* API 密钥 */}
       <div>
         <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-          API 密钥
+          {t('settings.apiKey')}
         </label>
         <input
           type="password"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
-          placeholder="输入 API 密钥"
+          placeholder={t('settings.apiKeyPlaceholder')}
           className="w-full px-2.5 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-neutral-600 
             bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
             focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -232,9 +236,9 @@ function ApiConfigGroup() {
           bg-primary-500 hover:bg-primary-600 disabled:bg-neutral-300 dark:disabled:bg-neutral-600
           text-white transition-colors disabled:cursor-not-allowed"
       >
-        {connectionStatus === 'testing' ? '测试中...' : 
-         connectionStatus === 'success' ? '✓ 连接成功' :
-         connectionStatus === 'error' ? '✗ 连接失败' : '测试连接'}
+        {connectionStatus === 'testing' ? t('settings.testing') : 
+         connectionStatus === 'success' ? t('settings.connectionSuccess') :
+         connectionStatus === 'error' ? t('settings.connectionFailed') : t('settings.testConnection')}
       </button>
     </div>
   );
@@ -243,6 +247,7 @@ function ApiConfigGroup() {
 // ============ 模型选择分组 ============
 
 function ModelSelectGroup() {
+  const { t } = useTranslation();
   const { currentModel, setCurrentModel } = useSettingsStore();
   const { models } = useModelStore();
   
@@ -252,7 +257,7 @@ function ModelSelectGroup() {
   return (
     <div className="space-y-2">
       <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-        当前模型
+        {t('settings.currentModel')}
       </label>
       <select
         value={currentModel}
@@ -279,6 +284,7 @@ function ModelSelectGroup() {
 // ============ 高级参数分组（思考程度、图片配置） ============
 
 function AdvancedConfigGroup() {
+  const { t } = useTranslation();
   const { currentModel } = useSettingsStore();
   const { activeWindowId, windows, updateAdvancedConfig } = useChatWindowStore();
   const { getModelById } = useModelStore();
@@ -343,7 +349,7 @@ function AdvancedConfigGroup() {
   if (!activeWindowId || !hasAdvancedParams) {
     return (
       <div className="text-xs text-neutral-500 dark:text-neutral-400 text-center py-2">
-        {!activeWindowId ? '请先选择一个对话' : '当前模型不支持高级参数'}
+        {!activeWindowId ? t('settings.selectConversation') : t('settings.noAdvancedParams')}
       </div>
     );
   }
@@ -356,7 +362,7 @@ function AdvancedConfigGroup() {
       {thinkingConfigType === 'level' && (
         <div>
           <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-            思考程度
+            {t('settings.thinkingLevel')}
           </label>
           <ThinkingLevelSelector
             value={advancedConfig?.thinkingLevel ?? 'high'}
@@ -371,7 +377,7 @@ function AdvancedConfigGroup() {
       {thinkingConfigType === 'budget' && thinkingBudgetConfig && (
         <div>
           <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-            思考预算
+            {t('settings.thinkingBudget')}
           </label>
           <ThinkingBudgetSlider
             value={currentThinkingBudget}
@@ -387,10 +393,10 @@ function AdvancedConfigGroup() {
         <div className="flex items-center justify-between">
           <div>
             <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400">
-              显示思维链
+              {t('settings.showThinkingChain')}
             </label>
             <p className="text-xs text-neutral-400 dark:text-neutral-500">
-              显示模型推理过程
+              {t('settings.showReasoningProcess')}
             </p>
           </div>
           <button
@@ -421,7 +427,7 @@ function AdvancedConfigGroup() {
       {supportsImageGeneration && (
         <div>
           <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-            图片参数
+            {t('settings.imageParams')}
           </label>
           <ImageConfigPanel
             config={advancedConfig?.imageConfig ?? { aspectRatio: '1:1', imageSize: '1K' }}
@@ -438,6 +444,7 @@ function AdvancedConfigGroup() {
 // ============ 生成参数分组 ============
 
 function GenerationConfigGroup() {
+  const { t } = useTranslation();
   const { generationConfig, updateGenerationConfig } = useSettingsStore();
 
   return (
@@ -487,7 +494,7 @@ function GenerationConfigGroup() {
       {/* Max Output Tokens */}
       <div>
         <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-          最大输出 Token
+          {t('settings.maxOutputTokens')}
         </label>
         <input
           type="number"
@@ -497,7 +504,7 @@ function GenerationConfigGroup() {
           onChange={(e) => updateGenerationConfig({ 
             maxOutputTokens: e.target.value ? parseInt(e.target.value) : undefined 
           })}
-          placeholder="默认"
+          placeholder={t('common.default')}
           className="w-full px-2.5 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-neutral-600 
             bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
             focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -510,24 +517,25 @@ function GenerationConfigGroup() {
 // ============ 系统指令分组 ============
 
 function SystemInstructionGroup() {
+  const { t } = useTranslation();
   const { systemInstruction, updateSystemInstruction } = useSettingsStore();
 
   return (
     <div>
       <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-        全局系统指令
+        {t('settings.globalSystemInstruction')}
       </label>
       <textarea
         value={systemInstruction}
         onChange={(e) => updateSystemInstruction(e.target.value)}
-        placeholder="设置 AI 的角色和行为方式..."
+        placeholder={t('settings.systemInstructionPlaceholder')}
         rows={3}
         className="w-full px-2.5 py-1.5 text-sm rounded-md border border-neutral-300 dark:border-neutral-600 
           bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
           focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 resize-none"
       />
       <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-        应用于所有新对话
+        {t('settings.applyToAllChats')}
       </p>
     </div>
   );
@@ -604,6 +612,7 @@ function LogoutIcon() {
  * 需求: 1.3 - 在侧边栏设置中提供登出功能
  */
 function LogoutButton() {
+  const { t } = useTranslation();
   const { logout } = useAuthStore();
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -616,7 +625,7 @@ function LogoutButton() {
       {showConfirm ? (
         <div className="space-y-2">
           <p className="text-xs text-neutral-600 dark:text-neutral-400 text-center">
-            确定要登出吗？
+            {t('auth.logoutConfirm')}
           </p>
           <div className="flex gap-2">
             <button
@@ -624,7 +633,7 @@ function LogoutButton() {
               className="flex-1 px-3 py-1.5 text-xs font-medium rounded-md
                 bg-red-500 hover:bg-red-600 text-white transition-colors"
             >
-              确定
+              {t('common.confirm')}
             </button>
             <button
               onClick={() => setShowConfirm(false)}
@@ -632,7 +641,7 @@ function LogoutButton() {
                 bg-neutral-200 dark:bg-neutral-600 hover:bg-neutral-300 dark:hover:bg-neutral-500
                 text-neutral-700 dark:text-neutral-200 transition-colors"
             >
-              取消
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -644,7 +653,7 @@ function LogoutButton() {
             text-neutral-700 dark:text-neutral-200 transition-colors"
         >
           <LogoutIcon />
-          <span>登出</span>
+          <span>{t('auth.logout')}</span>
         </button>
       )}
     </div>

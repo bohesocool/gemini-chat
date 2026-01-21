@@ -10,6 +10,7 @@ import { useCallback } from 'react';
 import { useDebugStore, type ApiRequestRecord } from '../../stores/debug';
 import { RequestDetail } from './RequestDetail';
 import { formatDuration } from '../../services/timeTracker';
+import { useTranslation } from '@/i18n';
 
 // ============ 类型定义 ============
 
@@ -27,6 +28,8 @@ interface DebugPanelProps {
  * 需求: 1.1, 1.2, 1.3, 1.4, 6.1, 6.2
  */
 export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
+  const { t } = useTranslation();
+  
   const {
     requestHistory,
     selectedRequestId,
@@ -46,10 +49,10 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
 
   // 清除历史记录
   const handleClearHistory = useCallback(() => {
-    if (window.confirm('确定要清除所有请求历史记录吗？')) {
+    if (window.confirm(t('debug.clearConfirm'))) {
       clearHistory();
     }
-  }, [clearHistory]);
+  }, [clearHistory, t]);
 
   // 返回列表
   const handleBackToList = useCallback(() => {
@@ -83,8 +86,8 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
               <button
                 onClick={handleBackToList}
                 className="flex-shrink-0 p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                title="返回列表"
-                aria-label="返回列表"
+                title={t('debug.backToList')}
+                aria-label={t('debug.backToList')}
               >
                 <BackIcon />
               </button>
@@ -93,20 +96,20 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
               id="debug-panel-title"
               className="text-base sm:text-lg font-semibold text-neutral-900 dark:text-white truncate"
             >
-              {selectedRequest ? '请求详情' : 'API 调试面板'}
+              {selectedRequest ? t('debug.requestDetail') : t('debug.title')}
             </h2>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* 调试模式开关 */}
             <label className="flex items-center gap-2 text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-              <span className="hidden xs:inline">调试模式</span>
-              <span className="xs:hidden">调试</span>
+              <span className="hidden xs:inline">{t('debug.debugMode')}</span>
+              <span className="xs:hidden">{t('debug.debugMode')}</span>
               <button
                 onClick={handleToggleDebug}
                 role="switch"
                 aria-checked={debugEnabled}
-                aria-label="切换调试模式"
+                aria-label={t('debug.debugMode')}
                 className={`
                   relative w-9 sm:w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0
                   ${debugEnabled ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-600'}
@@ -127,7 +130,7 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
                 onClick={handleClearHistory}
                 className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors whitespace-nowrap"
               >
-                清除
+                {t('debug.clear')}
               </button>
             )}
 
@@ -135,8 +138,8 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
             <button
               onClick={onClose}
               className="p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors flex-shrink-0"
-              title="关闭"
-              aria-label="关闭调试面板"
+              title={t('common.close')}
+              aria-label={t('common.close')}
             >
               <CloseIcon />
             </button>
@@ -153,6 +156,7 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
               selectedId={selectedRequestId}
               onSelect={selectRequest}
               debugEnabled={debugEnabled}
+              t={t}
             />
           )}
         </div>
@@ -169,6 +173,7 @@ interface RequestHistoryListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   debugEnabled: boolean;
+  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
 /**
@@ -180,13 +185,14 @@ function RequestHistoryList({
   selectedId,
   onSelect,
   debugEnabled,
+  t,
 }: RequestHistoryListProps) {
   if (!debugEnabled) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-neutral-500 dark:text-neutral-400">
         <DebugOffIcon />
-        <p className="mt-4 text-lg">调试模式已关闭</p>
-        <p className="mt-2 text-sm">开启调试模式后，API 请求将被记录</p>
+        <p className="mt-4 text-lg">{t('debug.debugModeOff')}</p>
+        <p className="mt-2 text-sm">{t('debug.enableDebugHint')}</p>
       </div>
     );
   }
@@ -195,8 +201,8 @@ function RequestHistoryList({
     return (
       <div className="flex flex-col items-center justify-center h-full text-neutral-500 dark:text-neutral-400">
         <EmptyIcon />
-        <p className="mt-4 text-lg">暂无请求记录</p>
-        <p className="mt-2 text-sm">发送消息后，请求将显示在这里</p>
+        <p className="mt-4 text-lg">{t('debug.noRequests')}</p>
+        <p className="mt-2 text-sm">{t('debug.sendMessageHint')}</p>
       </div>
     );
   }

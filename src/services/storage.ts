@@ -394,7 +394,30 @@ export async function loadModelConfigs(): Promise<ModelConfig[]> {
   const db = await getDB();
   const configs = await db.get('modelConfigs', MODEL_CONFIGS_KEY);
   if (configs && configs.length > 0) {
-    return configs;
+    // 创建预设模型的 ID 到描述翻译键的映射
+    const presetDescriptions = new Map(
+      GEMINI_MODELS.map(m => [m.id, m.description])
+    );
+    
+    // 同步预设模型的描述为翻译键（处理旧版本数据迁移）
+    const updatedConfigs = configs.map((config: ModelConfig) => {
+      // 如果是预设模型且描述不是翻译键格式，则更新为翻译键
+      const presetDesc = presetDescriptions.get(config.id);
+      if (presetDesc && !config.isCustom && config.description !== presetDesc) {
+        return { ...config, description: presetDesc };
+      }
+      return config;
+    });
+    
+    // 如果有更新，保存到数据库
+    const hasUpdates = updatedConfigs.some(
+      (config: ModelConfig, index: number) => config.description !== configs[index]?.description
+    );
+    if (hasUpdates) {
+      await db.put('modelConfigs', updatedConfigs, MODEL_CONFIGS_KEY);
+    }
+    
+    return updatedConfigs;
   }
   // 返回预设模型列表（转换为 ModelConfig 格式）
   return GEMINI_MODELS.map(model => ({

@@ -1,11 +1,12 @@
 /**
  * 登录页面组件
- * Requirements: 5.1, 5.6
+ * Requirements: 5.1, 5.6, 7.1, 7.2, 7.3, 7.4
  */
 
 import React, { useState, useCallback } from 'react';
 import { useAuthStore } from '../../stores/auth';
 import { isEnvPassword } from '../../types/auth';
+import { useTranslation } from '@/i18n';
 
 /**
  * 登录页面
@@ -14,6 +15,7 @@ import { isEnvPassword } from '../../types/auth';
 export function LoginPage() {
   const [password, setPassword] = useState('');
   const { login, isLoading, error, clearError } = useAuthStore();
+  const { t } = useTranslation();
 
   // 处理密码输入
   const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +55,7 @@ export function LoginPage() {
               Gemini Chat
             </h1>
             <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
-              请输入密码以继续
+              {t('auth.title')}
             </p>
           </div>
 
@@ -65,7 +67,7 @@ export function LoginPage() {
                 htmlFor="password" 
                 className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2"
               >
-                密码
+                {t('auth.passwordLabel')}
               </label>
               <input
                 id="password"
@@ -73,7 +75,7 @@ export function LoginPage() {
                 value={password}
                 onChange={handlePasswordChange}
                 onKeyDown={handleKeyDown}
-                placeholder="请输入密码"
+                placeholder={t('auth.passwordPlaceholder')}
                 disabled={isLoading}
                 autoFocus
                 className={`
@@ -115,10 +117,10 @@ export function LoginPage() {
               {isLoading ? (
                 <>
                   <LoadingSpinner className="w-5 h-5" />
-                  <span>登录中...</span>
+                  <span>{t('auth.loggingIn')}</span>
                 </>
               ) : (
-                <span>登录</span>
+                <span>{t('auth.loginButton')}</span>
               )}
             </button>
           </form>
@@ -126,7 +128,7 @@ export function LoginPage() {
           {/* 提示信息 */}
           {!isEnvPassword() && (
             <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center mt-6">
-              默认密码: adminiadmin
+              {t('auth.defaultPasswordHint')}
             </p>
           )}
         </div>

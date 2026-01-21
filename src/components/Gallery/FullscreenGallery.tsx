@@ -10,6 +10,7 @@ import { useImageStore } from '../../stores/image';
 import { groupImagesByDate } from '../../utils/galleryUtils';
 import { GalleryToolbar, type ViewMode } from './GalleryToolbar';
 import { ImageCard } from './ImageCard';
+import { useTranslation } from '@/i18n';
 import type { GeneratedImage } from '../../types';
 
 // ============ 类型定义 ============
@@ -56,11 +57,12 @@ function EmptyIcon({ className }: { className?: string }) {
 
 /** 加载状态组件 - 需求: 5.4 */
 const LoadingState = memo(function LoadingState() {
+  const { t } = useTranslation();
   return (
     <div className="flex-1 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        <p className="text-neutral-500 dark:text-neutral-400">加载图片中...</p>
+        <p className="text-neutral-500 dark:text-neutral-400">{t('gallery.loading')}</p>
       </div>
     </div>
   );
@@ -68,16 +70,17 @@ const LoadingState = memo(function LoadingState() {
 
 /** 空状态组件 - 需求: 5.3 */
 export const EmptyState = memo(function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div className="flex-1 flex items-center justify-center" data-testid="empty-state">
       <div className="flex flex-col items-center gap-4 text-center px-4">
         <EmptyIcon className="w-24 h-24 text-neutral-300 dark:text-neutral-600" />
         <div>
           <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300">
-            暂无图片
+            {t('gallery.noImages')}
           </h3>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            AI 生成的图片将显示在这里
+            {t('gallery.imageHint')}
           </p>
         </div>
       </div>

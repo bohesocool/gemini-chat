@@ -20,6 +20,7 @@ import { FileReferencePreview } from './MessageInput/FileReferencePreview';
 import type { FileReference } from '../types/filesApi';
 import { generateFileReferenceId, createFileReference } from '../types/filesApi';
 import { uploadFileToFilesApi, validateFilesApiFile, FilesApiError, getErrorMessage } from '../services/filesApi';
+import { useTranslation } from '@/i18n';
 
 interface MessageInputProps {
   /** 发送消息回调 */
@@ -143,7 +144,7 @@ export function MessageInput({
   onCancel,
   isSending = false,
   disabled = false,
-  placeholder = '输入消息...',
+  placeholder,
   showExtendedToolbar = true,
   editingContent,
   isEditing = false,
@@ -165,12 +166,16 @@ export function MessageInput({
   onThinkingBudgetChange,
   modelCapabilities,
 }: MessageInputProps) {
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [fileReferences, setFileReferences] = useState<FileReference[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 使用翻译后的占位符，根据状态选择合适的提示
+  const inputPlaceholder = placeholder ?? (disabled ? t('chat.inputPlaceholderNoApiKey') : t('chat.inputPlaceholderWithHint'));
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -618,7 +623,7 @@ export function MessageInput({
           <div className="flex items-center gap-2">
             <EditIndicatorIcon className="w-4 h-4 text-primary-500" />
             <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-              正在编辑消息
+              {t('chat.editingMessage')}
             </span>
           </div>
           <button
@@ -629,7 +634,7 @@ export function MessageInput({
               font-medium
             "
           >
-            取消
+            {t('common.cancel')}
           </button>
         </div>
       )}
@@ -684,7 +689,7 @@ export function MessageInput({
           <div className="text-center">
             <UploadIcon className="w-10 h-10 mx-auto mb-2 text-primary-500" />
             <p className="text-primary-600 dark:text-primary-400 font-medium">
-              释放以上传文件
+              {t('chat.releaseToUpload')}
             </p>
           </div>
         </div>
@@ -698,7 +703,7 @@ export function MessageInput({
             <IconButton
               onClick={handleImageClick}
               disabled={isDisabled}
-              title="上传图片"
+              title={t('chat.uploadImage')}
               reducedMotion={reducedMotion}
             >
               <ImageIcon className="w-5 h-5" />
@@ -707,7 +712,7 @@ export function MessageInput({
             <IconButton
               onClick={handleFileClick}
               disabled={isDisabled}
-              title="上传文件"
+              title={t('chat.uploadFile')}
               className="hidden sm:flex"
               reducedMotion={reducedMotion}
             >
@@ -726,7 +731,7 @@ export function MessageInput({
             onPaste={handlePaste}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder={placeholder}
+            placeholder={inputPlaceholder}
             disabled={isDisabled}
             rows={1}
             className={`
@@ -765,7 +770,7 @@ export function MessageInput({
               hover:shadow-lg hover:shadow-error-light/40
             "
             style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-            title="取消请求"
+            title={t('chat.cancelRequest')}
           >
             <StopIcon className="w-5 h-5" />
           </button>
@@ -784,7 +789,7 @@ export function MessageInput({
               }
             `}
             style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-            title="发送消息"
+            title={t('chat.sendMessage')}
           >
             {isSending ? (
               <LoadingSpinner className="w-5 h-5" />
@@ -802,7 +807,7 @@ export function MessageInput({
           <ToolbarButton
             onClick={handleImageClick}
             disabled={isDisabled}
-            title="上传图片"
+            title={t('chat.uploadImage')}
             reducedMotion={reducedMotion}
           >
             <ImageIcon className="w-4 h-4" />
@@ -811,7 +816,7 @@ export function MessageInput({
           <ToolbarButton
             onClick={handleFileClick}
             disabled={isDisabled}
-            title="上传文件"
+            title={t('chat.uploadFile')}
             reducedMotion={reducedMotion}
           >
             <PaperclipIcon className="w-4 h-4" />
@@ -831,7 +836,7 @@ export function MessageInput({
           <ToolbarButton
             onClick={() => onWebSearchToggle?.()}
             disabled={isDisabled}
-            title={webSearchEnabled ? '关闭联网搜索' : '开启联网搜索'}
+            title={webSearchEnabled ? t('chat.disableWebSearch') : t('chat.enableWebSearch')}
             active={webSearchEnabled}
             reducedMotion={reducedMotion}
           >
@@ -842,7 +847,7 @@ export function MessageInput({
           <ToolbarButton
             onClick={() => onUrlContextToggle?.()}
             disabled={isDisabled}
-            title={urlContextEnabled ? '关闭 URL 上下文' : '开启 URL 上下文'}
+            title={urlContextEnabled ? t('chat.disableUrlContext') : t('chat.enableUrlContext')}
             active={urlContextEnabled}
             reducedMotion={reducedMotion}
           >
@@ -889,27 +894,27 @@ export function MessageInput({
           {/* Files API 状态指示 - 需求: 1.6 */}
           {filesApiEnabled && (
             <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              Files API 已开启
+              {t('chat.filesApiEnabled')}
             </span>
           )}
 
           {/* 联网搜索状态指示 */}
           {webSearchEnabled && (
             <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              联网搜索已开启
+              {t('chat.webSearchEnabled')}
             </span>
           )}
 
           {/* URL 上下文状态指示 - 需求: 1.3 */}
           {urlContextEnabled && (
             <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              URL 上下文已开启
+              {t('chat.urlContextEnabled')}
             </span>
           )}
 
           {/* 提示文字 */}
           <span className="text-xs text-neutral-400 dark:text-neutral-500 hidden sm:inline">
-            Enter 发送 · Shift+Enter 换行
+            {t('chat.enterToSend')} · {t('chat.shiftEnterNewLine')}
           </span>
         </div>
       )}
@@ -1029,6 +1034,7 @@ interface AttachmentPreviewProps {
 }
 
 function AttachmentPreview({ attachment, onRemove, reducedMotion }: AttachmentPreviewProps) {
+  const { t } = useTranslation();
   const transitionStyle = reducedMotion
     ? {}
     : { transition: `all ${durationValues.fast}ms ${easings.easeOut}` };
@@ -1052,7 +1058,7 @@ function AttachmentPreview({ attachment, onRemove, reducedMotion }: AttachmentPr
             shadow-md touch-manipulation
           "
           style={{ ...transitionStyle, minWidth: '28px', minHeight: '28px' }}
-          title="删除"
+          title={t('chat.remove')}
         >
           <XIcon className="w-3 h-3" />
         </button>
@@ -1091,7 +1097,7 @@ function AttachmentPreview({ attachment, onRemove, reducedMotion }: AttachmentPr
           dark:hover:text-error-dark
         "
         style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-        title="删除"
+        title={t('chat.remove')}
       >
         <XIcon className="w-4 h-4" />
       </button>

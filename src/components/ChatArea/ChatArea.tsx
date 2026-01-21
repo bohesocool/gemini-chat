@@ -2,10 +2,11 @@
  * 聊天区域主组件
  * 集成顶部工具栏、子话题标签、消息列表和输入
  * 
- * Requirements: 4.1, 5.1, 5.2, 5.3, 5.4, 6.1, 7.5, 1.1, 1.2, 1.3
+ * Requirements: 4.1, 5.1, 5.2, 5.3, 5.4, 6.1, 7.5, 1.1, 1.2, 1.3, 6.3
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from '@/i18n';
 import { useChatWindowStore } from '../../stores/chatWindow';
 import { useSettingsStore } from '../../stores/settings';
 import { useModelStore } from '../../stores/model';
@@ -42,6 +43,7 @@ export interface ChatAreaProps {
 export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // 从 store 获取状态
   const {
@@ -119,9 +121,11 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
 
   // 处理创建子话题
   const handleCreateSubTopic = useCallback(() => {
-    if (!currentWindowId) return;
-    createSubTopic(currentWindowId);
-  }, [currentWindowId, createSubTopic]);
+    if (!currentWindowId || !currentWindow) return;
+    const topicNumber = currentWindow.subTopics.length + 1;
+    const title = t('sidebar.topicNumber', { number: String(topicNumber) });
+    createSubTopic(currentWindowId, title);
+  }, [currentWindowId, currentWindow, createSubTopic, t]);
 
   // 处理删除子话题
   const handleDeleteSubTopic = useCallback(
@@ -398,11 +402,6 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         onCancel={cancelRequest}
         isSending={isSending}
         disabled={!apiKey}
-        placeholder={
-          !apiKey
-            ? '请先在设置中配置 API 密钥'
-            : '输入消息... (Enter 发送, Shift+Enter 换行)'
-        }
         webSearchEnabled={currentWindow.config.webSearchEnabled}
         onWebSearchToggle={handleWebSearchToggle}
         urlContextEnabled={currentWindow.config.urlContextEnabled}
@@ -437,9 +436,10 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
  */
 function EmptyWindowState() {
   const { createWindow } = useChatWindowStore();
+  const { t } = useTranslation();
 
   const handleCreateWindow = () => {
-    createWindow();
+    createWindow(undefined, t('chat.defaultChatName'), t('sidebar.mainTopic'));
   };
 
   return (
@@ -456,11 +456,11 @@ function EmptyWindowState() {
       </div>
 
       <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
-        开始新程序
+        {t('chat.emptyState')}
       </h2>
 
       <p className="text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
-        选择一个现有的程序，或创建一个新的程序开始与 AI 交流
+        {t('chat.emptyStateHint')}
       </p>
 
       <button
@@ -475,7 +475,7 @@ function EmptyWindowState() {
         "
       >
         <PlusIcon className="w-5 h-5" />
-        新建程序
+        {t('sidebar.newChat')}
       </button>
     </div>
   );

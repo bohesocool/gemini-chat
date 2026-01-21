@@ -8,6 +8,7 @@ import React, { useMemo } from 'react';
 import type { ThinkingLevel, ModelCapabilities } from '../../types/models';
 import { getModelCapabilities } from '../../types/models';
 import { useModelStore } from '../../stores/model';
+import { useTranslation } from '../../i18n/useTranslation';
 
 /**
  * 思考程度选择器属性
@@ -26,34 +27,36 @@ export interface ThinkingLevelSelectorProps {
 }
 
 /**
- * 思考程度选项配置
+ * 思考程度选项配置（使用翻译键）
  * gemini-3-pro-preview 只支持 low/high
  * gemini-3-flash-preview 支持 minimal/low/medium/high
  */
-const THINKING_LEVEL_OPTIONS: Array<{
+interface ThinkingLevelOption {
   value: ThinkingLevel;
-  label: string;
-  description: string;
-}> = [
+  labelKey: string;
+  descriptionKey: string;
+}
+
+const THINKING_LEVEL_OPTIONS: ThinkingLevelOption[] = [
   {
     value: 'minimal',
-    label: '最少',
-    description: '最快响应，最少思考',
+    labelKey: 'modelParams.thinkingLevelMinimal',
+    descriptionKey: 'modelParams.thinkingLevelMinimalDesc',
   },
   {
     value: 'low',
-    label: '低',
-    description: '快速响应，适合简单任务',
+    labelKey: 'modelParams.thinkingLevelLow',
+    descriptionKey: 'modelParams.thinkingLevelLowDesc',
   },
   {
     value: 'medium',
-    label: '中',
-    description: '平衡速度和深度',
+    labelKey: 'modelParams.thinkingLevelMedium',
+    descriptionKey: 'modelParams.thinkingLevelMediumDesc',
   },
   {
     value: 'high',
-    label: '高',
-    description: '深度推理，适合复杂问题',
+    labelKey: 'modelParams.thinkingLevelHigh',
+    descriptionKey: 'modelParams.thinkingLevelHighDesc',
   },
 ];
 
@@ -69,7 +72,7 @@ const THINKING_LEVEL_OPTIONS: Array<{
  * 
  * @param capabilities 模型能力配置（已处理重定向）
  */
-function getOptionsFromCapabilities(capabilities: ModelCapabilities): typeof THINKING_LEVEL_OPTIONS {
+function getOptionsFromCapabilities(capabilities: ModelCapabilities): ThinkingLevelOption[] {
   // 如果模型配置了 supportedThinkingLevels，则根据配置过滤选项
   if (capabilities.supportedThinkingLevels && capabilities.supportedThinkingLevels.length > 0) {
     return THINKING_LEVEL_OPTIONS.filter(
@@ -93,7 +96,7 @@ function getOptionsFromCapabilities(capabilities: ModelCapabilities): typeof THI
  * 
  * @param modelId 模型 ID
  */
-export function getOptionsForModel(modelId?: string): typeof THINKING_LEVEL_OPTIONS {
+export function getOptionsForModel(modelId?: string): ThinkingLevelOption[] {
   if (modelId) {
     // 使用 getModelCapabilities 获取模型能力配置
     const capabilities = getModelCapabilities(modelId);
@@ -119,6 +122,7 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
   variant = 'full',
   modelId,
 }) => {
+  const { t } = useTranslation();
   // 使用 store 的 getEffectiveCapabilities 方法来处理重定向 - 需求: 1.3
   const getEffectiveCapabilities = useModelStore((state) => state.getEffectiveCapabilities);
   
@@ -131,11 +135,12 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
     // 默认只返回 low 和 high
     return THINKING_LEVEL_OPTIONS.filter(opt => opt.value === 'low' || opt.value === 'high');
   }, [modelId, getEffectiveCapabilities]);
+
   // 紧凑模式：使用简单的按钮组
   if (variant === 'compact') {
     return (
       <div className="flex items-center gap-1">
-        <span className="text-xs text-[var(--text-secondary)] mr-1">思考:</span>
+        <span className="text-xs text-[var(--text-secondary)] mr-1">{t('modelParams.thinking')}:</span>
         <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
           {options.map((option) => (
             <button
@@ -151,9 +156,9 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
-              title={option.description}
+              title={t(option.descriptionKey)}
             >
-              {option.label}
+              {t(option.labelKey)}
             </button>
           ))}
         </div>
@@ -165,7 +170,7 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-[var(--text-primary)]">
-        思考程度
+        {t('modelParams.thinkingLevel')}
       </label>
       <div className="flex gap-2">
         {options.map((option) => (
@@ -193,10 +198,10 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
                   }
                 `}
               >
-                {option.label}
+                {t(option.labelKey)}
               </div>
               <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                {option.description}
+                {t(option.descriptionKey)}
               </div>
             </div>
           </button>

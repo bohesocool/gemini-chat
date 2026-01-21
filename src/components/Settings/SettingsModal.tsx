@@ -5,10 +5,12 @@
  * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { durationValues, easings, breakpointValues, touchTargets } from '../../design/tokens';
 import { useReducedMotion } from '../motion';
+import { useTranslation } from '../../i18n';
+import type { TranslateFunction } from '../../i18n';
 import type { SettingsTabId, SettingsTab } from './SettingsPanel';
 
 // ============================================
@@ -63,7 +65,29 @@ function useIsMobile(): boolean {
   return isMobile;
 }
 
-/** 设置标签配置 */
+/**
+ * 获取设置标签配置
+ * 使用翻译函数动态生成标签名称
+ * @param t 翻译函数
+ * @returns 设置标签配置数组
+ */
+export function getSettingsTabs(t: TranslateFunction): SettingsTab[] {
+  return [
+    { id: 'appearance', label: t('settings.appearance'), icon: <EyeIcon /> },
+    { id: 'api', label: t('settings.apiConfig'), icon: <KeyIcon /> },
+    { id: 'model', label: t('settings.modelSelect'), icon: <CpuIcon /> },
+    { id: 'generation', label: t('settings.generation'), icon: <SlidersIcon /> },
+    { id: 'system', label: t('settings.systemInstruction'), icon: <MessageIcon /> },
+    { id: 'safety', label: t('settings.safety'), icon: <ShieldIcon /> },
+    { id: 'data', label: t('settings.dataManagement'), icon: <DatabaseIcon /> },
+    { id: 'about', label: t('settings.about'), icon: <InfoIcon /> },
+  ];
+}
+
+/**
+ * @deprecated 使用 getSettingsTabs(t) 代替
+ * 保留此常量以保持向后兼容性
+ */
 export const SETTINGS_TABS: SettingsTab[] = [
   { id: 'appearance', label: '外观设置', icon: <EyeIcon /> },
   { id: 'api', label: 'API 配置', icon: <KeyIcon /> },
@@ -97,12 +121,16 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
   const [shouldRender, setShouldRender] = useState(false);
   const [animationState, setAnimationState] = useState<'entering' | 'entered' | 'exiting' | 'exited'>('exited');
   const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab);
   const [contentAnimationState, setContentAnimationState] = useState<'idle' | 'exiting' | 'entering'>('idle');
   const panelRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
+
+  // 使用翻译函数动态生成设置标签
+  const settingsTabs = useMemo(() => getSettingsTabs(t), [t]);
 
   // 使用更长的动画时间让过渡更平滑
   const duration = prefersReducedMotion ? 0 : 250;
@@ -306,13 +334,13 @@ export function SettingsModal({
             id="settings-modal-title"
             className="text-lg md:text-xl font-semibold text-neutral-900 dark:text-neutral-100"
           >
-            设置
+            {t('settings.title')}
           </h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-neutral-100/80 dark:hover:bg-neutral-700/80 transition-colors touch-manipulation"
             style={{ minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-            aria-label="关闭设置"
+            aria-label={t('settings.closeSettings')}
           >
             <CloseIcon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
           </button>
@@ -325,7 +353,7 @@ export function SettingsModal({
             className="flex-shrink-0 border-r border-neutral-200/50 dark:border-neutral-700/50 p-2 md:p-4 space-y-1 overflow-y-auto bg-neutral-50/50 dark:bg-neutral-800/30"
             style={{ width: isMobile ? `${SETTINGS_MODAL_SIZE.mobileNavWidth}px` : `${SETTINGS_MODAL_SIZE.navWidth}px` }}
           >
-            {SETTINGS_TABS.map((tab) => (
+            {settingsTabs.map((tab) => (
               <SettingsTabButton
                 key={tab.id}
                 tab={tab}

@@ -6,6 +6,7 @@
 
 import React from 'react';
 import type { MediaResolution } from '../../types/models';
+import { useTranslation } from '../../i18n/useTranslation';
 
 /**
  * 媒体分辨率选择器属性
@@ -22,33 +23,35 @@ export interface MediaResolutionSelectorProps {
 }
 
 /**
- * 媒体分辨率选项配置
+ * 媒体分辨率选项配置（使用翻译键）
  * 需求: 4.3, 4.4, 4.5, 4.6, 4.7
  */
-const MEDIA_RESOLUTION_OPTIONS: Array<{
+interface MediaResolutionOption {
   value: MediaResolution | undefined;
-  label: string;
-  description: string;
-}> = [
+  labelKey: string;
+  descriptionKey: string;
+}
+
+const MEDIA_RESOLUTION_OPTIONS: MediaResolutionOption[] = [
   {
     value: undefined,
-    label: '默认',
-    description: '使用 API 默认分辨率',
+    labelKey: 'modelParams.mediaResolutionDefault',
+    descriptionKey: 'modelParams.mediaResolutionDefaultDesc',
   },
   {
     value: 'MEDIA_RESOLUTION_LOW',
-    label: '低',
-    description: '低分辨率，处理更快',
+    labelKey: 'modelParams.mediaResolutionLow',
+    descriptionKey: 'modelParams.mediaResolutionLowDesc',
   },
   {
     value: 'MEDIA_RESOLUTION_MEDIUM',
-    label: '中',
-    description: '中等分辨率，平衡质量和速度',
+    labelKey: 'modelParams.mediaResolutionMedium',
+    descriptionKey: 'modelParams.mediaResolutionMediumDesc',
   },
   {
     value: 'MEDIA_RESOLUTION_HIGH',
-    label: '高',
-    description: '高分辨率，最佳质量',
+    labelKey: 'modelParams.mediaResolutionHigh',
+    descriptionKey: 'modelParams.mediaResolutionHighDesc',
   },
 ];
 
@@ -67,15 +70,17 @@ export const MediaResolutionSelector: React.FC<MediaResolutionSelectorProps> = (
   disabled = false,
   variant = 'full',
 }) => {
+  const { t } = useTranslation();
+
   // 紧凑模式：使用简单的按钮组
   if (variant === 'compact') {
     return (
       <div className="flex items-center gap-1">
-        <span className="text-xs text-[var(--text-secondary)] mr-1">媒体分辨率:</span>
+        <span className="text-xs text-[var(--text-secondary)] mr-1">{t('modelParams.mediaResolution')}:</span>
         <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
           {MEDIA_RESOLUTION_OPTIONS.map((option) => (
             <button
-              key={option.label}
+              key={option.labelKey}
               type="button"
               disabled={disabled}
               onClick={() => onChange(option.value)}
@@ -87,9 +92,9 @@ export const MediaResolutionSelector: React.FC<MediaResolutionSelectorProps> = (
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
-              title={option.description}
+              title={t(option.descriptionKey)}
             >
-              {option.label}
+              {t(option.labelKey)}
             </button>
           ))}
         </div>
@@ -101,12 +106,12 @@ export const MediaResolutionSelector: React.FC<MediaResolutionSelectorProps> = (
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-[var(--text-primary)]">
-        媒体分辨率
+        {t('modelParams.mediaResolution')}
       </label>
       <div className="flex gap-2">
         {MEDIA_RESOLUTION_OPTIONS.map((option) => (
           <button
-            key={option.label}
+            key={option.labelKey}
             type="button"
             disabled={disabled}
             onClick={() => onChange(option.value)}
@@ -129,10 +134,10 @@ export const MediaResolutionSelector: React.FC<MediaResolutionSelectorProps> = (
                   }
                 `}
               >
-                {option.label}
+                {t(option.labelKey)}
               </div>
               <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                {option.description}
+                {t(option.descriptionKey)}
               </div>
             </div>
           </button>
