@@ -208,6 +208,16 @@ body,
   background-color: var(--color-neutral-600);
 }
 
+/* 隐藏滚动条的工具类 */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE 和 Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
+
 /* Markdown 内容样式 */
 .markdown-content {
   color: var(--text-primary);

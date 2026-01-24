@@ -662,10 +662,8 @@ export function Layout({ sidebar, children }: LayoutProps) {
         )}
 
         {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
-        {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
-        {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
         <nav className={`
-          flex flex-col w-20   flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
+          flex flex-col w-14 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
           ${theme === 'snow-white'
             ? 'bg-white'
             : effectiveTheme === 'dark' ? 'bg-black' : 'bg-primary-600'}
@@ -768,26 +766,20 @@ export function Layout({ sidebar, children }: LayoutProps) {
           ${effectiveTheme === 'dark' ? 'bg-[#050505]' : 'bg-white'}
         `}>
 
-          {/* Windows Controls Header Area - 需求: 顶部控制栏 */}
-          <div className="h-10 flex items-center justify-between px-4 drag-region flex-shrink-0 z-50">
-            {/* Left side spacer - Sidebar Toggle Button */}
-            <div className="flex-1 flex items-center">
-              {sidebarCollapsed && (
-                <button
-                  onClick={() => setSidebarCollapsed(false)}
-                  className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 no-drag focus:outline-none"
-                  title={t('nav.expandSidebar')}
-                >
-                  {/* Menu Icon */}
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-              )}
+          {/* 侧边栏展开按钮 - 仅在折叠时显示 */}
+          {sidebarCollapsed && (
+            <div className="h-10 flex items-center px-4 flex-shrink-0 z-50">
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 focus:outline-none"
+                title={t('nav.expandSidebar')}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
             </div>
-            {/* Window Controls - Right aligned */}
-            <WindowControls />
-          </div>
+          )}
 
           <div className="flex-1 overflow-hidden relative flex flex-col">
             {currentView === 'images' ? (

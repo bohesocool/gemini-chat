@@ -13,14 +13,14 @@ type ModelSeries = 'gemini-3' | 'gemini-2.5' | 'gemini-2.0' | 'unknown';
 
 /**
  * 模型系列颜色配置
- * 不同系列使用不同颜色区分
+ * 所有系列使用统一的主题色
  */
 const MODEL_SERIES_COLORS: Record<ModelSeries, { bg: string; text: string; darkBg: string; darkText: string }> = {
   'gemini-3': {
-    bg: 'bg-purple-100',
-    text: 'text-purple-700',
-    darkBg: 'dark:bg-purple-900/30',
-    darkText: 'dark:text-purple-300',
+    bg: 'bg-primary-100',
+    text: 'text-primary-700',
+    darkBg: 'dark:bg-primary-900/30',
+    darkText: 'dark:text-primary-300',
   },
   'gemini-2.5': {
     bg: 'bg-primary-100',
@@ -29,10 +29,10 @@ const MODEL_SERIES_COLORS: Record<ModelSeries, { bg: string; text: string; darkB
     darkText: 'dark:text-primary-300',
   },
   'gemini-2.0': {
-    bg: 'bg-blue-100',
-    text: 'text-blue-700',
-    darkBg: 'dark:bg-blue-900/30',
-    darkText: 'dark:text-blue-300',
+    bg: 'bg-primary-100',
+    text: 'text-primary-700',
+    darkBg: 'dark:bg-primary-900/30',
+    darkText: 'dark:text-primary-300',
   },
   'unknown': {
     bg: 'bg-neutral-100',

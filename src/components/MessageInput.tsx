@@ -735,23 +735,24 @@ export function MessageInput({
             disabled={isDisabled}
             rows={1}
             className={`
-              w-full resize-none rounded-2xl px-4 py-3
+              w-full resize-none rounded-full px-5 py-3
               bg-neutral-50 dark:bg-neutral-800
               text-neutral-900 dark:text-neutral-100 
               placeholder-neutral-400 dark:placeholder-neutral-500
               disabled:opacity-50 disabled:cursor-not-allowed
               text-base leading-6
-              border-2 outline-none
+              border outline-none
               message-input-textarea
+              scrollbar-hide
               ${isFocused
-                ? 'border-primary-500 shadow-lg shadow-primary-500/10'
-                : 'border-neutral-200 dark:border-neutral-700 shadow-sm'
+                ? 'border-primary-500 shadow-md shadow-primary-500/10'
+                : 'border-neutral-200 dark:border-neutral-700'
               }
             `}
             style={{
               ...transitionStyle,
               minHeight: `${INPUT_MIN_ROWS * LINE_HEIGHT_PX + 24}px`,
-              overflowY: 'auto',
+              overflowY: 'hidden',
             }}
           />
         </div>
