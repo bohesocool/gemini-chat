@@ -670,7 +670,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
           layout-nav
         `}>
           {/* 顶部 Logo - 替换为图片 */}
-          <div className="flex items-center justify-center h-12 mb-2 mt-5">
+          <div className="flex items-center justify-center h-12 mb-2 mt-2">
             <div className="w-10 h-10  rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
               <img src={logoImage} alt="Logo" className="w-full h-full object-cover" />
             </div>
@@ -766,25 +766,9 @@ export function Layout({ sidebar, children }: LayoutProps) {
           ${effectiveTheme === 'dark' ? 'bg-[#050505]' : 'bg-white'}
         `}>
 
-          {/* 侧边栏展开按钮 - 仅在折叠时显示 */}
-          {sidebarCollapsed && (
-            <div className="h-10 flex items-center px-4 flex-shrink-0 z-50">
-              <button
-                onClick={() => setSidebarCollapsed(false)}
-                className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 focus:outline-none"
-                title={t('nav.expandSidebar')}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-          )}
-
           <div className="flex-1 overflow-hidden relative flex flex-col">
             {currentView === 'images' ? (
               <FullscreenGallery
-                onBackToChat={handleBackToChat}
                 onImageClick={handleImageClick}
               />
             ) : currentView === 'live' ? (
@@ -797,6 +781,8 @@ export function Layout({ sidebar, children }: LayoutProps) {
                 onEdit={handleEditTemplate}
                 onDelete={handleDeleteTemplate}
                 onUseTemplate={handleUseTemplate}
+                sidebarCollapsed={sidebarCollapsed}
+                onExpandSidebar={() => setSidebarCollapsed(false)}
               />
             ) : currentView === 'bookmarks' ? (
               /* 书签详情视图 - 需求: 3.3 */
@@ -804,6 +790,8 @@ export function Layout({ sidebar, children }: LayoutProps) {
                 selectedBookmarkId={selectedBookmarkId}
                 onNavigate={handleNavigateToBookmark}
                 onDelete={handleDeleteBookmark}
+                sidebarCollapsed={sidebarCollapsed}
+                onExpandSidebar={() => setSidebarCollapsed(false)}
               />
             ) : (
               children

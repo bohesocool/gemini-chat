@@ -69,7 +69,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     updateMessageContent,
   } = useChatWindowStore();
 
-  const { apiEndpoint, apiKey } = useSettingsStore();
+  const { apiEndpoint, apiKey, sidebarCollapsed, setSidebarCollapsed } = useSettingsStore();
 
   // 获取模型能力 - 需求: 4.6
   const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
@@ -363,6 +363,8 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         models={models}
         onModelChange={handleModelChange}
         messages={currentSubTopic?.messages || []}
+        sidebarCollapsed={sidebarCollapsed}
+        onExpandSidebar={() => setSidebarCollapsed(false)}
       />
 
       {/* 子话题标签栏 - Requirements: 5.1 */}

@@ -220,7 +220,7 @@ export function LiveApiView({
       {!isLeftPanelCollapsed && (
         <aside className="w-64 flex-shrink-0 border-r border-neutral-200 dark:border-neutral-700 flex flex-col">
           {/* 左侧面板头部 */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
+          <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
               {onBackToChat && (
                 <button
@@ -260,9 +260,9 @@ export function LiveApiView({
         </aside>
       )}
 
-      {/* 左侧面板折叠时的展开按钮 */}
+      {/* 左侧面板折叠时的展开按钮 - 不显示边框 */}
       {isLeftPanelCollapsed && (
-        <div className="flex-shrink-0 border-r border-neutral-200 dark:border-neutral-700 flex flex-col items-center py-3 px-1">
+        <div className="flex-shrink-0 flex flex-col items-center py-3 px-1">
           {onBackToChat && (
             <button
               onClick={onBackToChat}
@@ -302,7 +302,7 @@ export function LiveApiView({
           // 实时对话模式
           <>
             {/* 顶部标题栏 */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
+            <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {isConnected ? t('live.inConversation') : isConnecting ? t('live.connecting') : t('live.ready')}
@@ -354,7 +354,7 @@ export function LiveApiView({
 
             {/* 控制面板 - 包含"开始会话"按钮 */}
             {/* 需求: 1.7 - "开始会话"按钮在底部控制面板中 */}
-            <div className="border-t border-neutral-200 dark:border-neutral-700">
+            <div>
               <LiveControlPanel
                 connectionStatus={connectionStatus}
                 isMuted={isMuted}

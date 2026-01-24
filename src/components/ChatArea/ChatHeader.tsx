@@ -29,6 +29,10 @@ export interface ChatHeaderProps {
   onModelChange?: (modelId: string) => void;
   /** 消息列表（用于导出） - Requirements: 1.1 */
   messages?: Message[];
+  /** 侧边栏是否折叠 - 用于显示展开按钮 */
+  sidebarCollapsed?: boolean;
+  /** 展开侧边栏回调 */
+  onExpandSidebar?: () => void;
 }
 
 // ============ ModelSelector 子组件 ============
@@ -178,6 +182,8 @@ export function ChatHeader({
   models,
   onModelChange,
   messages = [],
+  sidebarCollapsed = false,
+  onExpandSidebar,
 }: ChatHeaderProps) {
   // 导出对话框状态
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -191,12 +197,22 @@ export function ChatHeader({
   const displayTitle = title === '新对话' ? t('chat.defaultChatName') : (title || t('chat.defaultChatName'));
 
   return (
-    <div className="
-      flex items-center justify-between px-4 py-3
-      bg-white dark:bg-neutral-900
-    ">
-      {/* 左侧：标题和模型选择器 */}
+    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-neutral-900">
+      {/* 左侧：展开按钮（折叠时显示）、标题和模型选择器 */}
       <div className="flex items-center gap-3">
+        {/* 展开侧边栏按钮 - 仅在侧边栏折叠时显示 */}
+        {sidebarCollapsed && onExpandSidebar && (
+          <button
+            onClick={onExpandSidebar}
+            className="p-1.5 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 focus:outline-none transition-colors"
+            title={t('nav.expandSidebar')}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        
         <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-md">
           {displayTitle}
         </h1>

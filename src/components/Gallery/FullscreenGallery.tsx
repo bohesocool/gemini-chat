@@ -16,8 +16,6 @@ import type { GeneratedImage } from '../../types';
 // ============ 类型定义 ============
 
 export interface FullscreenGalleryProps {
-  /** 返回对话的回调 */
-  onBackToChat: () => void;
   /** 点击图片的回调 */
   onImageClick?: (image: GeneratedImage) => void;
 }
@@ -96,7 +94,6 @@ export const EmptyState = memo(function EmptyState() {
  * 需求: 3.4 视图切换动画
  */
 export const FullscreenGallery = memo(function FullscreenGallery({
-  onBackToChat,
   onImageClick,
 }: FullscreenGalleryProps) {
   // 状态
@@ -157,7 +154,6 @@ export const FullscreenGallery = memo(function FullscreenGallery({
         <GalleryToolbar
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
-          onBackToChat={onBackToChat}
           imageCount={0}
         />
         <LoadingState />
@@ -172,7 +168,6 @@ export const FullscreenGallery = memo(function FullscreenGallery({
         <GalleryToolbar
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
-          onBackToChat={onBackToChat}
           imageCount={0}
         />
         <EmptyState />
@@ -186,7 +181,6 @@ export const FullscreenGallery = memo(function FullscreenGallery({
       <GalleryToolbar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
-        onBackToChat={onBackToChat}
         imageCount={images.length}
       />
       

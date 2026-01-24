@@ -103,7 +103,7 @@ export function LiveSessionList({
     <div className={`flex flex-col h-full ${className}`}>
       {/* 顶部标题栏 - 简化版，移除新建会话按钮 */}
       {/* 需求: 1.7 - 开始会话按钮在底部控制面板中 */}
-      <div className="flex items-center px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
+      <div className="flex items-center px-4 py-3">
         <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
           {t('live.historySessions')}
         </h2>

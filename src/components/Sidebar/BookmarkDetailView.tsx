@@ -21,6 +21,10 @@ export interface BookmarkDetailViewProps {
   onNavigate: (bookmark: Bookmark) => void;
   /** 删除书签回调 */
   onDelete: (bookmarkId: string) => void;
+  /** 侧边栏是否折叠 */
+  sidebarCollapsed?: boolean;
+  /** 展开侧边栏回调 */
+  onExpandSidebar?: () => void;
 }
 
 /**
@@ -47,6 +51,8 @@ export function BookmarkDetailView({
   selectedBookmarkId,
   onNavigate,
   onDelete,
+  sidebarCollapsed = false,
+  onExpandSidebar,
 }: BookmarkDetailViewProps) {
   const { bookmarks } = useBookmarkStore();
   
@@ -72,14 +78,30 @@ export function BookmarkDetailView({
   // 空状态 - 需求: 3.8
   if (!bookmark) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <EmptyBookmarkIcon className="w-16 h-16 text-neutral-300 dark:text-neutral-600 mb-4" />
-        <h3 className="text-lg font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-          选择一个书签
-        </h3>
-        <p className="text-sm text-neutral-500 dark:text-neutral-500 max-w-sm">
-          从左侧列表中选择一个书签，查看完整消息内容
-        </p>
+      <div className="flex flex-col h-full">
+        {/* 展开按钮 - 仅在侧边栏折叠时显示，不带下划线 */}
+        {sidebarCollapsed && onExpandSidebar && (
+          <div className="flex items-center px-6 py-4">
+            <button
+              onClick={onExpandSidebar}
+              className="p-1.5 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 focus:outline-none transition-colors"
+              title="展开侧边栏"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        )}
+        <div className="flex flex-col items-center justify-center flex-1 p-8 text-center">
+          <EmptyBookmarkIcon className="w-16 h-16 text-neutral-300 dark:text-neutral-600 mb-4" />
+          <h3 className="text-lg font-medium text-neutral-600 dark:text-neutral-400 mb-2">
+            选择一个书签
+          </h3>
+          <p className="text-sm text-neutral-500 dark:text-neutral-500 max-w-sm">
+            从左侧列表中选择一个书签，查看完整消息内容
+          </p>
+        </div>
       </div>
     );
   }
@@ -89,6 +111,18 @@ export function BookmarkDetailView({
       {/* 头部 - 标题和操作按钮 */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center gap-3">
+          {/* 展开侧边栏按钮 - 仅在侧边栏折叠时显示 */}
+          {sidebarCollapsed && onExpandSidebar && (
+            <button
+              onClick={onExpandSidebar}
+              className="p-1.5 rounded-md hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 focus:outline-none transition-colors"
+              title="展开侧边栏"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
           <BookmarkIcon className="w-6 h-6 text-primary-500" />
           <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-200">
             书签详情

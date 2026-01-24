@@ -696,7 +696,7 @@ export function MessageInput({
       )}
 
       {/* 输入区域 - Requirements: 7.1, 7.2, 7.3, 7.4 */}
-      <div className="flex items-end gap-2">
+      <div className="flex items-center gap-2">
         {/* 快捷上传按钮（工具栏隐藏时显示） */}
         {!showExtendedToolbar && (
           <div className="flex gap-1 flex-shrink-0">

@@ -208,19 +208,18 @@ export function ChatWindowCard({
           )}
         </div>
 
-        {/* 模型标签 - 显示当前使用的模型 */}
-        <ModelBadge modelId={window.config.model} className="flex-shrink-0" />
-
-        {/* 消息数量徽章 */}
-        {totalMessages > 0 && isActive && (
-          <span className="flex-shrink-0 bg-primary-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-            {totalMessages}
-          </span>
-        )}
-
-        {/* 操作按钮 - 悬停显示 */}
-        {isHovered && !isActive && (
-          <div className="flex items-center gap-1">
+        {/* 右侧区域 - 模型标签和操作按钮共用位置 */}
+        <div className="flex-shrink-0 relative">
+          {/* 模型标签 - 悬停时渐隐 */}
+          <ModelBadge 
+            modelId={window.config.model} 
+            className={`transition-opacity duration-200 ${isHovered && !isActive ? 'opacity-0' : 'opacity-100'}`} 
+          />
+          
+          {/* 操作按钮 - 悬停时渐显，绝对定位覆盖在模型标签位置 */}
+          <div 
+            className={`absolute inset-0 flex items-center justify-end gap-1 transition-opacity duration-200 ${isHovered && !isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          >
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -242,6 +241,13 @@ export function ChatWindowCard({
               <TrashIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400 hover:text-red-500" />
             </button>
           </div>
+        </div>
+
+        {/* 消息数量徽章 */}
+        {totalMessages > 0 && isActive && (
+          <span className="flex-shrink-0 bg-primary-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+            {totalMessages}
+          </span>
         )}
       </div>
 

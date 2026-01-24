@@ -17,22 +17,11 @@ export interface GalleryToolbarProps {
   viewMode: ViewMode;
   /** 视图模式变更回调 */
   onViewModeChange: (mode: ViewMode) => void;
-  /** 返回对话回调 */
-  onBackToChat: () => void;
   /** 图片总数 */
   imageCount: number;
 }
 
 // ============ 图标组件 ============
-
-/** 返回箭头图标 */
-function ArrowLeftIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-    </svg>
-  );
-}
 
 /** 小图标视图图标 */
 function GridSmallIcon({ className }: { className?: string }) {
@@ -64,25 +53,14 @@ function GridLargeIcon({ className }: { className?: string }) {
 export const GalleryToolbar = memo(function GalleryToolbar({
   viewMode,
   onViewModeChange,
-  onBackToChat,
   imageCount,
 }: GalleryToolbarProps) {
   const { t } = useTranslation();
   
   return (
     <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-colors duration-200">
-      {/* 左侧：返回按钮和标题 - 响应式布局 */}
+      {/* 左侧：标题 - 响应式布局 */}
       <div className="flex items-center gap-1.5 sm:gap-3">
-        <button
-          onClick={onBackToChat}
-          className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-md sm:rounded-lg transition-colors active:scale-95 sm:active:scale-100"
-          aria-label={t('gallery.backToChat')}
-        >
-          <ArrowLeftIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="hidden xs:inline">{t('gallery.backToChat')}</span>
-          <span className="xs:hidden">{t('gallery.back')}</span>
-        </button>
-        <div className="hidden sm:block h-5 w-px bg-neutral-200 dark:bg-neutral-600" />
         <h2 className="text-sm sm:text-lg font-semibold text-neutral-800 dark:text-neutral-100">
           {t('gallery.title')}
         </h2>
