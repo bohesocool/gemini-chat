@@ -183,7 +183,7 @@ export function Sidebar() {
 
   return (
     <div className="flex h-full flex-col bg-neutral-50 dark:bg-neutral-800 transition-colors duration-300">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
+      <div className="flex items-center justify-between px-4 py-3">
         <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
           {currentView === 'assistants' ? t('sidebar.assistants') : currentView === 'images' ? t('sidebar.gallery') : currentView === 'templates' ? t('sidebar.templates') : currentView === 'bookmarks' ? t('sidebar.bookmarks') : currentView === 'live' ? t('sidebar.live') : t('settings.title')}
         </h2>
@@ -223,7 +223,7 @@ export function Sidebar() {
               <DragDropList items={filteredWindows} keyExtractor={(window) => window.id} renderItem={renderWindowCard} onReorder={handleReorder} />
             )}
           </div>
-          <div className="p-3 border-t border-neutral-200 dark:border-neutral-700">
+          <div className="p-3">
             <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
               {filteredWindows.length === windows.length ? `${windows.length} ${t('sidebar.chatCount')}` : `${t('sidebar.showing')} ${filteredWindows.length} / ${windows.length} ${t('sidebar.chatCount')}`}
             </p>

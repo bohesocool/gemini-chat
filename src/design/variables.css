@@ -7,44 +7,44 @@
    浅色主题（默认）
    ============================================ */
 :root {
-  /* 薄荷绿主题色 */
+  /* 薄荷绿主题色 - 降低饱和度版本 */
   /* Requirements: 1.1, 1.2 - 使用薄荷绿作为主题色 */
-  --color-mint-50: #f0fdf4;
-  --color-mint-100: #dcfce7;
-  --color-mint-200: #bbf7d0;
-  --color-mint-300: #86efac;
-  --color-mint-400: #4ade80;
-  --color-mint-500: #22c55e;
-  --color-mint-600: #16a34a;
-  --color-mint-700: #15803d;
-  --color-mint-800: #166534;
-  --color-mint-900: #14532d;
+  --color-mint-50: #f5f9f7;
+  --color-mint-100: #e8f0ec;
+  --color-mint-200: #d0e3d8;
+  --color-mint-300: #a8cdb8;
+  --color-mint-400: #7ab894;
+  --color-mint-500: #5a9e74;
+  --color-mint-600: #48855f;
+  --color-mint-700: #3d6d4f;
+  --color-mint-800: #345842;
+  --color-mint-900: #2c4837;
 
-  /* 品牌主题色 - 薄荷绿色系 */
+  /* 品牌主题色 - 降低饱和度版本 */
   /* Requirements: 1.3, 1.4, 1.5 - 所有使用主色的 UI 元素显示薄荷绿色 */
-  --color-brand-50: #f0fdf4;
-  --color-brand-100: #dcfce7;
-  --color-brand-200: #bbf7d0;
-  --color-brand-300: #86efac;
-  --color-brand-400: #4ade80;
-  --color-brand-500: #22c55e;
-  --color-brand-600: #16a34a;
-  --color-brand-700: #15803d;
-  --color-brand-800: #166534;
-  --color-brand-900: #14532d;
+  --color-brand-50: #f5f9f7;
+  --color-brand-100: #e8f0ec;
+  --color-brand-200: #d0e3d8;
+  --color-brand-300: #a8cdb8;
+  --color-brand-400: #7ab894;
+  --color-brand-500: #5a9e74;
+  --color-brand-600: #48855f;
+  --color-brand-700: #3d6d4f;
+  --color-brand-800: #345842;
+  --color-brand-900: #2c4837;
 
-  /* 主色 - 薄荷绿色系 */
+  /* 主色 - 降低饱和度版本 */
   /* Requirements: 1.3, 1.4, 1.5 - 左侧导航栏、按钮、链接等使用薄荷绿 */
-  --color-primary-50: #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-200: #bbf7d0;
-  --color-primary-300: #86efac;
-  --color-primary-400: #4ade80;
-  --color-primary-500: #22c55e;
-  --color-primary-600: #16a34a;
-  --color-primary-700: #15803d;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  --color-primary-50: #f5f9f7;
+  --color-primary-100: #e8f0ec;
+  --color-primary-200: #d0e3d8;
+  --color-primary-300: #a8cdb8;
+  --color-primary-400: #7ab894;
+  --color-primary-500: #5a9e74;
+  --color-primary-600: #48855f;
+  --color-primary-700: #3d6d4f;
+  --color-primary-800: #345842;
+  --color-primary-900: #2c4837;
 
   /* 信息色（蓝色系，用于信息提示等） */
   --color-info-50: #eff6ff;
@@ -97,20 +97,20 @@
   /* 边框色 */
   --border-primary: #e4e4e7;
   --border-secondary: #d4d4d8;
-  --border-focus: #22c55e;
-  --border-brand: #22c55e;
+  --border-focus: #5a9e74;
+  --border-brand: #5a9e74;
 
-  /* 品牌色快捷变量 */
-  --brand: #22c55e;
-  --brand-hover: #16a34a;
-  --brand-active: #15803d;
-  --brand-light: #dcfce7;
-  --brand-dark: #166534;
+  /* 品牌色快捷变量 - 降低饱和度版本 */
+  --brand: #5a9e74;
+  --brand-hover: #48855f;
+  --brand-active: #3d6d4f;
+  --brand-light: #e8f0ec;
+  --brand-dark: #345842;
 
-  /* 消息气泡颜色 */
+  /* 消息气泡颜色 - 降低饱和度版本 */
   /* Requirements: 7.7, 1.1, 1.2, 1.3, 1.4 - 消息气泡使用柔和的背景色 */
-  --message-user-bg: #86efac;  /* 更柔和的薄荷绿背景 */
-  --message-user-text: #166534; /* 深绿色文字保证对比度 */
+  --message-user-bg: #a8cdb8;  /* 更柔和的薄荷绿背景 */
+  --message-user-text: #345842; /* 深绿色文字保证对比度 */
   --message-ai-bg: #f4f4f5;
   --message-ai-text: #18181b;
 
@@ -159,41 +159,41 @@
    深色主题
    ============================================ */
 .dark {
-  /* 薄荷绿主题色（深色模式下反转色阶） */
-  --color-mint-50: #14532d;
-  --color-mint-100: #166534;
-  --color-mint-200: #15803d;
-  --color-mint-300: #16a34a;
-  --color-mint-400: #22c55e;
-  --color-mint-500: #4ade80;
-  --color-mint-600: #86efac;
-  --color-mint-700: #bbf7d0;
-  --color-mint-800: #dcfce7;
-  --color-mint-900: #f0fdf4;
+  /* 薄荷绿主题色（深色模式下反转色阶）- 降低饱和度版本 */
+  --color-mint-50: #2c4837;
+  --color-mint-100: #345842;
+  --color-mint-200: #3d6d4f;
+  --color-mint-300: #48855f;
+  --color-mint-400: #5a9e74;
+  --color-mint-500: #7ab894;
+  --color-mint-600: #a8cdb8;
+  --color-mint-700: #d0e3d8;
+  --color-mint-800: #e8f0ec;
+  --color-mint-900: #f5f9f7;
 
-  /* 品牌主题色（深色模式下稍微调亮） */
-  --color-brand-50: #14532d;
-  --color-brand-100: #166534;
-  --color-brand-200: #15803d;
-  --color-brand-300: #16a34a;
-  --color-brand-400: #22c55e;
-  --color-brand-500: #4ade80;
-  --color-brand-600: #86efac;
-  --color-brand-700: #bbf7d0;
-  --color-brand-800: #dcfce7;
-  --color-brand-900: #f0fdf4;
+  /* 品牌主题色（深色模式下稍微调亮）- 降低饱和度版本 */
+  --color-brand-50: #2c4837;
+  --color-brand-100: #345842;
+  --color-brand-200: #3d6d4f;
+  --color-brand-300: #48855f;
+  --color-brand-400: #5a9e74;
+  --color-brand-500: #7ab894;
+  --color-brand-600: #a8cdb8;
+  --color-brand-700: #d0e3d8;
+  --color-brand-800: #e8f0ec;
+  --color-brand-900: #f5f9f7;
 
-  /* 主色 - 薄荷绿色系（深色模式下稍微调亮） */
-  --color-primary-50: #14532d;
-  --color-primary-100: #166534;
-  --color-primary-200: #15803d;
-  --color-primary-300: #16a34a;
-  --color-primary-400: #22c55e;
-  --color-primary-500: #4ade80;
-  --color-primary-600: #86efac;
-  --color-primary-700: #bbf7d0;
-  --color-primary-800: #dcfce7;
-  --color-primary-900: #f0fdf4;
+  /* 主色 - 薄荷绿色系（深色模式下稍微调亮）- 降低饱和度版本 */
+  --color-primary-50: #2c4837;
+  --color-primary-100: #345842;
+  --color-primary-200: #3d6d4f;
+  --color-primary-300: #48855f;
+  --color-primary-400: #5a9e74;
+  --color-primary-500: #7ab894;
+  --color-primary-600: #a8cdb8;
+  --color-primary-700: #d0e3d8;
+  --color-primary-800: #e8f0ec;
+  --color-primary-900: #f5f9f7;
 
   /* 信息色（深色模式下稍微调亮） */
   --color-info-50: #1e3a8a;
@@ -246,20 +246,20 @@
   /* 边框色 */
   --border-primary: #3f3f46;
   --border-secondary: #52525b;
-  --border-focus: #4ade80;
-  --border-brand: #4ade80;
+  --border-focus: #7ab894;
+  --border-brand: #7ab894;
 
-  /* 品牌色快捷变量 */
-  --brand: #4ade80;
-  --brand-hover: #22c55e;
-  --brand-active: #16a34a;
-  --brand-light: #166534;
-  --brand-dark: #dcfce7;
+  /* 品牌色快捷变量 - 降低饱和度版本 */
+  --brand: #7ab894;
+  --brand-hover: #5a9e74;
+  --brand-active: #48855f;
+  --brand-light: #345842;
+  --brand-dark: #e8f0ec;
 
-  /* 消息气泡颜色 */
+  /* 消息气泡颜色 - 降低饱和度版本 */
   /* Requirements: 7.7, 1.1, 1.2, 1.3, 1.4 - 消息气泡使用柔和的背景色 */
-  --message-user-bg: #166534;  /* 柔和的深绿色背景 */
-  --message-user-text: #dcfce7; /* 浅绿色文字 */
+  --message-user-bg: #345842;  /* 柔和的深绿色背景 */
+  --message-user-text: #e8f0ec; /* 浅绿色文字 */
   --message-ai-bg: #27272a;
   --message-ai-text: #fafafa;
 

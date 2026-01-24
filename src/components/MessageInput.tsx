@@ -604,7 +604,7 @@ export function MessageInput({
     <div
       ref={containerRef}
       className={`
-        relative border-t border-neutral-200 dark:border-neutral-700 
+        relative
         bg-white dark:bg-neutral-900 px-3 py-2 pb-1
         ${isDragging ? 'ring-2 ring-primary-500 ring-inset' : ''}
       `}
