@@ -193,7 +193,6 @@ export function ChatHeader({
   return (
     <div className="
       flex items-center justify-between px-4 py-3
-      border-b border-neutral-200 dark:border-neutral-700
       bg-white dark:bg-neutral-900
     ">
       {/* 左侧：标题和模型选择器 */}

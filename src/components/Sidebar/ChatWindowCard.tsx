@@ -181,18 +181,13 @@ export function ChatWindowCard({
       className={`
         group relative rounded-lg cursor-pointer transition-all duration-150 mb-1.5
         ${isActive
-          ? 'bg-primary-50 dark:bg-primary-900/30 border-l-4 border-l-primary-500'
+          ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-300 dark:border-primary-600'
           : 'hover:bg-neutral-100 dark:hover:bg-neutral-700/50'
         }
       `}
     >
       {/* 卡片主体 */}
       <div className="flex items-center gap-3 p-2.5 pl-3">
-        {/* 星标图标 */}
-        <div className="flex-shrink-0">
-          <StarIcon className="w-5 h-5 text-amber-400" filled />
-        </div>
-
         {/* 标题和信息 */}
         <div className="flex-1 min-w-0">
           <h3 className={`

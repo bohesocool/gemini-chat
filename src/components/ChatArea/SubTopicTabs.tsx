@@ -279,7 +279,6 @@ export function SubTopicTabs({
     <div
       className="
         flex items-center gap-2 px-4 py-2
-        border-b border-neutral-200 dark:border-neutral-700
         bg-white dark:bg-neutral-900
       "
       role="tablist"

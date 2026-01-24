@@ -667,8 +667,8 @@ export function Layout({ sidebar, children }: LayoutProps) {
         <nav className={`
           flex flex-col w-20   flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
           ${theme === 'snow-white'
-            ? 'bg-white border-r border-black'
-            : effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-primary-600'}
+            ? 'bg-white'
+            : effectiveTheme === 'dark' ? 'bg-black' : 'bg-primary-600'}
           layout-nav
         `}>
           {/* 顶部 Logo - 替换为图片 */}
@@ -713,7 +713,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
           </div>
 
           {/* 底部工具 - 调试、语言切换、主题切换和设置 */}
-          <div className="flex flex-col items-center py-3 gap-2 border-t border-primary-500/30">
+          <div className="flex flex-col items-center py-3 gap-2">
             {/* 调试面板入口按钮 - 需求: 6.1 */}
             <NavIconButton
               icon={<DebugIcon />}
