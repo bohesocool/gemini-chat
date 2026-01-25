@@ -1157,26 +1157,6 @@ export function AppearanceSettingsSection() {
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.darkModeDesc')}</div>
         </button>
 
-        {/* 午夜薄荷主题 */}
-        <button
-          onClick={() => setTheme('midnight')}
-          className={`
-            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
-            ${theme === 'midnight'
-              ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20 shadow-sm'
-              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
-          `}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-lg bg-black shadow-sm border border-emerald-900">
-              <SparklesIcon className="w-5 h-5 text-emerald-400" />
-            </div>
-            {theme === 'midnight' && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />}
-          </div>
-          <div className="font-medium text-slate-900 dark:text-slate-100">{t('settings.midnightMint')}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('settings.midnightMintDesc')}</div>
-        </button>
-
         {/* 雪白主题 (Snow White) */}
         <button
           onClick={() => {
@@ -1292,15 +1272,6 @@ function MoonIcon({ className }: { className?: string }) {
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-    </svg>
-  );
-}
-
-function SparklesIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
     </svg>
   );
 }

@@ -103,12 +103,6 @@
   <img src="public/readme/image-gallery.png" alt="图片画廊" width="800">
 </p>
 
-### 午夜薄荷主题
-
-<p align="center">
-  <img src="public/readme/midnightBohe-theme.png" alt="午夜薄荷主题" width="800">
-</p>
-
 ### 模型重定向
 
 <p align="center">

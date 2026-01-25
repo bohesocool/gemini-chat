@@ -243,12 +243,6 @@ export function ChatWindowCard({
           </div>
         </div>
 
-        {/* 消息数量徽章 */}
-        {totalMessages > 0 && isActive && (
-          <span className="flex-shrink-0 bg-primary-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-            {totalMessages}
-          </span>
-        )}
       </div>
 
       {/* 子话题展开按钮 */}

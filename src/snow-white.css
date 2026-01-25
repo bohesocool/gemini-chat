@@ -210,7 +210,7 @@
 /* 2. 侧边栏容器 */
 .snow-white .layout-sidebar {
   background-color: #ffffff !important;
-  border-right: 1px solid #000000 !important;
+  border-right: 1px solid #d4d4d8 !important; /* Zinc 300 - 柔和的分割线 */
 }
 
 /* 3. 侧边栏 - 新建对话按钮 */
