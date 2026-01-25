@@ -233,7 +233,7 @@ export function TemplateEditorModal({
             onClick={handleSave}
             className="
               px-6 py-2 rounded-lg
-              bg-primary-500 hover:bg-primary-600
+              bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300
               text-white font-medium
               transition-colors
               shadow-sm

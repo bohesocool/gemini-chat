@@ -469,7 +469,7 @@ function EmptyWindowState() {
         onClick={handleCreateWindow}
         className="
           inline-flex items-center gap-2 px-6 py-3
-          bg-primary-500 hover:bg-primary-600 
+          bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300
           text-white font-medium rounded-xl
           shadow-md shadow-primary-500/30
           transition-all duration-200 hover:shadow-lg hover:shadow-primary-500/40

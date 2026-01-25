@@ -37,7 +37,7 @@ export function RequestDetail({ request }: RequestDetailProps) {
       <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-700">
         {/* 方法和 URL */}
         <div className="flex items-start gap-2 sm:gap-3">
-          <span className="flex-shrink-0 px-2 py-1 text-xs sm:text-sm font-medium rounded bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+          <span className="flex-shrink-0 px-2 py-1 text-xs sm:text-sm font-medium rounded bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-white">
             {request.method}
           </span>
           <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 break-all min-w-0">

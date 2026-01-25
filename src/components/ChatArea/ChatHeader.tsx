@@ -138,7 +138,7 @@ function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
                   w-full text-left px-3 py-2
                   text-sm transition-colors
                   ${model.id === currentModel
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                    ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-700 dark:text-white'
                     : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                   }
                 `}

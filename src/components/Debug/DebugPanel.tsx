@@ -262,7 +262,7 @@ function RequestListItem({ request, isSelected, onClick }: RequestListItemProps)
       {/* 主行 - 修复对齐 */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* 方法标签 - 固定宽度确保对齐 */}
-        <span className="flex-shrink-0 w-12 sm:w-14 px-1.5 sm:px-2 py-0.5 text-xs font-medium rounded bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-center">
+        <span className="flex-shrink-0 w-12 sm:w-14 px-1.5 sm:px-2 py-0.5 text-xs font-medium rounded bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-white text-center">
           {request.method}
         </span>
 

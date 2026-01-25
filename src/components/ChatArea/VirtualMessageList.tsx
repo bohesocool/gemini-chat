@@ -936,8 +936,9 @@ const EmptyState = memo(function EmptyState() {
       <div className="
         w-16 h-16 rounded-2xl 
         bg-gradient-to-br from-green-500 to-emerald-600 
+        dark:from-green-700 dark:to-emerald-800
         flex items-center justify-center mb-4
-        shadow-lg shadow-green-500/30
+        shadow-lg shadow-green-500/30 dark:shadow-green-900/40
         start-new-chat-icon
       ">
         <BotIcon className="w-8 h-8 text-white" />

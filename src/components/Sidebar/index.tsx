@@ -160,7 +160,7 @@ export function Sidebar() {
             onClick={(e) => e.stopPropagation()}
           />
           <div className="flex gap-2 mt-2">
-            <button onClick={handleSaveEdit} className="flex-1 px-3 py-1 text-xs bg-primary-500 hover:bg-primary-600 text-white rounded transition-colors">{t('common.save')}</button>
+            <button onClick={handleSaveEdit} className="flex-1 px-3 py-1 text-xs bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded transition-colors">{t('common.save')}</button>
             <button onClick={handleCancelEdit} className="flex-1 px-3 py-1 text-xs bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-neutral-300 rounded transition-colors">{t('common.cancel')}</button>
           </div>
         </div>
@@ -203,7 +203,7 @@ export function Sidebar() {
           <div className="p-3">
             <button
               onClick={handleCreateWindow}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm touch-manipulation"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm touch-manipulation"
               style={{ minHeight: touchTargets.minimum }}
             >
               <PlusIcon className="h-5 w-5" />

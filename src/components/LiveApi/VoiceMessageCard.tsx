@@ -56,7 +56,7 @@ export function getVoiceMessageRoleStyles(role: 'user' | 'model'): {
   if (role === 'user') {
     return {
       containerClass: 'voice-message-user items-end',
-      bubbleClass: 'bg-primary-500 hover:bg-primary-600',
+      bubbleClass: 'bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300',
       waveClass: 'text-white/80',
       durationClass: 'text-primary-200',
     };

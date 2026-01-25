@@ -19,20 +19,20 @@ const MODEL_SERIES_COLORS: Record<ModelSeries, { bg: string; text: string; darkB
   'gemini-3': {
     bg: 'bg-primary-100',
     text: 'text-primary-700',
-    darkBg: 'dark:bg-primary-900/30',
-    darkText: 'dark:text-primary-300',
+    darkBg: 'dark:bg-primary-900/50',
+    darkText: 'dark:text-white',
   },
   'gemini-2.5': {
     bg: 'bg-primary-100',
     text: 'text-primary-700',
-    darkBg: 'dark:bg-primary-900/30',
-    darkText: 'dark:text-primary-300',
+    darkBg: 'dark:bg-primary-900/50',
+    darkText: 'dark:text-white',
   },
   'gemini-2.0': {
     bg: 'bg-primary-100',
     text: 'text-primary-700',
-    darkBg: 'dark:bg-primary-900/30',
-    darkText: 'dark:text-primary-300',
+    darkBg: 'dark:bg-primary-900/50',
+    darkText: 'dark:text-white',
   },
   'unknown': {
     bg: 'bg-neutral-100',

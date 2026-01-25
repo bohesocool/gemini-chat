@@ -397,7 +397,7 @@ function SettingsTabButton({ tab, isActive, onClick, isMobile = false }: Setting
       className={`
         flex items-center gap-2 md:gap-3 w-full px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors touch-manipulation
         ${isActive
-          ? 'bg-primary-100/80 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
+          ? 'bg-primary-100/80 dark:bg-primary-900/50 text-primary-700 dark:text-white'
           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100/80 dark:hover:bg-neutral-700/50'
         }
       `}

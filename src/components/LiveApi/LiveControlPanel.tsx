@@ -91,7 +91,7 @@ export function LiveControlPanel({
         {isDisconnected || hasError ? (
           <button
             onClick={onStartSession}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-xl font-medium transition-colors"
           >
             <PlayIcon className="w-5 h-5" />
             开始会话

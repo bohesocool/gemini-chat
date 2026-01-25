@@ -358,7 +358,7 @@ function FormatButton({ format, currentFormat, onClick, icon, label, description
         {icon}
       </div>
       <div>
-        <div className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-neutral-700 dark:text-neutral-300'}`}>
+        <div className={`font-medium ${isSelected ? 'text-primary-700 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
           {label}
         </div>
         <div className="text-xs text-neutral-500 dark:text-neutral-400">

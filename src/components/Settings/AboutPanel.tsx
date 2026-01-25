@@ -137,7 +137,7 @@ export function AboutPanel(): JSX.Element {
         <button
           onClick={handleCheckUpdate}
           disabled={updateStatus === 'checking'}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 
+          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300
             disabled:bg-neutral-300 dark:disabled:bg-neutral-600
             text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
         >

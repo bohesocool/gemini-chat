@@ -84,7 +84,7 @@ const StatusBadge = memo(function StatusBadge({
         px-2 py-0.5 rounded-md text-xs font-medium
         ${isClickable ? 'cursor-pointer' : 'cursor-default'}
         ${active
-          ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
+          ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-white'
           : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'
         }
         ${isClickable && !disabled

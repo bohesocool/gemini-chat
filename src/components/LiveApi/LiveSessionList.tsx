@@ -213,7 +213,7 @@ function SessionItem({
           className={`
             text-sm truncate
             ${isSelected
-              ? 'text-primary-700 dark:text-primary-300 font-medium'
+              ? 'text-primary-700 dark:text-white font-medium'
               : 'text-neutral-700 dark:text-neutral-300'
             }
           `}

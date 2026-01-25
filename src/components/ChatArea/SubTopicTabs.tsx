@@ -123,7 +123,7 @@ function TabItem({
       className={`
         group relative flex items-center gap-1 px-3 rounded-lg cursor-pointer touch-manipulation
         ${isActive
-          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+          ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-white'
           : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
         }
       `}

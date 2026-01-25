@@ -167,7 +167,7 @@ export function LiveHistoryView({
           className="
             w-full flex items-center justify-center gap-2
             px-4 py-3 rounded-xl
-            bg-primary-500 hover:bg-primary-600
+            bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300
             text-white font-medium
             transition-colors
           "

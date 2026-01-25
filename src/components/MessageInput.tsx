@@ -622,7 +622,7 @@ export function MessageInput({
         ">
           <div className="flex items-center gap-2">
             <EditIndicatorIcon className="w-4 h-4 text-primary-500" />
-            <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+            <span className="text-sm font-medium text-primary-700 dark:text-white">
               {t('chat.editingMessage')}
             </span>
           </div>
@@ -785,7 +785,7 @@ export function MessageInput({
               p-3 rounded-2xl flex-shrink-0 touch-manipulation
               flex items-center justify-center
               ${canSend
-                ? 'bg-primary-500 hover:bg-primary-600 active:scale-95 text-white shadow-md shadow-primary-500/30 hover:shadow-lg hover:shadow-primary-500/40'
+                ? 'bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 active:scale-95 text-white shadow-md shadow-primary-500/30 hover:shadow-lg hover:shadow-primary-500/40'
                 : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
               }
             `}

@@ -186,7 +186,7 @@ export function TemplateDetailView({
       <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700">
         <button
           onClick={handleUseTemplate}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors font-medium shadow-sm"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-lg transition-colors font-medium shadow-sm"
         >
           <PlayIcon className="w-5 h-5" />
           使用此模板开始新对话

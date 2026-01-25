@@ -233,7 +233,7 @@ function ApiConfigGroup() {
         onClick={() => testConnection()}
         disabled={connectionStatus === 'testing' || !apiKey}
         className="w-full px-3 py-1.5 text-xs font-medium rounded-md
-          bg-primary-500 hover:bg-primary-600 disabled:bg-neutral-300 dark:disabled:bg-neutral-600
+          bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 disabled:bg-neutral-300 dark:disabled:bg-neutral-600
           text-white transition-colors disabled:cursor-not-allowed"
       >
         {connectionStatus === 'testing' ? t('settings.testing') : 

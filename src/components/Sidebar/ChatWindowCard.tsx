@@ -82,7 +82,7 @@ function SubTopicItem({ subTopic, isActive, onSelect }: SubTopicItemProps) {
       className={`
         w-full text-left px-3 py-1.5 text-sm rounded transition-colors touch-manipulation
         ${isActive
-          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+          ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-white'
           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700/50'
         }
       `}
@@ -193,7 +193,7 @@ export function ChatWindowCard({
           <h3 className={`
             text-sm font-medium truncate
             ${isActive 
-              ? 'text-primary-700 dark:text-primary-300' 
+              ? 'text-primary-700 dark:text-white' 
               : 'text-neutral-800 dark:text-neutral-200'
             }
           `}>
