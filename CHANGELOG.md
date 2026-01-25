@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.6](https://github.com/bohesocool/gemini-chat/compare/v0.2.5...v0.2.6) (2026-01-25)
+
+
+### ✨ 新功能 (Features)
+
+* 更新布局组件和聊天窗口卡片，添加标题栏组件 ([26bf2e6](https://github.com/bohesocool/gemini-chat/commit/26bf2e6bf322d026b4d6bb5ecca19019572ea355))
+* 优化UI交互体验 - 历史对话悬停时模型名渐隐显示编辑删除按钮 - 修复发送按钮与输入框垂直居中对齐 ([dbbeaf1](https://github.com/bohesocool/gemini-chat/commit/dbbeaf18a759c024617991a4b4a3e2381706ae75))
+
+
+### 🔧 其他更改 (Chores)
+
+* update UI and translations ([2f143be](https://github.com/bohesocool/gemini-chat/commit/2f143bef0c36224a6ff216b5559bc625ed3612ed))
+
 ### [0.2.5](https://github.com/bohesocool/gemini-chat/compare/v0.2.4...v0.2.5) (2026-01-21)
 
 
