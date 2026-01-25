@@ -38,7 +38,7 @@ import { useBookmarkStore } from '../stores/bookmark';
 import type { Bookmark } from '../stores/bookmark';
 import type { GeneratedImage } from '../types';
 
-import { WindowControls } from './WindowControls';
+import { TitleBar } from './TitleBar';
 import logoImage from '../assets/logo.png';
 import { LiveApiView } from './LiveApi';
 import { generatePalette, generateDarkPalette } from '../utils/color';
@@ -554,11 +554,6 @@ export function Layout({ sidebar, children }: LayoutProps) {
     setIsDebugPanelOpen(false);
   }, []);
 
-  // 返回对话视图 - 需求: 2.3
-  const handleBackToChat = useCallback(() => {
-    setCurrentView('assistants');
-  }, []);
-
   // 处理图片点击 - 需求: 5.2
   const handleImageClick = useCallback((image: GeneratedImage) => {
     setPreviewImage(image);
@@ -649,9 +644,11 @@ export function Layout({ sidebar, children }: LayoutProps) {
       selectedBookmarkId,
       setSelectedBookmarkId
     }}>
-      <div className="flex overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300 relative" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+      <div className="flex flex-col overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300 relative" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+        {/* 自定义标题栏 - 仅 Electron 环境显示 */}
+        <TitleBar effectiveTheme={effectiveTheme} />
 
-
+      <div className="flex flex-1 overflow-hidden">
         {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
         {!sidebarCollapsed && isMobile && currentView !== 'images' && (
           <div
@@ -663,12 +660,28 @@ export function Layout({ sidebar, children }: LayoutProps) {
 
         {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
         <nav className={`
-          flex flex-col w-14 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
+          relative flex flex-col w-14 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
           ${theme === 'snow-white'
             ? 'bg-white'
             : effectiveTheme === 'dark' ? 'bg-black' : 'bg-primary-600'}
           layout-nav
         `}>
+          {/* 内凹圆角 - 使用 SVG 实现平滑的内凹效果 */}
+          {typeof window !== 'undefined' && 'electronAPI' in window && (
+            <svg 
+              className="absolute top-0 z-50 pointer-events-none"
+              style={{ left: '100%', transform: 'scaleY(-1)' }}
+              width="16" 
+              height="16" 
+              viewBox="0 0 16 16"
+            >
+              <path 
+                d="M 0 16 L 0 0 A 16 16 0 0 0 16 16 L 0 16 Z"
+                fill={theme === 'snow-white' ? '#ffffff' : (effectiveTheme === 'dark' ? '#000000' : 'var(--color-primary-600, #16a34a)')}
+              />
+            </svg>
+          )}
+          
           {/* 顶部 Logo - 替换为图片 */}
           <div className="flex items-center justify-center h-12 mb-2 mt-2">
             <div className="w-10 h-10  rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
@@ -765,7 +778,6 @@ export function Layout({ sidebar, children }: LayoutProps) {
           flex flex-1 flex-col overflow-hidden transition-all duration-300 relative
           ${effectiveTheme === 'dark' ? 'bg-[#050505]' : 'bg-white'}
         `}>
-
           <div className="flex-1 overflow-hidden relative flex flex-col">
             {currentView === 'images' ? (
               <FullscreenGallery
@@ -832,6 +844,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
             template={editingTemplate}
           />
         )}
+      </div>
       </div>
     </SidebarContext.Provider>
   );
