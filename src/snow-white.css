@@ -33,13 +33,14 @@
 /* 导航栏 & 侧边栏 (Sidebar & Nav) */
 /* ========================================= */
 
-/* 强制导航栏背景为纯白，增加右侧边框分隔 */
 .snow-white nav,
 .snow-white aside {
   background-color: #ffffff !important;
-  border-right: 1px solid #e4e4e7 !important;
-  /* Zinc 200 */
+  border-right: 1px solid #000000 !important;
+  /* Zinc 200 -> Now Deep Black for seamless connection */
 }
+
+/* CSS variables moved to index.css to ensure correct cascade order */
 
 /* 覆盖导航栏图标颜色 (原为 text-white) */
 .snow-white nav button {
@@ -210,7 +211,8 @@
 /* 2. 侧边栏容器 */
 .snow-white .layout-sidebar {
   background-color: #ffffff !important;
-  border-right: 1px solid #d4d4d8 !important; /* Zinc 300 - 柔和的分割线 */
+  border-right: 1px solid #d4d4d8 !important;
+  /* Zinc 300 - 柔和的分割线 */
 }
 
 /* 3. 侧边栏 - 新建对话按钮 */

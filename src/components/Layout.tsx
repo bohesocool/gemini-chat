@@ -648,203 +648,220 @@ export function Layout({ sidebar, children }: LayoutProps) {
         {/* 自定义标题栏 - 仅 Electron 环境显示 */}
         <TitleBar effectiveTheme={effectiveTheme} />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
-        {!sidebarCollapsed && isMobile && currentView !== 'images' && (
-          <div
-            className="fixed inset-0 z-20 bg-black/50 transition-opacity duration-300"
-            onClick={toggleSidebar}
-            aria-hidden="true"
-          />
-        )}
+        <div className="flex flex-1 overflow-hidden">
+          {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
+          {!sidebarCollapsed && isMobile && currentView !== 'images' && (
+            <div
+              className="fixed inset-0 z-20 bg-black/50 transition-opacity duration-300"
+              onClick={toggleSidebar}
+              aria-hidden="true"
+            />
+          )}
 
-        {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
-        <nav className={`
+          {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
+          <nav className={`
           relative flex flex-col w-14 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
           ${theme === 'snow-white'
-            ? 'bg-white'
-            : effectiveTheme === 'dark' ? 'bg-black' : 'bg-primary-600'}
+              ? 'bg-white'
+              : effectiveTheme === 'dark' ? 'bg-black' : 'bg-primary-600'}
           layout-nav
         `}>
-          {/* 内凹圆角 - 使用 SVG 实现平滑的内凹效果 */}
-          {typeof window !== 'undefined' && 'electronAPI' in window && (
-            <svg 
-              className="absolute top-0 z-50 pointer-events-none"
-              style={{ left: '100%', transform: 'scaleY(-1)' }}
-              width="16" 
-              height="16" 
-              viewBox="0 0 16 16"
-            >
-              <path 
-                d="M 0 16 L 0 0 A 16 16 0 0 0 16 16 L 0 16 Z"
-                fill={theme === 'snow-white' ? '#ffffff' : (effectiveTheme === 'dark' ? '#000000' : 'var(--color-primary-600, #16a34a)')}
-              />
-            </svg>
-          )}
-          
-          {/* 顶部 Logo - 替换为图片 */}
-          <div className="flex items-center justify-center h-12 mb-2 mt-2">
-            <div className="w-10 h-10  rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
-              <img src={logoImage} alt="Logo" className="w-full h-full object-cover" />
+            {/* 内凹圆角 - 使用 SVG 实现平滑的内凹效果 */}
+            {typeof window !== 'undefined' && 'electronAPI' in window && (
+              <svg
+                className="absolute top-0 z-50 pointer-events-none"
+                style={{ left: 'calc(100% - 1px)', transform: 'scaleY(-1)' }}
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+              >
+                {/* Unified path utilizing CSS variables for seamless transitions */}
+                <path
+                  d="M 0 16 L 0 0 A 16 16 0 0 0 16 16 L 0 16 Z"
+                  style={{
+                    fill: theme === 'snow-white' ? '#ffffff' : (effectiveTheme === 'dark' ? '#000000' : 'var(--color-primary-600)'),
+                    stroke: 'none',
+                    transition: 'fill 0.3s ease'
+                  }}
+                />
+
+                {/* Secondary stroke path for perfect border connection in Snow White mode */}
+                <path
+                  d="M 0 0 A 16 16 0 0 0 16 16"
+                  fill="none"
+                  style={{
+                    stroke: theme === 'snow-white' ? '#000000' : 'transparent',
+                    strokeWidth: '1px',
+                    vectorEffect: 'non-scaling-stroke',
+                    transition: 'stroke 0.3s ease'
+                  }}
+                />
+              </svg>
+            )}
+
+            {/* 顶部 Logo - 替换为图片 */}
+            <div className="flex items-center justify-center h-12 mb-2 mt-2">
+              <div className="w-10 h-10  rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
+                <img src={logoImage} alt="Logo" className="w-full h-full object-cover" />
+              </div>
             </div>
-          </div>
 
-          {/* 导航图标 - 助手、模板、书签和图片库 */}
-          <div className="flex-1 flex flex-col items-center py-3 gap-2">
-            <NavIconButton
-              icon={<ChatIcon />}
-              label={t('sidebar.assistants')}
-              isActive={currentView === 'assistants' && !sidebarCollapsed}
-              onClick={handleAssistantsClick}
-            />
-            <NavIconButton
-              icon={<TemplateNavIcon />}
-              label={t('sidebar.templates')}
-              isActive={currentView === 'templates' && !sidebarCollapsed}
-              onClick={handleTemplatesClick}
-            />
-            <NavIconButton
-              icon={<BookmarkNavIcon />}
-              label={t('sidebar.bookmarks')}
-              isActive={currentView === 'bookmarks' && !sidebarCollapsed}
-              onClick={handleBookmarksClick}
-            />
-            <NavIconButton
-              icon={<ImageGalleryIcon />}
-              label={t('sidebar.gallery')}
-              isActive={currentView === 'images' && !sidebarCollapsed}
-              onClick={handleImagesClick}
-            />
-            <NavIconButton
-              icon={<LiveIcon />}
-              label={t('sidebar.live')}
-              isActive={currentView === 'live'}
-              onClick={handleLiveClick}
-            />
-          </div>
+            {/* 导航图标 - 助手、模板、书签和图片库 */}
+            <div className="flex-1 flex flex-col items-center py-3 gap-2">
+              <NavIconButton
+                icon={<ChatIcon />}
+                label={t('sidebar.assistants')}
+                isActive={currentView === 'assistants' && !sidebarCollapsed}
+                onClick={handleAssistantsClick}
+              />
+              <NavIconButton
+                icon={<TemplateNavIcon />}
+                label={t('sidebar.templates')}
+                isActive={currentView === 'templates' && !sidebarCollapsed}
+                onClick={handleTemplatesClick}
+              />
+              <NavIconButton
+                icon={<BookmarkNavIcon />}
+                label={t('sidebar.bookmarks')}
+                isActive={currentView === 'bookmarks' && !sidebarCollapsed}
+                onClick={handleBookmarksClick}
+              />
+              <NavIconButton
+                icon={<ImageGalleryIcon />}
+                label={t('sidebar.gallery')}
+                isActive={currentView === 'images' && !sidebarCollapsed}
+                onClick={handleImagesClick}
+              />
+              <NavIconButton
+                icon={<LiveIcon />}
+                label={t('sidebar.live')}
+                isActive={currentView === 'live'}
+                onClick={handleLiveClick}
+              />
+            </div>
 
-          {/* 底部工具 - 调试、语言切换、主题切换和设置 */}
-          <div className="flex flex-col items-center py-3 gap-2">
-            {/* 调试面板入口按钮 - 需求: 6.1 */}
-            <NavIconButton
-              icon={<DebugIcon />}
-              label={t('nav.apiDebug')}
-              isActive={isDebugPanelOpen}
-              onClick={handleDebugClick}
-            />
-            <NavIconButton
-              icon={effectiveTheme === 'dark' ? <MoonIcon /> : <SunIcon />}
-              label={effectiveTheme === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
-              onClick={handleThemeToggle}
-            />
-            {/* 语言切换按钮 - 需求: 3.1 */}
-            <NavIconButton
-              icon={<LanguageIcon />}
-              label={locale === 'zh-CN' ? 'Switch to English' : '切换到中文'}
-              onClick={handleLanguageToggle}
-            />
-            <NavIconButton
-              icon={<SettingsIcon />}
-              label={t('settings.title')}
-              isActive={isSettingsModalOpen}
-              onClick={handleSettingsClick}
-            />
-          </div>
-        </nav>
+            {/* 底部工具 - 调试、语言切换、主题切换和设置 */}
+            <div className="flex flex-col items-center py-3 gap-2">
+              {/* 调试面板入口按钮 - 需求: 6.1 */}
+              <NavIconButton
+                icon={<DebugIcon />}
+                label={t('nav.apiDebug')}
+                isActive={isDebugPanelOpen}
+                onClick={handleDebugClick}
+              />
+              <NavIconButton
+                icon={effectiveTheme === 'dark' ? <MoonIcon /> : <SunIcon />}
+                label={effectiveTheme === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
+                onClick={handleThemeToggle}
+              />
+              {/* 语言切换按钮 - 需求: 3.1 */}
+              <NavIconButton
+                icon={<LanguageIcon />}
+                label={locale === 'zh-CN' ? 'Switch to English' : '切换到中文'}
+                onClick={handleLanguageToggle}
+              />
+              <NavIconButton
+                icon={<SettingsIcon />}
+                label={t('settings.title')}
+                isActive={isSettingsModalOpen}
+                onClick={handleSettingsClick}
+              />
+            </div>
+          </nav>
 
-        {/* 侧边栏内容区 - 图片库和 Live 视图时直接移除 (不渲染) */}
-        {currentView !== 'images' && currentView !== 'live' && (
-          <aside
-            className={`
+          {/* 侧边栏内容区 - 图片库和 Live 视图时直接移除 (不渲染) */}
+          {currentView !== 'images' && currentView !== 'live' && (
+            <aside
+              className={`
               fixed inset-y-0 left-12 z-30 transform transition-[width,transform,opacity] duration-300 ease-in-out overflow-hidden
               md:relative md:left-0 md:translate-x-0
               ${sidebarCollapsed ? '-translate-x-full md:w-0 md:opacity-0' : 'translate-x-0 md:w-64 md:opacity-100'}
               ${theme === 'snow-white'
-                ? 'bg-white border-r border-black'
-                : effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-neutral-50 border-r border-neutral-200'}
+                  ? 'bg-white border-r border-black'
+                  : effectiveTheme === 'dark' ? 'bg-black border-r border-white/5' : 'bg-neutral-50 border-r border-neutral-200'}
               layout-sidebar
             `}
-            style={theme === 'snow-white' ? { backgroundColor: '#ffffff', borderRightColor: '#000000' } : undefined}
-          >
-            {/* Fixed width container to prevent squashing */}
-            <div className="w-64 h-full flex flex-col">
-              {sidebar}
-            </div>
-          </aside>
-        )}
+              style={theme === 'snow-white' ? { backgroundColor: '#ffffff', borderRightColor: '#000000' } : undefined}
+            >
+              {/* Fixed width container to prevent squashing */}
+              <div className="w-64 h-full flex flex-col">
+                {sidebar}
+              </div>
+            </aside>
+          )}
 
-        {/* 主内容区 - 需求: 2.1, 2.2, 2.3, 3.3 */}
-        <main className={`
+          {/* 主内容区 - 需求: 2.1, 2.2, 2.3, 3.3 */}
+          <main className={`
           flex flex-1 flex-col overflow-hidden transition-all duration-300 relative
           ${effectiveTheme === 'dark' ? 'bg-[#050505]' : 'bg-white'}
         `}>
-          <div className="flex-1 overflow-hidden relative flex flex-col">
-            {currentView === 'images' ? (
-              <FullscreenGallery
-                onImageClick={handleImageClick}
-              />
-            ) : currentView === 'live' ? (
-              /* Live API 实时对话视图 - 需求: 1.1, 2.1 */
-              <LiveApiView />
-            ) : currentView === 'templates' ? (
-              /* 模板详情视图 - 需求: 2.3 */
-              <TemplateDetailView
-                selectedTemplateId={selectedTemplateId}
-                onEdit={handleEditTemplate}
-                onDelete={handleDeleteTemplate}
-                onUseTemplate={handleUseTemplate}
-                sidebarCollapsed={sidebarCollapsed}
-                onExpandSidebar={() => setSidebarCollapsed(false)}
-              />
-            ) : currentView === 'bookmarks' ? (
-              /* 书签详情视图 - 需求: 3.3 */
-              <BookmarkDetailView
-                selectedBookmarkId={selectedBookmarkId}
-                onNavigate={handleNavigateToBookmark}
-                onDelete={handleDeleteBookmark}
-                sidebarCollapsed={sidebarCollapsed}
-                onExpandSidebar={() => setSidebarCollapsed(false)}
-              />
-            ) : (
-              children
-            )}
-          </div>
-        </main>
+            <div className="flex-1 overflow-hidden relative flex flex-col">
+              {currentView === 'images' ? (
+                <FullscreenGallery
+                  onImageClick={handleImageClick}
+                />
+              ) : currentView === 'live' ? (
+                /* Live API 实时对话视图 - 需求: 1.1, 2.1 */
+                <LiveApiView />
+              ) : currentView === 'templates' ? (
+                /* 模板详情视图 - 需求: 2.3 */
+                <TemplateDetailView
+                  selectedTemplateId={selectedTemplateId}
+                  onEdit={handleEditTemplate}
+                  onDelete={handleDeleteTemplate}
+                  onUseTemplate={handleUseTemplate}
+                  sidebarCollapsed={sidebarCollapsed}
+                  onExpandSidebar={() => setSidebarCollapsed(false)}
+                />
+              ) : currentView === 'bookmarks' ? (
+                /* 书签详情视图 - 需求: 3.3 */
+                <BookmarkDetailView
+                  selectedBookmarkId={selectedBookmarkId}
+                  onNavigate={handleNavigateToBookmark}
+                  onDelete={handleDeleteBookmark}
+                  sidebarCollapsed={sidebarCollapsed}
+                  onExpandSidebar={() => setSidebarCollapsed(false)}
+                />
+              ) : (
+                children
+              )}
+            </div>
+          </main>
 
-        {/* 毛玻璃设置模态框 */}
-        <SettingsModal
-          isOpen={isSettingsModalOpen}
-          onClose={handleCloseSettingsModal}
-          renderContent={renderSettingsContent}
-        />
-
-        {/* 调试面板 - 需求: 6.1 */}
-        {isDebugPanelOpen && (
-          <DebugPanel
-            isOpen={isDebugPanelOpen}
-            onClose={handleCloseDebugPanel}
+          {/* 毛玻璃设置模态框 */}
+          <SettingsModal
+            isOpen={isSettingsModalOpen}
+            onClose={handleCloseSettingsModal}
+            renderContent={renderSettingsContent}
           />
-        )}
 
-        {/* 图片预览模态框 - 需求: 5.2 */}
-        {previewImage && (
-          <ImagePreviewModal
-            isOpen={!!previewImage}
-            image={previewImage}
-            onClose={handleCloseImagePreview}
-          />
-        )}
+          {/* 调试面板 - 需求: 6.1 */}
+          {isDebugPanelOpen && (
+            <DebugPanel
+              isOpen={isDebugPanelOpen}
+              onClose={handleCloseDebugPanel}
+            />
+          )}
 
-        {/* 模板编辑器模态框 - 需求: 2.5, 2.6 */}
-        {isTemplateEditorOpen && (
-          <TemplateEditorModal
-            isOpen={isTemplateEditorOpen}
-            onClose={handleCloseTemplateEditor}
-            onSave={handleSaveTemplate}
-            template={editingTemplate}
-          />
-        )}
-      </div>
+          {/* 图片预览模态框 - 需求: 5.2 */}
+          {previewImage && (
+            <ImagePreviewModal
+              isOpen={!!previewImage}
+              image={previewImage}
+              onClose={handleCloseImagePreview}
+            />
+          )}
+
+          {/* 模板编辑器模态框 - 需求: 2.5, 2.6 */}
+          {isTemplateEditorOpen && (
+            <TemplateEditorModal
+              isOpen={isTemplateEditorOpen}
+              onClose={handleCloseTemplateEditor}
+              onSave={handleSaveTemplate}
+              template={editingTemplate}
+            />
+          )}
+        </div>
       </div>
     </SidebarContext.Provider>
   );

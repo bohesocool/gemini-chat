@@ -15,8 +15,8 @@ import { useSettingsStore } from '../stores/settings';
  * 判断是否在 Electron 环境中运行
  */
 const isElectronEnvironment = (): boolean => {
-  return typeof window !== 'undefined' && 
-    'electronAPI' in window && 
+  return typeof window !== 'undefined' &&
+    'electronAPI' in window &&
     (window as { electronAPI?: unknown }).electronAPI !== undefined;
 };
 
@@ -106,7 +106,7 @@ interface TitleBarProps {
  */
 export function TitleBar({ effectiveTheme }: TitleBarProps) {
   const { theme } = useSettingsStore();
-  
+
   // 非 Electron 环境不渲染
   if (!isElectronEnvironment()) {
     return null;
@@ -114,7 +114,7 @@ export function TitleBar({ effectiveTheme }: TitleBarProps) {
 
   const isWindows = !isMacOS();
   const isLightTheme = theme === 'snow-white';
-  
+
   // 获取导航栏背景色类名（与左侧导航栏一致）
   const getNavBgClass = () => {
     if (theme === 'snow-white') return 'bg-white';
@@ -125,16 +125,26 @@ export function TitleBar({ effectiveTheme }: TitleBarProps) {
     <div className={`h-8 flex items-center justify-between select-none drag-region ${getNavBgClass()} relative`}>
       {/* 左侧占位 - 导航栏宽度 */}
       <div className="w-14 flex-shrink-0" />
-      
+
       {/* 中间区域 - 与导航栏同色，填充整个标题栏 */}
       <div className="flex-1" />
-      
+
       {/* 右侧窗口控制按钮（仅 Windows）*/}
       {isWindows && (
         <div className="relative z-10">
           <WindowControlButtons isLightTheme={isLightTheme} />
         </div>
       )}
+
+      {/* Snow White 主题的底部边框线 - 使用 opacity 过渡避免闪烁 */}
+      <div
+        className={`absolute bottom-0 h-[1px] bg-black pointer-events-none transition-opacity duration-300 ${theme === 'snow-white' ? 'opacity-100' : 'opacity-0'}`}
+        style={{
+          zIndex: 50,
+          left: 'calc(3.5rem + 15px)', // 56px (sidebar) + 16px (radius) - 1px (overlap)
+          right: 0
+        }}
+      />
     </div>
   );
 }

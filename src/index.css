@@ -20,6 +20,27 @@ body {
   padding: 0;
 }
 
+:root {
+  /* Default Corner SVG colors (Light Mode) */
+  --corner-fill: var(--color-primary-600);
+  /* Previously hardcoded #16a34a logic */
+  --corner-stroke: transparent;
+  --titlebar-border-opacity: 0;
+}
+
+.dark {
+  /* Default Corner SVG colors (Dark Mode) */
+  --corner-fill: #000000;
+  --corner-stroke: transparent;
+}
+
+/* Snow White overrides - Must appear AFTER :root to win cascade */
+.snow-white {
+  --corner-fill: #ffffff;
+  --corner-stroke: #000000;
+  --titlebar-border-opacity: 1;
+}
+
 /* Midnight Mint Theme */
 /* Midnight Mint Theme */
 .midnight {
@@ -210,12 +231,15 @@ body,
 
 /* 隐藏滚动条的工具类 */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE 和 Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 和 Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 /* Markdown 内容样式 */
