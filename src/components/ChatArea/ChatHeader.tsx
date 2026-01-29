@@ -117,7 +117,7 @@ function ModelSelector({ currentModel, models, onChange }: ModelSelectorProps) {
         <div
           className="
             absolute top-full left-0 mt-1 z-50
-            min-w-[200px] max-h-[300px] overflow-y-auto
+            min-w-[200px] max-h-[300px] overflow-y-auto scrollbar-hide
             bg-white dark:bg-neutral-800
             border border-neutral-200 dark:border-neutral-700
             rounded-lg shadow-lg

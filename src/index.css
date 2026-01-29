@@ -144,7 +144,7 @@ body,
 }
 
 ::-webkit-scrollbar-track {
-  background-color: var(--bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -167,7 +167,7 @@ body,
 /* Midnight scrollbars */
 /* Midnight scrollbars */
 .midnight ::-webkit-scrollbar-track {
-  background-color: #000000;
+  background: transparent;
 }
 
 .midnight ::-webkit-scrollbar-thumb {

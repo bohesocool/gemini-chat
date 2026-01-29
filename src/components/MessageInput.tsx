@@ -722,7 +722,19 @@ export function MessageInput({
         )}
 
         {/* 文本输入框 - Requirements: 9.1, 9.2, 4.1, 4.2, 4.3, 4.4 */}
-        <div className="flex-1 min-w-0 relative">
+        <div 
+          className={`
+            flex-1 min-w-0 flex items-center gap-2
+            rounded-full px-4 py-2
+            bg-neutral-50 dark:bg-neutral-800
+            border
+            ${isFocused
+              ? 'border-primary-500 shadow-md shadow-primary-500/10'
+              : 'border-neutral-200 dark:border-neutral-700'
+            }
+          `}
+          style={transitionStyle}
+        >
           <textarea
             ref={textareaRef}
             value={content}
@@ -734,71 +746,62 @@ export function MessageInput({
             placeholder={inputPlaceholder}
             disabled={isDisabled}
             rows={1}
-            className={`
-              w-full resize-none rounded-full px-5 py-3
-              bg-neutral-50 dark:bg-neutral-800
+            className="
+              flex-1 resize-none py-1
+              bg-transparent
               text-neutral-900 dark:text-neutral-100 
               placeholder-neutral-400 dark:placeholder-neutral-500
               disabled:opacity-50 disabled:cursor-not-allowed
               text-base leading-6
-              border outline-none
+              border-none outline-none focus:outline-none focus:ring-0
               message-input-textarea
               scrollbar-hide
-              ${isFocused
-                ? 'border-primary-500 shadow-md shadow-primary-500/10'
-                : 'border-neutral-200 dark:border-neutral-700'
-              }
-            `}
+            "
             style={{
-              ...transitionStyle,
-              minHeight: `${INPUT_MIN_ROWS * LINE_HEIGHT_PX + 24}px`,
+              minHeight: `${INPUT_MIN_ROWS * LINE_HEIGHT_PX}px`,
               overflowY: 'hidden',
             }}
           />
+          {/* 发送/取消按钮 */}
+          {isSending && onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="
+                p-2 rounded-full flex-shrink-0 touch-manipulation
+                flex items-center justify-center
+                bg-error-light hover:bg-red-600 active:scale-95 
+                text-white
+              "
+              style={transitionStyle}
+              title={t('chat.cancelRequest')}
+            >
+              <StopIcon className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!canSend}
+              className={`
+                p-2 rounded-full flex-shrink-0 touch-manipulation
+                flex items-center justify-center
+                ${canSend
+                  ? 'bg-primary-500 hover:bg-primary-600 dark:bg-primary-500 dark:hover:bg-primary-600 active:scale-95 text-white'
+                  : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
+                }
+              `}
+              style={transitionStyle}
+              title={t('chat.sendMessage')}
+            >
+              {isSending ? (
+                <LoadingSpinner className="w-5 h-5" />
+              ) : (
+                <SendIcon className="w-5 h-5" />
+              )}
+            </button>
+          )}
         </div>
-
-        {/* 发送/取消按钮 - Requirements: 9.4, 5.1 */}
-        {isSending && onCancel ? (
-          // 取消按钮 - 需求: 5.1 在发送状态时显示取消按钮
-          <button
-            type="button"
-            onClick={onCancel}
-            className="
-              p-3 rounded-2xl flex-shrink-0 touch-manipulation
-              flex items-center justify-center
-              bg-error-light hover:bg-red-600 active:scale-95 
-              text-white shadow-md shadow-error-light/30 
-              hover:shadow-lg hover:shadow-error-light/40
-            "
-            style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-            title={t('chat.cancelRequest')}
-          >
-            <StopIcon className="w-5 h-5" />
-          </button>
-        ) : (
-          // 发送按钮 - Requirements: 9.4 主题色
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!canSend}
-            className={`
-              p-3 rounded-2xl flex-shrink-0 touch-manipulation
-              flex items-center justify-center
-              ${canSend
-                ? 'bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 active:scale-95 text-white shadow-md shadow-primary-500/30 hover:shadow-lg hover:shadow-primary-500/40'
-                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
-              }
-            `}
-            style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-            title={t('chat.sendMessage')}
-          >
-            {isSending ? (
-              <LoadingSpinner className="w-5 h-5" />
-            ) : (
-              <SendIcon className="w-5 h-5" />
-            )}
-          </button>
-        )}
       </div>
 
       {/* 工具栏 - 移到输入框下方 - Requirements: 7.2, 7.3 */}

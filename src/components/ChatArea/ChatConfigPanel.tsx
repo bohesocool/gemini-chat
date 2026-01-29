@@ -328,7 +328,7 @@ export function ChatConfigPanel({
       <div
         ref={panelRef}
         className="
-          w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto
+          w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto scrollbar-hide
           rounded-2xl shadow-2xl
           bg-white/90 dark:bg-neutral-900/90
           border border-neutral-200/50 dark:border-neutral-700/50
