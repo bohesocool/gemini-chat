@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.7](https://github.com/bohesocool/gemini-chat/compare/v0.2.6...v0.2.7) (2026-01-29)
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* **theme:** refine Snow White theme polish with unified borders and smooth transitions ([fc71604](https://github.com/bohesocool/gemini-chat/commit/fc716044b11b514461fd53a7b0ffb264c7534222))
+
+
+### 🔧 其他更改 (Chores)
+
+* 更新聊天界面组件和样式 ([256ccb1](https://github.com/bohesocool/gemini-chat/commit/256ccb117879bd45f7641f66f063d95eb58ed512))
+
 ### [0.2.6](https://github.com/bohesocool/gemini-chat/compare/v0.2.5...v0.2.6) (2026-01-25)
 
 
