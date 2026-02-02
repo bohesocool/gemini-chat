@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.8](https://github.com/bohesocool/gemini-chat/compare/v0.2.7...v0.2.8) (2026-02-02)
+
+
+### ✨ 新功能 (Features)
+
+* improve image copy and timeline sticky features ([dce5878](https://github.com/bohesocool/gemini-chat/commit/dce5878eeb0f37db6cdf586f80cf808106afeb5e))
+
 ### [0.2.7](https://github.com/bohesocool/gemini-chat/compare/v0.2.6...v0.2.7) (2026-01-29)
 
 
