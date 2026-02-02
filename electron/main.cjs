@@ -1,7 +1,7 @@
 // Electron 主进程入口文件
 // 需求: 1.1, 1.2, 1.4
 
-const { app, BrowserWindow, Menu, ipcMain } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, clipboard, nativeImage } = require('electron')
 const path = require('path')
 
 // 主窗口引用
@@ -66,6 +66,18 @@ ipcMain.on('window-maximize', () => {
 
 ipcMain.on('window-close', () => {
   mainWindow?.close()
+})
+
+// IPC 监听：复制图片到剪贴板
+ipcMain.handle('copy-image-to-clipboard', async (event, base64Data, mimeType) => {
+  try {
+    const imageBuffer = Buffer.from(base64Data, 'base64')
+    const image = nativeImage.createFromBuffer(imageBuffer)
+    clipboard.writeImage(image)
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
 })
 
 // 需求 1.4: 应用关闭时正确清理资源并退出进程

@@ -17,6 +17,7 @@ interface Window {
     send: (channel: string, data?: any) => void;
     receive: (channel: string, func: (...args: any[]) => void) => void;
     once: (channel: string, func: (...args: any[]) => void) => void;
+    copyImageToClipboard: (base64Data: string, mimeType: string) => Promise<{ success: boolean; error?: string }>;
     platform: string;
     versions: {
       node: string;

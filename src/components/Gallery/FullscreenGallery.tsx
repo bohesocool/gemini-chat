@@ -100,11 +100,11 @@ export const FullscreenGallery = memo(function FullscreenGallery({
   const [viewMode, setViewMode] = useState<ViewMode>('small');
   // 动画状态 - 需求: 3.4
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   // 滚动容器引用 - 需求: 3.4 保持滚动位置
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
-  
+
   // 从 store 获取图片数据
   const { images, isLoading, loadImages } = useImageStore();
 
@@ -119,19 +119,19 @@ export const FullscreenGallery = memo(function FullscreenGallery({
     if (scrollContainerRef.current) {
       scrollPositionRef.current = scrollContainerRef.current.scrollTop;
     }
-    
+
     // 开始过渡动画
     setIsTransitioning(true);
-    
+
     // 短暂延迟后切换模式，让淡出动画完成
     setTimeout(() => {
       setViewMode(mode);
-      
+
       // 恢复滚动位置
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = scrollPositionRef.current;
       }
-      
+
       // 结束过渡动画
       setTimeout(() => {
         setIsTransitioning(false);
@@ -183,29 +183,28 @@ export const FullscreenGallery = memo(function FullscreenGallery({
         onViewModeChange={handleViewModeChange}
         imageCount={images.length}
       />
-      
+
       {/* 图片内容区 - 需求: 1.4 响应式布局, 3.4 视图切换动画 */}
-      <div 
+      <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6"
+        className="flex-1 overflow-y-auto"
       >
-        <div 
-          className={`transition-opacity duration-150 ease-in-out ${
-            isTransitioning ? 'opacity-0' : 'opacity-100'
-          }`}
+        <div
+          className={`transition-opacity duration-150 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'
+            }`}
         >
           {imageGroups.map((group) => (
-            <div key={group.dateKey} className="mb-4 sm:mb-6 last:mb-0">
-              {/* 日期分组标题 - 响应式字体大小 */}
-              <h3 className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 mb-2 sm:mb-3 sticky top-0 bg-neutral-50 dark:bg-neutral-900 py-1 z-10">
+            <div key={group.dateKey} className="last:mb-0">
+              {/* 日期分组标题 - 粘性定位在滚动容器顶部 */}
+              <h3 className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 sticky top-0 bg-neutral-50 dark:bg-neutral-900 py-2 z-10 px-3 sm:px-4 md:px-6 border-b border-neutral-100 dark:border-neutral-800">
                 {group.date}
                 <span className="ml-2 text-neutral-400 dark:text-neutral-500 font-normal">
                   ({group.images.length})
                 </span>
               </h3>
-              
+
               {/* 图片网格 - 带过渡动画 */}
-              <div className={`grid ${getGridClasses(viewMode)} transition-all duration-200 ease-out`}>
+              <div className={`grid ${getGridClasses(viewMode)} transition-all duration-200 ease-out p-3 sm:p-4 md:p-6`}>
                 {group.images.map((image, index) => (
                   <div
                     key={image.id}

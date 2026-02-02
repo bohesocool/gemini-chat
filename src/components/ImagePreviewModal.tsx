@@ -59,7 +59,7 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   // 需求 7.5: 用户友好的错误信息
   const [errorMessage, setErrorMessage] = useState<string>('');
-  
+
   // 需求 13.4: 缩放状态管理
   const [zoom, setZoom] = useState<ZoomState>({ scale: 1, translateX: 0, translateY: 0 });
   // 是否正在拖拽
@@ -112,17 +112,17 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
     e.preventDefault();
     const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
     const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, zoom.scale + delta));
-    
+
     // 计算以鼠标位置为中心的缩放
     if (containerRef.current && imageRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left - rect.width / 2;
       const mouseY = e.clientY - rect.top - rect.height / 2;
-      
+
       const scaleFactor = newScale / zoom.scale;
       const newTranslateX = mouseX - (mouseX - zoom.translateX) * scaleFactor;
       const newTranslateY = mouseY - (mouseY - zoom.translateY) * scaleFactor;
-      
+
       setZoom({ scale: newScale, translateX: newTranslateX, translateY: newTranslateY });
     } else {
       setZoom(prev => ({ ...prev, scale: newScale }));
@@ -174,20 +174,20 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
 
   // 需求 13.8: 缩放控制按钮 - 放大
   const handleZoomIn = useCallback(() => {
-    setZoom(prev => ({ 
-      ...prev, 
-      scale: Math.min(MAX_SCALE, prev.scale + ZOOM_STEP) 
+    setZoom(prev => ({
+      ...prev,
+      scale: Math.min(MAX_SCALE, prev.scale + ZOOM_STEP)
     }));
   }, []);
-  
+
   // 需求 13.8: 缩放控制按钮 - 缩小
   const handleZoomOut = useCallback(() => {
-    setZoom(prev => ({ 
-      ...prev, 
-      scale: Math.max(MIN_SCALE, prev.scale - ZOOM_STEP) 
+    setZoom(prev => ({
+      ...prev,
+      scale: Math.max(MIN_SCALE, prev.scale - ZOOM_STEP)
     }));
   }, []);
-  
+
   // 需求 13.8: 缩放控制按钮 - 重置
   const handleZoomReset = useCallback(() => {
     setZoom({ scale: 1, translateX: 0, translateY: 0 });
@@ -202,20 +202,20 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
       // 创建下载链接
       const link = document.createElement('a');
       link.href = `data:${image.mimeType};base64,${image.data}`;
-      
+
       // 需求 7.3, 8.3: 使用原始 mimeType 确定文件扩展名，生成描述性文件名
       const extension = image.mimeType.split('/')[1] || 'png';
       const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
-      
+
       // 如果是完整的 GeneratedImage，使用其 id；否则使用时间戳
       const imageId = isFullImage(image) ? image.id.slice(0, 8) : timestamp.slice(-8);
       link.download = `generated_image_${timestamp}_${imageId}.${extension}`;
-      
+
       // 触发下载
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setDownloadStatus('success');
       setTimeout(() => setDownloadStatus('idle'), 2000);
     } catch (error) {
@@ -231,6 +231,20 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
     if (!image) return;
 
     try {
+      // 在 Electron 环境中使用系统剪贴板 API
+      if (window.electronAPI?.copyImageToClipboard) {
+        const result = await window.electronAPI.copyImageToClipboard(image.data, image.mimeType);
+        if (result.success) {
+          setCopyStatus('success');
+          setErrorMessage('');
+          setTimeout(() => setCopyStatus('idle'), 2000);
+          return;
+        } else {
+          throw new Error(result.error || '复制失败');
+        }
+      }
+
+      // 浏览器环境：使用 Clipboard API
       // 将 base64 转换为 Blob
       const byteCharacters = atob(image.data);
       const byteNumbers = new Array(byteCharacters.length);

@@ -11,14 +11,19 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('electronAPI', {
   // 平台信息
   platform: process.platform,
-  
+
   // 版本信息
   versions: {
     node: process.versions.node,
     chrome: process.versions.chrome,
     electron: process.versions.electron
   },
-  
+
+  // 复制图片到剪贴板
+  copyImageToClipboard: (base64Data, mimeType) => {
+    return ipcRenderer.invoke('copy-image-to-clipboard', base64Data, mimeType)
+  },
+
   // 发送消息到主进程
   send: (channel, data) => {
     // 白名单通道，确保安全
@@ -27,7 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.send(channel, data)
     }
   },
-  
+
   // 从主进程接收消息
   receive: (channel, callback) => {
     const validChannels = ['app-update', 'app-error']
@@ -37,7 +42,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on(channel, (event, ...args) => callback(...args))
     }
   },
-  
+
   // 单次接收消息
   once: (channel, callback) => {
     const validChannels = ['app-update', 'app-error']
