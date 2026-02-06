@@ -94,19 +94,13 @@
 ### Main Interface
 
 <p align="center">
-  <img src="public/readme/main-interface.png" alt="Main Interface" width="800">
+  <img src="public/readme/main-interface-en.png" alt="Main Interface" width="800">
 </p>
 
 ### Image Gallery
 
 <p align="center">
-  <img src="public/readme/image-gallery.png" alt="Image Gallery" width="800">
-</p>
-
-### Midnight Mint Theme
-
-<p align="center">
-  <img src="public/readme/midnightBohe-theme.png" alt="Midnight Mint Theme" width="800">
+  <img src="public/readme/image-gallery-en.png" alt="Image Gallery" width="800">
 </p>
 
 ### Model Redirect
@@ -217,7 +211,7 @@ After deployment, visit http://localhost:5173 to use the application.
 3. Leave API endpoint empty to use the official address, or enter a third-party proxy address
 
 <p align="center">
-  <img src="public/readme/api-settings.png" alt="API Settings" width="500">
+  <img src="public/readme/api-settings-en.png" alt="API Settings" width="500">
 </p>
 
 ### Getting API Key
