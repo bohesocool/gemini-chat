@@ -85,14 +85,14 @@ function getSupportedFormatsText(): string {
 
 /**
  * 构建 Files API 端点 URL
+ * API Key 通过 x-goog-api-key Header 传递，不再附加到 URL 中
  * @param baseEndpoint 基础端点
  * @param path API 路径
- * @param apiKey API 密钥
  */
-function buildFilesApiUrl(baseEndpoint: string, path: string, apiKey: string): string {
+function buildFilesApiUrl(baseEndpoint: string, path: string): string {
   // 移除末尾斜杠
   const endpoint = baseEndpoint.replace(/\/+$/, '');
-  return `${endpoint}${path}?key=${apiKey}`;
+  return `${endpoint}${path}`;
 }
 
 // ============ 核心功能 ============
@@ -158,7 +158,7 @@ export async function uploadFileToFilesApi(
   }
 
   const baseEndpoint = endpoint || DEFAULT_FILES_API_ENDPOINT;
-  const uploadUrl = buildFilesApiUrl(baseEndpoint, UPLOAD_PATH, apiKey);
+  const uploadUrl = buildFilesApiUrl(baseEndpoint, UPLOAD_PATH);
 
   try {
     // 使用 XMLHttpRequest 以支持上传进度
@@ -249,6 +249,7 @@ export async function uploadFileToFilesApi(
 
       // 发送请求
       xhr.open('POST', uploadUrl);
+      xhr.setRequestHeader('x-goog-api-key', apiKey);
       xhr.setRequestHeader('X-Goog-Upload-Protocol', 'multipart');
       
       // 构建 multipart 请求体
@@ -301,13 +302,14 @@ export async function getFileMetadata(
   apiLogger.info('获取文件元数据', { fileName });
 
   const baseEndpoint = endpoint || DEFAULT_FILES_API_ENDPOINT;
-  const url = buildFilesApiUrl(baseEndpoint, `${FILES_PATH}/${fileName}`, apiKey);
+  const url = buildFilesApiUrl(baseEndpoint, `${FILES_PATH}/${fileName}`);
 
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
       },
     });
 
@@ -379,13 +381,14 @@ export async function deleteUploadedFile(
   apiLogger.info('删除已上传文件', { fileName });
 
   const baseEndpoint = endpoint || DEFAULT_FILES_API_ENDPOINT;
-  const url = buildFilesApiUrl(baseEndpoint, `${FILES_PATH}/${fileName}`, apiKey);
+  const url = buildFilesApiUrl(baseEndpoint, `${FILES_PATH}/${fileName}`);
 
   try {
     const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
       },
     });
 

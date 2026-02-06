@@ -336,15 +336,16 @@ export async function fetchGeminiModels(
     throw new Error('API 端点和密钥不能为空');
   }
 
-  // 构建请求 URL
+  // 构建请求 URL（API Key 通过 Header 传递，不附加到 URL 中）
   const normalizedEndpoint = endpoint.replace(/\/+$/, '');
-  const url = `${normalizedEndpoint}/models?key=${apiKey}`;
+  const url = `${normalizedEndpoint}/models`;
 
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
       },
     });
 
