@@ -238,6 +238,11 @@ export class LiveApiService {
    * Requirements: 2.2
    * 
    * 注意：情感对话和主动音频功能需要使用 v1alpha API 版本
+   * 
+   * 安全说明：此处 API Key 通过 URL query 参数传递是已知的例外情况。
+   * 浏览器原生 WebSocket API 不支持自定义 Header，而 Google Gemini Live API
+   * 要求通过 ?key= 参数进行鉴权，这是 WebSocket 协议的固有限制，无法规避。
+   * 所有 HTTP (fetch/XHR) 请求已改为通过 x-goog-api-key Header 传递密钥。
    */
   private buildWebSocketUrl(): string {
     const { apiEndpoint, apiKey, enableAffectiveDialog, enableProactiveAudio } = this.config;
@@ -259,6 +264,7 @@ export class LiveApiService {
     
     // 构建 WebSocket URL
     // Live API 使用 wss 协议
+    // 注意：WebSocket 无法使用 Header 传递 API Key，此处 query 参数是唯一选择
     const wsUrl = `wss://${baseUrl}/ws/google.ai.generativelanguage.${apiVersion}.GenerativeService.BidiGenerateContent?key=${apiKey}`;
     
     return wsUrl;

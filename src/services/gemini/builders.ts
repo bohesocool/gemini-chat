@@ -132,12 +132,12 @@ export function buildRequestUrl(config: ApiConfig, stream: boolean = true): stri
   // 选择生成方法
   const method = stream ? 'streamGenerateContent' : 'generateContent';
   
-  // 构建完整 URL
-  const url = `${endpoint}/${modelPath}:${method}?key=${config.apiKey}`;
+  // 构建完整 URL（API Key 通过 x-goog-api-key Header 传递，不再附加到 URL 中）
+  const url = `${endpoint}/${modelPath}:${method}`;
   
   // 如果是流式响应，添加 alt=sse 参数
   if (stream) {
-    return `${url}&alt=sse`;
+    return `${url}?alt=sse`;
   }
   
   return url;

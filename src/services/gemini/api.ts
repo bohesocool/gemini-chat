@@ -59,7 +59,7 @@ export async function sendMessage(
   const url = buildRequestUrl(config, true);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model);
 
-  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  // 构建请求头（通过 header 传递 API key，避免密钥暴露在 URL 中）
   const headers = {
     'Content-Type': 'application/json',
     'x-goog-api-key': config.apiKey,
@@ -288,7 +288,7 @@ export async function sendMessageWithThoughts(
   const url = buildRequestUrl(config, true);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled, urlContextEnabled);
 
-  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  // 构建请求头（通过 header 传递 API key，避免密钥暴露在 URL 中）
   const headers = {
     'Content-Type': 'application/json',
     'x-goog-api-key': config.apiKey,
@@ -631,7 +631,7 @@ export async function sendMessageNonStreaming(
   const url = buildRequestUrl(config, false);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model);
 
-  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  // 构建请求头（通过 header 传递 API key，避免密钥暴露在 URL 中）
   const headers = {
     'Content-Type': 'application/json',
     'x-goog-api-key': config.apiKey,
@@ -794,7 +794,7 @@ export async function sendMessageNonStreamingWithThoughts(
   const url = buildRequestUrl(config, false);
   const body = buildRequestBody(contents, generationConfig, safetySettings, systemInstruction, advancedConfig, config.model, webSearchEnabled, urlContextEnabled);
 
-  // 构建请求头（同时使用 header 方式传递 API key，兼容更多上游服务）
+  // 构建请求头（通过 header 传递 API key，避免密钥暴露在 URL 中）
   const headers = {
     'Content-Type': 'application/json',
     'x-goog-api-key': config.apiKey,
@@ -954,7 +954,7 @@ export async function testConnection(config: ApiConfig): Promise<{ success: bool
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-goog-api-key': config.apiKey, // 同时使用 header 方式传递 API key，兼容更多上游服务
+        'x-goog-api-key': config.apiKey, // 通过 header 传递 API key，避免密钥暴露在 URL 中
       },
       body: JSON.stringify(body),
     });
