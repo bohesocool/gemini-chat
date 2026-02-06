@@ -44,8 +44,8 @@ interface GeminiChatDB extends DBSchema {
 /** 数据库名称 */
 const DB_NAME = 'gemini-chat-db';
 
-/** 数据库版本 - 升级到 3 以支持 chatWindows 存储 */
-const DB_VERSION = 3;
+/** 数据库版本 - 升级到 4 以修复版本冲突 */
+const DB_VERSION = 4;
 
 /** 设置存储的键名 */
 const SETTINGS_KEY = 'app-settings';
