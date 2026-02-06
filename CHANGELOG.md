@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.9](https://github.com/bohesocool/gemini-chat/compare/v0.2.8...v0.2.9) (2026-02-06)
+
+
+### 🔧 其他更改 (Chores)
+
+* **storage:** update database version to 4 to resolve version conflicts ([286e7f7](https://github.com/bohesocool/gemini-chat/commit/286e7f719b7ddceed62a9677bc5504e6a3d85486))
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* **chatWindow:** extract message helpers and simplify messageActions ([9143697](https://github.com/bohesocool/gemini-chat/commit/91436972e062205ed87ca546e0d035c3aeeb83cf))
+
 ### [0.2.8](https://github.com/bohesocool/gemini-chat/compare/v0.2.7...v0.2.8) (2026-02-02)
 
 
