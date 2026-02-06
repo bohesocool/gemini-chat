@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.10](https://github.com/bohesocool/gemini-chat/compare/v0.2.9...v0.2.10) (2026-02-06)
+
+
+### 🔧 其他更改 (Chores)
+
+* update README with new image assets and translations for English version ([352a34e](https://github.com/bohesocool/gemini-chat/commit/352a34ecff2557d4cff5ad146ad327a919e924f5))
+
+
+### 🐛 Bug 修复 (Bug Fixes)
+
+* **security:** migrate API key from URL query params to request headers ([399f882](https://github.com/bohesocool/gemini-chat/commit/399f882741c1cac829008023f4cab5d443b2a8dc))
+
 ### [0.2.9](https://github.com/bohesocool/gemini-chat/compare/v0.2.8...v0.2.9) (2026-02-06)
 
 
