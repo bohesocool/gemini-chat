@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
 import type { ChatWindowStore } from './types';
 import { createWindowActions } from './windowActions';
 import { createSubtopicActions } from './subtopicActions';
@@ -11,8 +12,10 @@ import { createMessageActions } from './messageActions';
 
 /**
  * 创建聊天窗口 Store
+ * 使用 Immer 中间件包装，支持可变风格的 draft 写法更新状态
  */
-export const useChatWindowStore = create<ChatWindowStore>((set, get) => ({
+export const useChatWindowStore = create<ChatWindowStore>()(
+  immer((set, get) => ({
   // ============ 初始状态 ============
   windows: [],
   activeWindowId: null,
@@ -108,4 +111,4 @@ export const useChatWindowStore = create<ChatWindowStore>((set, get) => ({
       totalTokens: totalPromptTokens + totalCompletionTokens,
     };
   },
-}));
+})));

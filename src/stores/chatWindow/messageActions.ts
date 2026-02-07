@@ -8,7 +8,6 @@
  * 已提取到 messageHelpers.ts，消除约 80% 的代码重复。
  */
 
-import type { ChatWindow } from '../../types/chatWindow';
 import type { Message, Attachment, ApiConfig, ModelAdvancedConfig } from '../../types/models';
 import type { FileReference } from '../../types/filesApi';
 import { saveChatWindow } from '../../services/storage';
@@ -20,10 +19,8 @@ import { buildContentWithFileReferences } from '../../services/gemini/builders';
 import {
   saveGeneratedImages,
   buildAiMessage,
-  buildUpdatedWindow,
   finalizeAndSave,
   extractErrorMessage,
-  replaceMessageAtIndex,
   orchestrateSend,
   SENDING_RESET_STATE,
 } from './messageHelpers';
@@ -73,9 +70,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         readyFileReferences && readyFileReferences.length > 0 ? readyFileReferences : undefined,
     };
 
-    // 添加用户消息到子话题
-    const messagesWithUser = [...subTopic.messages, userMessage];
-
+    // 添加用户消息到子话题（使用 Immer draft 写法）
     // 更新窗口标题（如果是第一条消息）
     let windowTitle = window.title;
     if (subTopic.messages.length === 0 && window.subTopics.length === 1) {
@@ -84,17 +79,27 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         (content.length > UI_LIMITS.MAX_TITLE_LENGTH ? '...' : '');
     }
 
-    // 构建已添加用户消息的窗口
-    const updatedWindow: ChatWindow = {
-      ...buildUpdatedWindow(window, subTopicId, messagesWithUser),
-      title: windowTitle,
-    };
+    set((state) => {
+      const w = state.windows.find((w) => w.id === windowId);
+      if (w) {
+        const st = w.subTopics.find((st) => st.id === subTopicId);
+        if (st) {
+          st.messages.push(userMessage);
+          st.updatedAt = Date.now();
+        }
+        w.title = windowTitle;
+        w.updatedAt = Date.now();
+      }
+    });
 
-    // 更新窗口状态并保存（发送状态由 orchestrateSend 设置）
-    set((state) => ({
-      windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-    }));
-    await saveChatWindow(updatedWindow);
+    // 从最新状态获取窗口进行持久化
+    const savedWindow = get().windows.find((w) => w.id === windowId);
+    if (savedWindow) {
+      await saveChatWindow(savedWindow);
+    }
+
+    // 获取添加用户消息后的消息列表（用于后续 API 调用）
+    const messagesWithUser = [...subTopic.messages, userMessage];
 
     // 检测图片生成模型，用于消息格式转换
     const { useModelStore } = await import('../model');
@@ -124,12 +129,10 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       subTopicId,
       contextMessages: geminiContents,
       set,
-      baseWindow: updatedWindow,
-      currentMessages: messagesWithUser,
       apiConfig,
       advancedConfig,
       promptForImageConfig: content,
-      // 成功回调：保存图片并持久化 AI 消息
+      // 成功回调：保存图片并通过 draft 修改持久化 AI 消息
       onSuccess: async (aiMessage, result) => {
         // 保存生成的图片到图片库 - 需求: 2.7, 4.3, 5.4
         const effectiveImageConfig = advancedConfig?.imageConfig ?? window.config.advancedConfig?.imageConfig;
@@ -141,8 +144,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         });
 
         await finalizeAndSave(
-          set, windowId, updatedWindow, subTopicId,
-          [...messagesWithUser, aiMessage]
+          set, get, windowId, subTopicId,
+          (st) => { st.messages.push(aiMessage); }
         );
       },
       // 取消回调：有部分响应时保存，无部分响应时重置状态
@@ -158,8 +161,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           };
 
           await finalizeAndSave(
-            set, windowId, updatedWindow, subTopicId,
-            [...messagesWithUser, partialAiMessage]
+            set, get, windowId, subTopicId,
+            (st) => { st.messages.push(partialAiMessage); }
           );
         } else {
           set(SENDING_RESET_STATE);
@@ -167,14 +170,17 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       },
       // 错误回调：将错误保存到用户消息中
       onError: async (error) => {
-        const userMessageWithError: Message = {
-          ...userMessage,
-          error: extractErrorMessage(error, '发送消息失败'),
-        };
+        const errorMessage = extractErrorMessage(error, '发送消息失败');
 
         await finalizeAndSave(
-          set, windowId, updatedWindow, subTopicId,
-          [...subTopic.messages, userMessageWithError],
+          set, get, windowId, subTopicId,
+          (st) => {
+            // 回滚：移除之前添加的用户消息，替换为带错误的版本
+            const lastMsg = st.messages[st.messages.length - 1];
+            if (lastMsg && lastMsg.id === userMessage.id) {
+              lastMsg.error = errorMessage;
+            }
+          },
           { error: null }
         );
       },
@@ -216,18 +222,25 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    // 截断消息列表，删除该消息之后的所有消息
+    // 截断消息列表，删除该消息之后的所有消息（使用 Immer draft 写法）
     // 需求: 3.2 - Property 5: 消息编辑后截断
-    const truncatedMessages = subTopic.messages.slice(0, messageIndex);
+    set((state) => {
+      const w = state.windows.find((w) => w.id === windowId);
+      if (w) {
+        const st = w.subTopics.find((st) => st.id === subTopicId);
+        if (st) {
+          st.messages.length = messageIndex;
+          st.updatedAt = Date.now();
+        }
+        w.updatedAt = Date.now();
+      }
+    });
 
-    const updatedWindow = buildUpdatedWindow(window, subTopicId, truncatedMessages);
-
-    set((state) => ({
-      windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-    }));
-
-    // 保存窗口
-    await saveChatWindow(updatedWindow);
+    // 从最新状态获取窗口进行持久化
+    const updatedWindow = get().windows.find((w) => w.id === windowId);
+    if (updatedWindow) {
+      await saveChatWindow(updatedWindow);
+    }
 
     // 重新发送编辑后的消息
     const { useSettingsStore } = await import('../settings');
@@ -294,8 +307,6 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       subTopicId,
       contextMessages: geminiContents,
       set,
-      baseWindow: window,
-      currentMessages: subTopic.messages,
       // 需求: 2.1, 2.2, 2.3, 2.4 - 重新生成时使用原始提示词参数进行图片配置解析
       promptForImageConfig: lastUserMessage?.content,
       // 成功回调：保持原消息 ID 不变，替换消息内容
@@ -314,8 +325,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         const updatedMessage = buildAiMessage(messageId, result, originalMessage);
 
         await finalizeAndSave(
-          set, windowId, window, subTopicId,
-          replaceMessageAtIndex(subTopic.messages, messageIndex, updatedMessage)
+          set, get, windowId, subTopicId,
+          (st) => { st.messages[messageIndex] = updatedMessage; }
         );
       },
       // 取消回调：有部分响应时保存（保持原 ID），无部分响应时重置状态
@@ -330,8 +341,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           };
 
           await finalizeAndSave(
-            set, windowId, window, subTopicId,
-            replaceMessageAtIndex(subTopic.messages, messageIndex, partialMessage)
+            set, get, windowId, subTopicId,
+            (st) => { st.messages[messageIndex] = partialMessage; }
           );
         } else {
           // 没有部分响应，保留原消息
@@ -341,14 +352,16 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       // 错误回调：将错误保存到 AI 消息中，保留原消息内容
       // 需求: 4.4 - 重新生成失败时保留原消息内容，但添加错误状态
       onError: async (error) => {
-        const messageWithError: Message = {
-          ...originalMessage,
-          error: extractErrorMessage(error, '重新生成失败'),
-        };
+        const errorMessage = extractErrorMessage(error, '重新生成失败');
 
         await finalizeAndSave(
-          set, windowId, window, subTopicId,
-          replaceMessageAtIndex(subTopic.messages, messageIndex, messageWithError),
+          set, get, windowId, subTopicId,
+          (st) => {
+            const msg = st.messages[messageIndex];
+            if (msg) {
+              msg.error = errorMessage;
+            }
+          },
           { error: null }
         );
       },
@@ -388,31 +401,31 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
     const existingMessage = subTopic.messages[messageIndex];
     if (!existingMessage) return;
 
-    // 更新消息的错误状态
-    const updatedMessage: Message = {
-      ...existingMessage,
-      error: error || undefined, // null 转为 undefined 以便从对象中移除
-    };
+    // 更新消息的错误状态（使用 Immer draft 写法）
+    set((state) => {
+      const w = state.windows.find((w) => w.id === windowId);
+      if (!w) return;
+      const st = w.subTopics.find((st) => st.id === subTopicId);
+      if (!st) return;
+      const msg = st.messages[messageIndex];
+      if (!msg) return;
 
-    // 如果 error 为 null，删除 error 字段
-    if (error === null) {
-      delete updatedMessage.error;
-    }
+      if (error === null) {
+        delete msg.error;
+      } else {
+        msg.error = error;
+      }
+      st.updatedAt = Date.now();
+      w.updatedAt = Date.now();
+    });
 
-    const updatedWindow = buildUpdatedWindow(
-      window,
-      subTopicId,
-      replaceMessageAtIndex(subTopic.messages, messageIndex, updatedMessage)
-    );
-
-    set((state) => ({
-      windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-    }));
-
-    // 异步保存到存储
+    // 从最新状态获取窗口进行持久化
     // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 console.error
     try {
-      await saveChatWindow(updatedWindow);
+      const updatedWindow = get().windows.find((w) => w.id === windowId);
+      if (updatedWindow) {
+        await saveChatWindow(updatedWindow);
+      }
     } catch (err) {
       storeLogger.error('更新消息错误状态失败', {
         error: err instanceof Error ? err.message : '未知错误',
@@ -458,30 +471,37 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    // 清除用户消息的错误状态
+    // 清除用户消息的错误状态（使用 Immer draft 写法）
     // 需求: 2.3 - 保留 fileReferences 字段以便在重试时正确传递
-    const clearedUserMessage: Message = { ...userMessage };
-    delete clearedUserMessage.error;
+    set((state) => {
+      const w = state.windows.find((w) => w.id === windowId);
+      if (w) {
+        const st = w.subTopics.find((st) => st.id === subTopicId);
+        if (st) {
+          const msg = st.messages[messageIndex];
+          if (msg) {
+            delete msg.error;
+          }
+          st.updatedAt = Date.now();
+        }
+        w.updatedAt = Date.now();
+      }
+    });
 
-    // 更新消息列表：将清除错误后的用户消息替换回去
-    const updatedMessages = replaceMessageAtIndex(
-      subTopic.messages,
-      messageIndex,
-      clearedUserMessage
-    );
-    const updatedWindow = buildUpdatedWindow(window, subTopicId, updatedMessages);
-
-    // 更新窗口状态并保存（发送状态由 orchestrateSend 设置）
-    set((state) => ({
-      windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-    }));
-    await saveChatWindow(updatedWindow);
+    // 从最新状态获取窗口进行持久化
+    const updatedWindowForSave = get().windows.find((w) => w.id === windowId);
+    if (updatedWindowForSave) {
+      await saveChatWindow(updatedWindowForSave);
+    }
 
     // 获取包含该用户消息的所有消息作为上下文
     // 需求: 2.3 - contextMessages 包含所有历史消息的 fileReferences
-    const contextMessages = subTopic.messages
-      .slice(0, messageIndex + 1)
-      .map((m, i) => (i === messageIndex ? clearedUserMessage : m));
+    // 从最新状态获取清除错误后的消息
+    const updatedSubTopic = get().windows.find((w) => w.id === windowId)
+      ?.subTopics.find((st) => st.id === subTopicId);
+    const contextMessages = updatedSubTopic
+      ? updatedSubTopic.messages.slice(0, messageIndex + 1)
+      : subTopic.messages.slice(0, messageIndex + 1);
 
     // 检测图片生成模型，用于消息格式转换
     const { useModelStore } = await import('../model');
@@ -498,11 +518,9 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       subTopicId,
       contextMessages: geminiContents,
       set,
-      baseWindow: updatedWindow,
-      currentMessages: updatedMessages,
       // 需求: 2.3 - 重试时使用原始提示词参数进行图片配置解析
       promptForImageConfig: userMessage.content,
-      // 成功回调：保存图片并持久化 AI 消息
+      // 成功回调：保存图片并通过 draft 修改持久化 AI 消息
       onSuccess: async (aiMessage, result) => {
         // 保存生成的图片到图片库 - 需求: 5.4
         await saveGeneratedImages(result.images, {
@@ -513,8 +531,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         });
 
         await finalizeAndSave(
-          set, windowId, updatedWindow, subTopicId,
-          [...updatedMessages, aiMessage]
+          set, get, windowId, subTopicId,
+          (st) => { st.messages.push(aiMessage); }
         );
       },
       // 取消回调：有部分响应时保存，无部分响应时重置状态
@@ -529,8 +547,8 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           };
 
           await finalizeAndSave(
-            set, windowId, updatedWindow, subTopicId,
-            [...updatedMessages, partialAiMessage]
+            set, get, windowId, subTopicId,
+            (st) => { st.messages.push(partialAiMessage); }
           );
         } else {
           set(SENDING_RESET_STATE);
@@ -538,14 +556,16 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       },
       // 错误回调：将错误保存回用户消息
       onError: async (error) => {
-        const userMessageWithError: Message = {
-          ...clearedUserMessage,
-          error: extractErrorMessage(error, '发送消息失败'),
-        };
+        const errorMessage = extractErrorMessage(error, '发送消息失败');
 
         await finalizeAndSave(
-          set, windowId, window, subTopicId,
-          replaceMessageAtIndex(subTopic.messages, messageIndex, userMessageWithError),
+          set, get, windowId, subTopicId,
+          (st) => {
+            const msg = st.messages[messageIndex];
+            if (msg) {
+              msg.error = errorMessage;
+            }
+          },
           { error: null }
         );
       },
@@ -579,19 +599,26 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    // 删除该消息及其后续所有消息
-    const truncatedMessages = subTopic.messages.slice(0, messageIndex);
+    // 删除该消息及其后续所有消息（使用 Immer draft 写法）
+    set((state) => {
+      const w = state.windows.find((w) => w.id === windowId);
+      if (w) {
+        const st = w.subTopics.find((st) => st.id === subTopicId);
+        if (st) {
+          st.messages.length = messageIndex;
+          st.updatedAt = Date.now();
+        }
+        w.updatedAt = Date.now();
+      }
+    });
 
-    const updatedWindow = buildUpdatedWindow(window, subTopicId, truncatedMessages);
-
-    set((state) => ({
-      windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-    }));
-
-    // 异步保存到存储
+    // 从最新状态获取窗口进行持久化
     // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 console.error
     try {
-      await saveChatWindow(updatedWindow);
+      const updatedWindow = get().windows.find((w) => w.id === windowId);
+      if (updatedWindow) {
+        await saveChatWindow(updatedWindow);
+      }
     } catch (error) {
       storeLogger.error('删除消息失败', {
         error: error instanceof Error ? error.message : '未知错误',
@@ -637,25 +664,28 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    // 仅更新消息内容，保留其他属性
-    const updatedMessage: Message = {
-      ...originalMessage,
-      content: newContent,
-    };
+    // 仅更新消息内容，保留其他属性（使用 Immer draft 写法）
+    set((state) => {
+      const w = state.windows.find((w) => w.id === windowId);
+      if (w) {
+        const st = w.subTopics.find((st) => st.id === subTopicId);
+        if (st) {
+          const msg = st.messages[messageIndex];
+          if (msg) {
+            msg.content = newContent;
+          }
+          st.updatedAt = Date.now();
+        }
+        w.updatedAt = Date.now();
+      }
+    });
 
-    const updatedWindow = buildUpdatedWindow(
-      window,
-      subTopicId,
-      replaceMessageAtIndex(subTopic.messages, messageIndex, updatedMessage)
-    );
-
-    set((state) => ({
-      windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-    }));
-
-    // 异步保存到存储
+    // 从最新状态获取窗口进行持久化
     try {
-      await saveChatWindow(updatedWindow);
+      const updatedWindow = get().windows.find((w) => w.id === windowId);
+      if (updatedWindow) {
+        await saveChatWindow(updatedWindow);
+      }
     } catch (error) {
       storeLogger.error('更新消息内容失败', {
         error: error instanceof Error ? error.message : '未知错误',

@@ -12,7 +12,7 @@
  * - 窗口/子话题状态更新与持久化
  */
 
-import type { ChatWindow } from '../../types/chatWindow';
+import type { ChatWindow, SubTopic } from '../../types/chatWindow';
 import type { Message, ApiConfig, ModelAdvancedConfig, MessageTokenUsage } from '../../types/models';
 import type { GeminiContent } from '../../types/gemini';
 import {
@@ -25,7 +25,7 @@ import {
 import { useModelStore } from '../model';
 import { saveChatWindow } from '../../services/storage';
 import { storeLogger } from '../../services/logger';
-import type { SetState } from './types';
+import type { SetState, GetState } from './types';
 
 // ============ 类型定义 ============
 
@@ -279,51 +279,42 @@ export function buildAiMessage(
 // ============ 状态更新辅助 ============
 
 /**
- * 构建更新了子话题消息的窗口对象
- */
-export function buildUpdatedWindow(
-  window: ChatWindow,
-  subTopicId: string,
-  messages: Message[]
-): ChatWindow {
-  const updatedSubTopics = window.subTopics.map((st) =>
-    st.id === subTopicId
-      ? { ...st, messages, updatedAt: Date.now() }
-      : st
-  );
-  return {
-    ...window,
-    subTopics: updatedSubTopics,
-    updatedAt: Date.now(),
-  };
-}
-
-/**
- * 更新窗口状态、重置发送状态、保存到存储
- * 统一处理 set + saveChatWindow 的组合操作
+ * 通过 draft 修改回调更新子话题状态、重置发送状态、保存到存储
+ * 统一处理 set（Immer draft 修改）+ saveChatWindow 的组合操作
  *
- * @param set - Zustand setter
+ * @param set - Zustand setter（支持 Immer draft 修改）
+ * @param get - Zustand getter（用于获取最新状态进行持久化）
  * @param windowId - 窗口 ID
- * @param baseWindow - 基础窗口对象（将在此基础上更新子话题消息）
  * @param subTopicId - 子话题 ID
- * @param messages - 更新后的消息列表
+ * @param updateDraft - draft 修改回调，接收目标子话题的 draft 进行直接修改
  * @param extraState - 额外的状态更新（如 { error: null }）
  */
 export async function finalizeAndSave(
   set: SetState,
+  get: GetState,
   windowId: string,
-  baseWindow: ChatWindow,
   subTopicId: string,
-  messages: Message[],
+  updateDraft: (subTopic: SubTopic) => void,
   extraState?: Record<string, unknown>
 ): Promise<void> {
-  const finalWindow = buildUpdatedWindow(baseWindow, subTopicId, messages);
-  set((state) => ({
-    windows: state.windows.map((w) => (w.id === windowId ? finalWindow : w)),
-    ...SENDING_RESET_STATE,
-    ...extraState,
-  }));
-  await saveChatWindow(finalWindow);
+  set((state) => {
+    const w = state.windows.find((w) => w.id === windowId);
+    if (w) {
+      const st = w.subTopics.find((st) => st.id === subTopicId);
+      if (st) {
+        updateDraft(st);
+        st.updatedAt = Date.now();
+      }
+      w.updatedAt = Date.now();
+    }
+    Object.assign(state, SENDING_RESET_STATE);
+    if (extraState) Object.assign(state, extraState);
+  });
+  // 持久化：从最新状态中获取窗口对象
+  const finalWindow = get().windows.find((w) => w.id === windowId);
+  if (finalWindow) {
+    await saveChatWindow(finalWindow);
+  }
 }
 
 /**
@@ -334,20 +325,6 @@ export function extractErrorMessage(error: unknown, defaultMessage: string): str
   if (error instanceof Error) return error.message;
   return defaultMessage;
 }
-
-/**
- * 替换消息数组中指定索引的消息（不可变操作）
- */
-export function replaceMessageAtIndex(
-  messages: Message[],
-  index: number,
-  newMessage: Message
-): Message[] {
-  const result = [...messages];
-  result[index] = newMessage;
-  return result;
-}
-
 
 // ============ 统一消息发送编排 ============
 
@@ -365,10 +342,6 @@ export interface OrchestrateSendConfig {
   // 状态管理
   /** Zustand 状态设置器 */
   set: SetState;
-  /** 用于 finalizeAndSave 的基础窗口（可能已包含用户消息更新） */
-  baseWindow: ChatWindow;
-  /** 当前消息列表（用于错误时回写） */
-  currentMessages: Message[];
   // 可选覆盖
   /** 自定义 API 配置（端点/密钥/模型） */
   apiConfig?: ApiConfig;
