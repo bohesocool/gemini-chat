@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.12](https://github.com/bohesocool/gemini-chat/compare/v0.2.11...v0.2.12) (2026-02-07)
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* **gemini:** enhance API message handling and introduce orchestrateSend function ([49e0d73](https://github.com/bohesocool/gemini-chat/commit/49e0d73370143571dfd979ed107ecab2b804714c))
+
+
+### ✨ 新功能 (Features)
+
+* 提取共享图标组件库，统一图标管理 ([411a2c1](https://github.com/bohesocool/gemini-chat/commit/411a2c18757ee5130e4bd5d137ad5cfab9001c70))
+
 ### [0.2.11](https://github.com/bohesocool/gemini-chat/compare/v0.2.10...v0.2.11) (2026-02-07)
 
 
