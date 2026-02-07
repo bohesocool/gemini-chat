@@ -5,6 +5,7 @@
 
 import type { GenerationConfig, SafetySetting } from './gemini';
 import type { Message, ModelAdvancedConfig } from './models';
+import { getTranslation } from '../i18n';
 
 // ============ 聊天窗口配置 ============
 
@@ -124,11 +125,11 @@ export const DEFAULT_CHAT_WINDOW_CONFIG: ChatWindowConfig = {
  * @param title 子话题标题
  * @returns 新的子话题对象
  */
-export function createDefaultSubTopic(id: string, title: string = '主话题'): SubTopic {
+export function createDefaultSubTopic(id: string, title?: string): SubTopic {
   const now = Date.now();
   return {
     id,
-    title,
+    title: title ?? getTranslation('sidebar.mainTopic'),
     messages: [],
     createdAt: now,
     updatedAt: now,
@@ -153,7 +154,7 @@ export function createDefaultChatWindow(
 ): ChatWindow {
   const now = Date.now();
   const defaultSubTopic = createDefaultSubTopic(subTopicId, subTopicTitle);
-  
+
   return {
     id,
     title,

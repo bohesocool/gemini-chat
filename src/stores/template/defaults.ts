@@ -4,10 +4,57 @@
  */
 
 import type { PromptTemplate } from './types';
+import { getTranslation } from '../../i18n';
 
 /**
- * 内置默认模板列表
+ * 获取内置默认模板列表
  * 包含：代码助手、翻译助手、写作助手、数据分析师
+ * 注意：使用函数而非常量，以确保翻译根据当前语言动态获取
+ */
+export function getDefaultTemplates(): PromptTemplate[] {
+  return [
+    {
+      id: 'builtin-code-assistant',
+      name: getTranslation('templates.codeAssistant'),
+      description: getTranslation('templates.codeAssistantDesc'),
+      systemInstruction: getTranslation('templates.codeAssistantInstruction'),
+      isBuiltIn: true,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+    {
+      id: 'builtin-translator',
+      name: getTranslation('templates.translator'),
+      description: getTranslation('templates.translatorDesc'),
+      systemInstruction: getTranslation('templates.translatorInstruction'),
+      isBuiltIn: true,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+    {
+      id: 'builtin-writer',
+      name: getTranslation('templates.writer'),
+      description: getTranslation('templates.writerDesc'),
+      systemInstruction: getTranslation('templates.writerInstruction'),
+      isBuiltIn: true,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+    {
+      id: 'builtin-analyst',
+      name: getTranslation('templates.analyst'),
+      description: getTranslation('templates.analystDesc'),
+      systemInstruction: getTranslation('templates.analystInstruction'),
+      isBuiltIn: true,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+  ];
+}
+
+/**
+ * 向后兼容的常量导出
+ * @deprecated 请使用 getDefaultTemplates() 代替
  */
 export const DEFAULT_TEMPLATES: PromptTemplate[] = [
   {

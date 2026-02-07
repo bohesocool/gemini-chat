@@ -47,7 +47,7 @@ const translations: Record<Locale, TranslationResource> = {
 export function getNestedValue(obj: TranslationResource, path: string): string | undefined {
   const keys = path.split('.');
   let current: TranslationResource | string | undefined = obj;
-  
+
   for (const key of keys) {
     // 如果当前值不是对象，无法继续解析
     if (typeof current !== 'object' || current === null) {
@@ -59,7 +59,7 @@ export function getNestedValue(obj: TranslationResource, path: string): string |
       return undefined;
     }
   }
-  
+
   // 只有当最终值是字符串时才返回
   return typeof current === 'string' ? current : undefined;
 }
@@ -81,7 +81,7 @@ export function getNestedValue(obj: TranslationResource, path: string): string |
 export function interpolate(template: string, params?: Record<string, string | number>): string {
   // 如果没有参数，直接返回模板
   if (!params) return template;
-  
+
   // 使用正则表达式匹配 {key} 格式的占位符
   // \w+ 匹配一个或多个单词字符（字母、数字、下划线）
   return template.replace(/\{(\w+)\}/g, (_, key) => {
@@ -122,7 +122,7 @@ export function interpolate(template: string, params?: Record<string, string | n
 export function useTranslation() {
   // 从 i18n Store 获取当前语言状态和控制方法
   const { locale, setLocale, toggleLocale } = useI18nStore();
-  
+
   /**
    * 翻译函数
    * 
@@ -135,20 +135,57 @@ export function useTranslation() {
   const t: TranslateFunction = useCallback((key: string, params?: Record<string, string | number>) => {
     // 获取当前语言的翻译资源
     const resource = translations[locale];
-    
+
     // 解析嵌套键获取翻译值
     const value = getNestedValue(resource, key);
-    
+
     // 如果翻译键不存在，返回键本身作为回退
     if (value === undefined) {
       // 在开发环境下输出警告，帮助开发者发现缺失的翻译
       console.warn(`Translation key not found: ${key}`);
       return key;
     }
-    
+
     // 替换参数占位符并返回
     return interpolate(value, params);
   }, [locale]);
-  
+
   return { t, locale, setLocale, toggleLocale };
 }
+
+// ============ 非 Hook 翻译函数（供非组件代码使用） ============
+
+/**
+ * 获取当前语言的翻译
+ * 
+ * 用于非 React 组件的代码（如工具函数、store 等）
+ * 注意：此函数会在每次调用时获取当前语言，不会自动响应语言变化
+ * 
+ * @param key - 翻译键，支持点号分隔的嵌套键
+ * @param params - 可选的参数对象，用于替换占位符
+ * @returns 翻译后的字符串，如果键不存在则返回键本身
+ */
+export function getTranslation(key: string, params?: Record<string, string | number>): string {
+  // 获取当前语言
+  const locale = useI18nStore.getState().locale;
+
+  // 获取当前语言的翻译资源
+  const resource = translations[locale];
+
+  // 解析嵌套键获取翻译值
+  const value = getNestedValue(resource, key);
+
+  // 如果翻译键不存在，返回键本身作为回退
+  if (value === undefined) {
+    console.warn(`Translation key not found: ${key}`);
+    return key;
+  }
+
+  // 替换参数占位符并返回
+  return interpolate(value, params);
+}
+
+/**
+ * 导出翻译资源（用于需要直接访问的场景）
+ */
+export { translations };

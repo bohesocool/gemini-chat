@@ -14,7 +14,8 @@
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && node start-electron.cjs\"",
     "electron:build": "npm run build && electron-builder",
     "prepare": "husky",
-    "release": "standard-version"
+    "release": "standard-version",
+    "scan:i18n": "node scripts/scan-hardcoded-chinese.cjs"
   },
   "build": {
     "extends": "electron-builder.yml"

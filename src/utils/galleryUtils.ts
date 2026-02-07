@@ -4,6 +4,7 @@
  */
 
 import type { GeneratedImage } from '../types';
+import { getTranslation } from '../i18n';
 
 // ============ 日期格式化函数 ============
 
@@ -32,33 +33,37 @@ export function getDateKey(timestamp: number): string {
 export function formatImageDate(timestamp: number): string {
   const now = new Date();
   const date = new Date(timestamp);
-  
+
   // 获取今天和昨天的日期键
   const todayKey = getDateKey(now.getTime());
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayKey = getDateKey(yesterdayDate.getTime());
-  
+
   const dateKey = getDateKey(timestamp);
-  
+
   if (dateKey === todayKey) {
-    return '今天';
+    return getTranslation('dateFormat.today');
   }
-  
+
   if (dateKey === yesterdayKey) {
-    return '昨天';
+    return getTranslation('dateFormat.yesterday');
   }
-  
+
   // 返回具体日期格式: X月X日
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  
+
   // 如果不是今年，显示年份
   if (date.getFullYear() !== now.getFullYear()) {
-    return `${date.getFullYear()}年${month}月${day}日`;
+    return getTranslation('dateFormat.fullDate', {
+      year: date.getFullYear(),
+      month,
+      day
+    });
   }
-  
-  return `${month}月${day}日`;
+
+  return getTranslation('dateFormat.shortDate', { month, day });
 }
 
 // ============ 图片排序函数 ============
@@ -96,10 +101,10 @@ export interface ImageGroup {
 export function groupImagesByDate(images: GeneratedImage[]): ImageGroup[] {
   // 先按日期排序
   const sortedImages = sortImagesByDate(images);
-  
+
   // 使用 Map 保持插入顺序
   const groupMap = new Map<string, GeneratedImage[]>();
-  
+
   for (const image of sortedImages) {
     const dateKey = getDateKey(image.createdAt);
     const existing = groupMap.get(dateKey);
@@ -109,7 +114,7 @@ export function groupImagesByDate(images: GeneratedImage[]): ImageGroup[] {
       groupMap.set(dateKey, [image]);
     }
   }
-  
+
   // 转换为 ImageGroup 数组
   const groups: ImageGroup[] = [];
   for (const [dateKey, groupImages] of groupMap) {
@@ -124,6 +129,6 @@ export function groupImagesByDate(images: GeneratedImage[]): ImageGroup[] {
       });
     }
   }
-  
+
   return groups;
 }
