@@ -5,9 +5,10 @@
  * Requirements: 2.2, 2.3, 2.4, 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 6.4
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { DropdownButton, type DropdownOption } from './DropdownButton';
 import type { ImageGenerationConfig, ImageAspectRatio, ImageSize } from '../../types/models';
+import { useTranslation } from '../../i18n';
 
 /**
  * 图片配置工具栏属性
@@ -41,14 +42,17 @@ const ASPECT_RATIO_OPTIONS: DropdownOption<ImageAspectRatio>[] = [
 ];
 
 /**
- * 分辨率选项列表
+ * 分辨率选项列表（动态获取以支持 i18n）
  * Requirements: 3.2
  */
-const IMAGE_SIZE_OPTIONS: DropdownOption<ImageSize>[] = [
-  { value: '1K', label: '1K', description: '标准' },
-  { value: '2K', label: '2K', description: '高清' },
-  { value: '4K', label: '4K', description: '超清' },
-];
+function useImageSizeOptions(): DropdownOption<ImageSize>[] {
+  const { t } = useTranslation();
+  return useMemo(() => [
+    { value: '1K', label: '1K', description: t('chat.resolutionStandard') },
+    { value: '2K', label: '2K', description: t('chat.resolutionHD') },
+    { value: '4K', label: '4K', description: t('chat.resolutionUltraHD') },
+  ], [t]);
+}
 
 /**
  * 图片配置工具栏组件
@@ -66,6 +70,8 @@ export function ImageConfigToolbar({
   disabled = false,
   supportsImageSize = true,
 }: ImageConfigToolbarProps) {
+  const { t } = useTranslation();
+  const imageSizeOptions = useImageSizeOptions();
   /**
    * 处理宽高比选择
    * Requirements: 2.3, 2.4, 4.1, 4.3
@@ -95,7 +101,7 @@ export function ImageConfigToolbar({
         value={config.aspectRatio}
         options={ASPECT_RATIO_OPTIONS}
         onSelect={handleAspectRatioChange}
-        label="比例"
+        label={t('chat.aspectRatio')}
         disabled={disabled}
       />
 
@@ -103,9 +109,9 @@ export function ImageConfigToolbar({
       {supportsImageSize && (
         <DropdownButton
           value={config.imageSize}
-          options={IMAGE_SIZE_OPTIONS}
+          options={imageSizeOptions}
           onSelect={handleImageSizeChange}
-          label="分辨率"
+          label={t('chat.resolution')}
           disabled={disabled}
         />
       )}

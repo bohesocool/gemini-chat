@@ -4,8 +4,9 @@
  * Requirements: 2.1, 2.2, 2.3, 2.4, 6.5
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { ImageAspectRatio, ImageSize, ImageGenerationConfig } from '../../types/models';
+import { useTranslation } from '../../i18n';
 
 /**
  * 图片配置面板属性
@@ -34,30 +35,29 @@ const ASPECT_RATIO_OPTIONS: Array<{
   label: string;
   icon: string;
 }> = [
-  { value: '1:1', label: '1:1', icon: '□' },
-  { value: '16:9', label: '16:9', icon: '▭' },
-  { value: '9:16', label: '9:16', icon: '▯' },
-  { value: '4:3', label: '4:3', icon: '▭' },
-  { value: '3:4', label: '3:4', icon: '▯' },
-  { value: '3:2', label: '3:2', icon: '▭' },
-  { value: '2:3', label: '2:3', icon: '▯' },
-  { value: '5:4', label: '5:4', icon: '▭' },
-  { value: '4:5', label: '4:5', icon: '▯' },
-  { value: '21:9', label: '21:9', icon: '▭' },
-];
+    { value: '1:1', label: '1:1', icon: '□' },
+    { value: '16:9', label: '16:9', icon: '▭' },
+    { value: '9:16', label: '9:16', icon: '▯' },
+    { value: '4:3', label: '4:3', icon: '▭' },
+    { value: '3:4', label: '3:4', icon: '▯' },
+    { value: '3:2', label: '3:2', icon: '▭' },
+    { value: '2:3', label: '2:3', icon: '▯' },
+    { value: '5:4', label: '5:4', icon: '▭' },
+    { value: '4:5', label: '4:5', icon: '▯' },
+    { value: '21:9', label: '21:9', icon: '▭' },
+  ];
 
 /**
- * 图片分辨率选项配置
+ * 图片分辨率选项配置（动态获取以支持 i18n）
  */
-const IMAGE_SIZE_OPTIONS: Array<{
-  value: ImageSize;
-  label: string;
-  description: string;
-}> = [
-  { value: '1K', label: '1K', description: '标准' },
-  { value: '2K', label: '2K', description: '高清' },
-  { value: '4K', label: '4K', description: '超清' },
-];
+function useImageSizeOptions() {
+  const { t } = useTranslation();
+  return useMemo(() => [
+    { value: '1K' as ImageSize, label: '1K', description: t('chat.resolutionStandard') },
+    { value: '2K' as ImageSize, label: '2K', description: t('chat.resolutionHD') },
+    { value: '4K' as ImageSize, label: '4K', description: t('chat.resolutionUltraHD') },
+  ], [t]);
+}
 
 /**
  * 图片配置面板组件
@@ -70,13 +70,15 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
   variant = 'full',
   supportsImageSize = true,
 }) => {
+  const { t } = useTranslation();
+  const imageSizeOptions = useImageSizeOptions();
   // 紧凑模式：使用简单的按钮组
   if (variant === 'compact') {
     return (
       <div className="flex items-center gap-3">
         {/* 宽高比选择 */}
         <div className="flex items-center gap-1">
-          <span className="text-xs text-[var(--text-secondary)]">比例:</span>
+          <span className="text-xs text-[var(--text-secondary)]">{t('chat.aspectRatio')}:</span>
           <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
             {ASPECT_RATIO_OPTIONS.map((option) => (
               <button
@@ -100,12 +102,11 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
           </div>
         </div>
 
-        {/* 分辨率选择 - 仅当 supportsImageSize 为 true 时显示 */}
         {supportsImageSize && (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-[var(--text-secondary)]">清晰度:</span>
+            <span className="text-xs text-[var(--text-secondary)]">{t('chat.resolution')}:</span>
             <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
-              {IMAGE_SIZE_OPTIONS.map((option) => (
+              {imageSizeOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
@@ -137,7 +138,7 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
       {/* 宽高比选择 */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-[var(--text-primary)]">
-          图片宽高比
+          {t('chat.aspectRatio')}
         </label>
         <div className="flex gap-2">
           {ASPECT_RATIO_OPTIONS.map((option) => (
@@ -178,10 +179,10 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
       {supportsImageSize && (
         <div className="space-y-2">
           <label className="block text-sm font-medium text-[var(--text-primary)]">
-            图片分辨率
+            {t('chat.imageResolution')}
           </label>
           <div className="flex gap-2">
-            {IMAGE_SIZE_OPTIONS.map((option) => (
+            {imageSizeOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"

@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { ImagePreviewModal } from '../ImagePreviewModal';
 import { ImageGrid } from '../shared/ImageGrid';
 import type { GeneratedImage } from '../../types/models';
+import { useTranslation } from '../../i18n';
 
 // ============ 类型定义 ============
 
@@ -52,16 +53,18 @@ export function ThoughtSummaryCard({
   const prevIsStreamingRef = useRef(isStreaming);
   // 图片预览状态
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
+  // i18n
+  const { t } = useTranslation();
 
   // 监听 isStreaming 从 true 变为 false，自动折叠 - Requirements: 1.2, 3.2
   useEffect(() => {
     const prevIsStreaming = prevIsStreamingRef.current;
-    
+
     // 当 isStreaming 从 true 变为 false 且用户未手动操作时，自动折叠
     if (prevIsStreaming && !isStreaming && !userHasInteracted) {
       setIsExpanded(false);
     }
-    
+
     // 更新 ref 以便下次比较
     prevIsStreamingRef.current = isStreaming;
   }, [isStreaming, userHasInteracted]);
@@ -85,7 +88,7 @@ export function ThoughtSummaryCard({
 
   // 获取当前预览的图片
   const previewImage = previewImageIndex !== null && images && images[previewImageIndex]
-    ? images[previewImageIndex] 
+    ? images[previewImageIndex]
     : null;
 
   return (
@@ -115,7 +118,7 @@ export function ThoughtSummaryCard({
         <div className="flex items-center gap-2">
           <ThinkingIcon className="w-4 h-4 text-purple-500 dark:text-purple-400" />
           <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-            思考过程
+            {t('chat.thinkingProcess')}
           </span>
         </div>
         <ChevronIcon
@@ -146,17 +149,17 @@ export function ThoughtSummaryCard({
           "
         >
           {content}
-          
+
           {/* 思维链图片网格 - 使用共享 ImageGrid 组件，紫色主题 */}
           {/* Requirements: 1.1, 1.3, 3.2 */}
-          <ImageGrid 
-            images={images || []} 
+          <ImageGrid
+            images={images || []}
             onImageClick={handleImageClick}
             theme="purple"
           />
         </div>
       </div>
-      
+
       {/* 图片预览模态框 - 复用 ImagePreviewModal Requirements: 2.1 */}
       <ImagePreviewModal
         image={previewImage}

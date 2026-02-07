@@ -226,7 +226,14 @@
     "budget": "预算",
     "budgetDynamic": "动态",
     "budgetOff": "关闭",
-    "budgetTokens": "tokens"
+    "budgetTokens": "tokens",
+    "thinkingProcess": "思考过程",
+    "aspectRatio": "比例",
+    "resolution": "分辨率",
+    "imageResolution": "图片分辨率",
+    "resolutionStandard": "标准",
+    "resolutionHD": "高清",
+    "resolutionUltraHD": "超清"
   },
   "auth": {
     "title": "请输入密码以继续",
@@ -484,5 +491,50 @@
     "total": "总计",
     "tokenDataUnavailable": "Token 数据不可用",
     "conversationTotalTokens": "对话累计 Token"
+  },
+  "errors": {
+    "network": "网络连接失败，请检查网络设置",
+    "apiKeyEmpty": "API 密钥不能为空",
+    "unknown": "发生未知错误，请稍后重试",
+    "timeout": "请求超时，请稍后重试",
+    "invalidEndpoint": "API 端点无效",
+    "emptyResponse": "响应体为空",
+    "requestCancelled": "请求已取消",
+    "apiKeyInvalid": "API 密钥无效或已过期",
+    "noPermission": "没有权限访问该资源",
+    "resourceNotFound": "请求的资源不存在",
+    "tooManyRequests": "请求过于频繁，请稍后重试",
+    "serverUnavailable": "服务器暂时不可用，请稍后重试",
+    "apiFailed": "API 请求失败: {statusCode}",
+    "connectionFailed": "连接失败",
+    "persistFailed": "持久化设置失败",
+    "loadFailed": "加载失败",
+    "saveFailed": "保存失败",
+    "updateFailed": "更新失败",
+    "deleteFailed": "删除失败",
+    "modelLoadFailed": "模型 {modelId} 加载失败",
+    "modelDeleteFailed": "模型 {modelId} 删除失败",
+    "modelRedirectFailed": "模型 {targetId} 重定向失败",
+    "fetchModelsFailed": "获取模型列表失败"
+  },
+  "templates": {
+    "codeAssistant": "代码助手",
+    "codeAssistantDesc": "帮助编写、审查和优化代码",
+    "codeAssistantInstruction": "你是一个专业的编程助手。请帮助用户编写高质量的代码，提供清晰的解释，并遵循最佳实践。当用户提供代码时，请仔细审查并提出改进建议。",
+    "translator": "翻译助手",
+    "translatorDesc": "多语言翻译和润色",
+    "translatorInstruction": "你是一个专业的翻译助手。请准确翻译用户提供的文本，保持原文的语气和风格。如果用户没有指定目标语言，请翻译为中文。对于专业术语，请提供准确的翻译并在必要时附上原文。",
+    "writer": "写作助手",
+    "writerDesc": "帮助撰写和改进文章",
+    "writerInstruction": "你是一个专业的写作助手。请帮助用户撰写、编辑和改进各类文章，包括博客、报告、邮件等。注重文章的结构、逻辑和表达，确保内容清晰、流畅、有说服力。",
+    "analyst": "数据分析师",
+    "analystDesc": "分析数据并提供洞察",
+    "analystInstruction": "你是一个数据分析专家。请帮助用户分析数据、解读结果，并提供有价值的洞察和建议。在分析时，请注意数据的准确性、完整性，并用清晰的方式呈现分析结果。"
+  },
+  "dateFormat": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "fullDate": "{year}年{month}月{day}日",
+    "shortDate": "{month}月{day}日"
   }
 }

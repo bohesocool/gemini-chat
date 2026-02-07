@@ -6,30 +6,69 @@
  */
 
 import { createLogger } from '../services/logger';
+import { getTranslation } from '../i18n';
 
 // 创建错误处理专用日志记录器
 const errorLogger = createLogger('ErrorHandler');
 
 /**
- * 错误消息常量
+ * 获取 i18n 错误消息的函数
+ * 集中管理错误消息的翻译
+ */
+function getErrorMessage(key: string, params?: Record<string, string | number>): string {
+  return getTranslation(`errors.${key}`, params);
+}
+
+/**
+ * 错误消息键常量（用于代码内部引用）
  * 需求: 6.1, 6.2, 6.3
  */
-export const ERROR_MESSAGES = {
+export const ERROR_MESSAGE_KEYS = {
   /** 网络连接失败 */
-  NETWORK: '网络连接失败，请检查网络设置',
+  NETWORK: 'network',
   /** API 密钥为空 */
-  API_KEY_EMPTY: 'API 密钥不能为空',
+  API_KEY_EMPTY: 'apiKeyEmpty',
   /** 未知错误 */
-  UNKNOWN: '发生未知错误，请稍后重试',
+  UNKNOWN: 'unknown',
   /** 请求超时 */
-  TIMEOUT: '请求超时，请稍后重试',
+  TIMEOUT: 'timeout',
   /** API 端点无效 */
-  INVALID_ENDPOINT: 'API 端点无效',
+  INVALID_ENDPOINT: 'invalidEndpoint',
   /** 响应体为空 */
-  EMPTY_RESPONSE: '响应体为空',
+  EMPTY_RESPONSE: 'emptyResponse',
   /** 请求已取消 */
-  REQUEST_CANCELLED: '请求已取消',
+  REQUEST_CANCELLED: 'requestCancelled',
 } as const;
+
+/**
+ * 获取本地化的错误消息对象
+ * 用于向后兼容现有代码
+ */
+export function getErrorMessages() {
+  return {
+    NETWORK: getErrorMessage('network'),
+    API_KEY_EMPTY: getErrorMessage('apiKeyEmpty'),
+    UNKNOWN: getErrorMessage('unknown'),
+    TIMEOUT: getErrorMessage('timeout'),
+    INVALID_ENDPOINT: getErrorMessage('invalidEndpoint'),
+    EMPTY_RESPONSE: getErrorMessage('emptyResponse'),
+    REQUEST_CANCELLED: getErrorMessage('requestCancelled'),
+  };
+}
+
+/**
+ * 向后兼容的 ERROR_MESSAGES 导出
+ * @deprecated 请使用 getErrorMessages() 代替
+ */
+export const ERROR_MESSAGES = {
+  get NETWORK() { return getErrorMessage('network'); },
+  get API_KEY_EMPTY() { return getErrorMessage('apiKeyEmpty'); },
+  get UNKNOWN() { return getErrorMessage('unknown'); },
+  get TIMEOUT() { return getErrorMessage('timeout'); },
+  get INVALID_ENDPOINT() { return getErrorMessage('invalidEndpoint'); },
+  get EMPTY_RESPONSE() { return getErrorMessage('emptyResponse'); },
+  get REQUEST_CANCELLED() { return getErrorMessage('requestCancelled'); },
+};
 
 /**
  * 错误处理选项
@@ -93,11 +132,11 @@ export function handleNetworkError(error: unknown): string {
   if (error instanceof Error) {
     // 检查是否为超时错误
     if (error.message.toLowerCase().includes('timeout')) {
-      return ERROR_MESSAGES.TIMEOUT;
+      return getErrorMessage('timeout');
     }
   }
 
-  return ERROR_MESSAGES.NETWORK;
+  return getErrorMessage('network');
 }
 
 /**
@@ -119,36 +158,36 @@ export function handleApiError(error: unknown): string {
 
     // 根据错误类型返回对应消息
     if (error.errorType === 'NETWORK_ERROR') {
-      return ERROR_MESSAGES.NETWORK;
+      return getErrorMessage('network');
     }
 
     // 根据状态码返回对应消息
     if (error.statusCode) {
       switch (error.statusCode) {
         case 401:
-          return 'API 密钥无效或已过期';
+          return getErrorMessage('apiKeyInvalid');
         case 403:
-          return '没有权限访问该资源';
+          return getErrorMessage('noPermission');
         case 404:
-          return '请求的资源不存在';
+          return getErrorMessage('resourceNotFound');
         case 429:
-          return '请求过于频繁，请稍后重试';
+          return getErrorMessage('tooManyRequests');
         case 500:
         case 502:
         case 503:
-          return '服务器暂时不可用，请稍后重试';
+          return getErrorMessage('serverUnavailable');
         default:
-          return `API 请求失败: ${error.statusCode}`;
+          return getErrorMessage('apiFailed', { statusCode: error.statusCode });
       }
     }
   }
 
   // 处理普通 Error
   if (error instanceof Error) {
-    return error.message || ERROR_MESSAGES.UNKNOWN;
+    return error.message || getErrorMessage('unknown');
   }
 
-  return ERROR_MESSAGES.UNKNOWN;
+  return getErrorMessage('unknown');
 }
 
 /**
@@ -176,7 +215,7 @@ export function handleError(error: unknown, options: ErrorHandlerOptions = {}): 
   }
   // 3. 处理普通 Error
   else if (error instanceof Error) {
-    message = error.message || ERROR_MESSAGES.UNKNOWN;
+    message = error.message || getErrorMessage('unknown');
   }
   // 4. 处理字符串错误
   else if (typeof error === 'string') {
@@ -184,7 +223,7 @@ export function handleError(error: unknown, options: ErrorHandlerOptions = {}): 
   }
   // 5. 未知错误类型
   else {
-    message = ERROR_MESSAGES.UNKNOWN;
+    message = getErrorMessage('unknown');
   }
 
   // 需求: 6.4 - 使用集中的日志服务记录错误

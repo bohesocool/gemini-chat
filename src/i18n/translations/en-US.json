@@ -226,7 +226,14 @@
     "budget": "Budget",
     "budgetDynamic": "Dynamic",
     "budgetOff": "Off",
-    "budgetTokens": "tokens"
+    "budgetTokens": "tokens",
+    "thinkingProcess": "Thinking Process",
+    "aspectRatio": "Ratio",
+    "resolution": "Resolution",
+    "imageResolution": "Image Resolution",
+    "resolutionStandard": "Standard",
+    "resolutionHD": "HD",
+    "resolutionUltraHD": "Ultra HD"
   },
   "auth": {
     "title": "Please enter password to continue",
@@ -484,5 +491,50 @@
     "total": "Total",
     "tokenDataUnavailable": "Token data unavailable",
     "conversationTotalTokens": "Conversation Total Tokens"
+  },
+  "errors": {
+    "network": "Network connection failed, please check your network settings",
+    "apiKeyEmpty": "API key cannot be empty",
+    "unknown": "An unknown error occurred, please try again later",
+    "timeout": "Request timed out, please try again later",
+    "invalidEndpoint": "API endpoint is invalid",
+    "emptyResponse": "Response body is empty",
+    "requestCancelled": "Request has been cancelled",
+    "apiKeyInvalid": "API key is invalid or expired",
+    "noPermission": "No permission to access this resource",
+    "resourceNotFound": "Requested resource not found",
+    "tooManyRequests": "Too many requests, please try again later",
+    "serverUnavailable": "Server temporarily unavailable, please try again later",
+    "apiFailed": "API request failed: {statusCode}",
+    "connectionFailed": "Connection failed",
+    "persistFailed": "Failed to persist settings",
+    "loadFailed": "Failed to load",
+    "saveFailed": "Failed to save",
+    "updateFailed": "Failed to update",
+    "deleteFailed": "Failed to delete",
+    "modelLoadFailed": "Failed to load model {modelId}",
+    "modelDeleteFailed": "Failed to delete model {modelId}",
+    "modelRedirectFailed": "Failed to redirect to model {targetId}",
+    "fetchModelsFailed": "Failed to fetch model list"
+  },
+  "templates": {
+    "codeAssistant": "Code Assistant",
+    "codeAssistantDesc": "Help write, review and optimize code",
+    "codeAssistantInstruction": "You are a professional programming assistant. Please help users write high-quality code, provide clear explanations, and follow best practices. When users provide code, please carefully review and suggest improvements.",
+    "translator": "Translator",
+    "translatorDesc": "Multi-language translation and polishing",
+    "translatorInstruction": "You are a professional translation assistant. Please accurately translate the text provided by users, maintaining the original tone and style. If the user does not specify a target language, please translate to English. For technical terms, please provide accurate translations and include the original text when necessary.",
+    "writer": "Writing Assistant",
+    "writerDesc": "Help write and improve articles",
+    "writerInstruction": "You are a professional writing assistant. Please help users write, edit and improve various articles including blogs, reports, emails, etc. Focus on structure, logic and expression to ensure content is clear, smooth and persuasive.",
+    "analyst": "Data Analyst",
+    "analystDesc": "Analyze data and provide insights",
+    "analystInstruction": "You are a data analysis expert. Please help users analyze data, interpret results, and provide valuable insights and suggestions. During analysis, pay attention to data accuracy and completeness, and present results in a clear manner."
+  },
+  "dateFormat": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "fullDate": "{month} {day}, {year}",
+    "shortDate": "{month} {day}"
   }
 }

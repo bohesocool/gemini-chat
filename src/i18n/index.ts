@@ -43,4 +43,9 @@ export {
   getNestedValue,
   /** 替换参数占位符（工具函数） */
   interpolate,
+  /** 非 Hook 翻译函数（供非组件代码使用） */
+  getTranslation,
+  /** 翻译资源 */
+  translations,
 } from './useTranslation';
+
