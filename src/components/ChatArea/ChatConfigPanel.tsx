@@ -16,6 +16,7 @@ import { useSettingsStore } from '../../stores/settings';
 import { getEnabledModels } from '../../services/model';
 import { useModelCapabilities, ThinkingLevelSelector, ThinkingBudgetSlider, ImageConfigPanel, MediaResolutionSelector } from '../ModelParams';
 import type { MediaResolution } from '../../types/models';
+import { CloseIcon } from '../icons';
 import { useReducedMotion } from '../motion';
 import { durationValues, easings } from '../../design/tokens';
 import type { ModelAdvancedConfig } from '../../types/models';
@@ -589,16 +590,6 @@ function StreamingToggle({ value, onChange }: StreamingToggleProps) {
         />
       </button>
     </div>
-  );
-}
-
-// ============ 图标组件 ============
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
   );
 }
 

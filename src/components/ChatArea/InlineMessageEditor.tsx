@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import type { Message } from '../../types/models';
+import { SaveIcon } from '../icons';
 
 // ============ 类型定义 ============
 
@@ -276,20 +277,5 @@ const ActionButton = memo(function ActionButton({ onClick, variant, disabled = f
     </button>
   );
 });
-
-// ============ 图标组件 ============
-
-function SaveIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 13l4 4L19 7"
-      />
-    </svg>
-  );
-}
 
 export default InlineMessageEditor;

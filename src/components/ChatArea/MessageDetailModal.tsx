@@ -8,6 +8,7 @@
 import { Modal } from '../motion/Modal';
 import { TokenUsageDisplay } from '../Debug/TokenUsageDisplay';
 import { TimingDisplay } from '../Debug/TimingDisplay';
+import { CopyIcon, NoDataIcon } from '../icons';
 import type { Message } from '../../types/models';
 
 // ============ 类型定义 ============
@@ -187,34 +188,6 @@ function formatTimestamp(timestamp: number): string {
     minute: '2-digit',
     second: '2-digit',
   });
-}
-
-// ============ 图标组件 ============
-
-function CopyIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-      />
-    </svg>
-  );
-}
-
-function NoDataIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      />
-    </svg>
-  );
 }
 
 export default MessageDetailModal;

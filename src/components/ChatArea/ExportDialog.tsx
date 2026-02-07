@@ -11,6 +11,7 @@ import { exportChatToImage } from '../../services/imageExport';
 import { LongImageRenderer } from './LongImageRenderer';
 import type { Message } from '../../types';
 import { useTranslation } from '@/i18n';
+import { CloseIcon, MarkdownIcon, ImageFillIcon, ExportIcon, ErrorIcon, SuccessIcon } from '../icons';
 
 // ============ 类型定义 ============
 
@@ -251,7 +252,7 @@ export function ExportDialog({
                   format="image"
                   currentFormat={format}
                   onClick={() => setFormat('image')}
-                  icon={<ImageIcon className="w-5 h-5" />}
+                  icon={<ImageFillIcon className="w-5 h-5" />}
                   label={t('export.longImage')}
                   description={t('export.imageDesc')}
                 />
@@ -399,59 +400,7 @@ function OptionCheckbox({ checked, onChange, label, description }: OptionCheckbo
   );
 }
 
-// ============ 图标组件 ============
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function MarkdownIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M22.27 19.385H1.73A1.73 1.73 0 010 17.655V6.345a1.73 1.73 0 011.73-1.73h20.54A1.73 1.73 0 0124 6.345v11.31a1.73 1.73 0 01-1.73 1.73zM5.769 15.923v-4.5l2.308 2.885 2.307-2.885v4.5h2.308V8.077h-2.308l-2.307 2.885-2.308-2.885H3.461v7.846h2.308zM19.385 12h-2.308V8.077h-2.307V12h-2.308l3.461 4.039 3.462-4.039z" />
-    </svg>
-  );
-}
-
-/**
- * 长图图标组件
- * Requirements: 1.3
- */
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-    </svg>
-  );
-}
-
-function ExportIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-    </svg>
-  );
-}
-
-function ErrorIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
-
-function SuccessIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
+// ============ 辅助组件 ============
 
 function LoadingSpinner({ className }: { className?: string }) {
   return (

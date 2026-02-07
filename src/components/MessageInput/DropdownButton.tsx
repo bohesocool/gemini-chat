@@ -9,6 +9,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { durationValues, easings } from '../../design/tokens';
 import { useReducedMotion } from '../motion';
+import { CheckIcon, ChevronDownIcon } from '../icons';
 
 /**
  * 下拉选项
@@ -266,55 +267,6 @@ export function DropdownButton<T extends string | number>({
       {/* 下拉菜单（通过 Portal 渲染） */}
       {renderMenu()}
     </div>
-  );
-}
-
-/**
- * 下拉箭头图标
- */
-function ChevronDownIcon({
-  className,
-  style,
-}: {
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <svg
-      className={className}
-      style={style}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 9l-7 7-7-7"
-      />
-    </svg>
-  );
-}
-
-/**
- * 选中标记图标
- */
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 13l4 4L19 7"
-      />
-    </svg>
   );
 }
 
