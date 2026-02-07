@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.11](https://github.com/bohesocool/gemini-chat/compare/v0.2.10...v0.2.11) (2026-02-07)
+
+
+### ✨ 新功能 (Features)
+
+* **security:** enhance security headers in nginx configuration ([b029c00](https://github.com/bohesocool/gemini-chat/commit/b029c00f79a32a34c2e613fb4af7e4993cdb4840))
+* update before v0.2.11 release ([14d1dbf](https://github.com/bohesocool/gemini-chat/commit/14d1dbf43748a7b9c46d0f29055df0c4dfab5301))
+
 ### [0.2.10](https://github.com/bohesocool/gemini-chat/compare/v0.2.9...v0.2.10) (2026-02-06)
 
 
