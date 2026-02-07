@@ -12,22 +12,19 @@ import type { ChatWindow } from '../../types/chatWindow';
 import type { Message, Attachment, ApiConfig, ModelAdvancedConfig } from '../../types/models';
 import type { FileReference } from '../../types/filesApi';
 import { saveChatWindow } from '../../services/storage';
-import { GeminiRequestCancelledWithThoughtsError } from '../../services/gemini';
 import { storeLogger } from '../../services/logger';
 import { generateId, messagesToGeminiContents } from './utils';
 import type { SetState, GetState } from './types';
 import { UI_LIMITS } from '../../constants';
 import { buildContentWithFileReferences } from '../../services/gemini/builders';
 import {
-  resolveApiCallConfig,
-  applyImagePromptConfig,
-  executeGeminiCall,
   saveGeneratedImages,
   buildAiMessage,
   buildUpdatedWindow,
   finalizeAndSave,
   extractErrorMessage,
   replaceMessageAtIndex,
+  orchestrateSend,
   SENDING_RESET_STATE,
 } from './messageHelpers';
 
@@ -93,79 +90,64 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
       title: windowTitle,
     };
 
-    // 创建 AbortController 用于取消请求 - 需求: 5.1, 5.2
-    const abortController = new AbortController();
-
-    // 需求: 4.2 - 在流式开始时清空 streamingThought 和 streamingText
+    // 更新窗口状态并保存（发送状态由 orchestrateSend 设置）
     set((state) => ({
       windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-      isSending: true,
-      error: null,
-      streamingText: '',
-      streamingThought: '',
-      currentRequestController: abortController,
     }));
-
-    // 保存窗口
     await saveChatWindow(updatedWindow);
 
-    try {
-      // 解析 API 配置（端点/密钥、流式设置、高级参数、模型能力）
-      const config = await resolveApiCallConfig(window, apiConfig, advancedConfig);
+    // 检测图片生成模型，用于消息格式转换
+    const { useModelStore } = await import('../model');
+    const modelCapabilities = useModelStore.getState().getEffectiveCapabilities(window.config.model);
+    const isImageGenerationModel = modelCapabilities.supportsImageGeneration === true;
 
-      // 图片生成模型的提示词解析
-      // 需求: 5.1, 5.2, 5.3, 6.1, 6.2
-      await applyImagePromptConfig(content, config.effectiveAdvancedConfig, config.isImageGenerationModel);
+    // 转换消息为 Gemini API 格式
+    // 需求: 3.3, 4.1, 4.2, 4.3 - 支持文件引用
+    let geminiContents = messagesToGeminiContents(messagesWithUser, isImageGenerationModel);
 
-      // 转换消息为 Gemini API 格式
-      // 需求: 3.3, 4.1, 4.2, 4.3 - 支持文件引用
-      let geminiContents = messagesToGeminiContents(messagesWithUser, config.isImageGenerationModel);
-
-      // 如果有文件引用，重新构建最后一条用户消息
-      // 需求: 4.1 - 使用 file_data part 格式
-      // 需求: 4.2 - 支持混合文件引用与文本内容
-      // 需求: 4.3 - 支持混合文件引用与内联 base64 数据
-      if (fileReferences && fileReferences.length > 0) {
-        const ready = fileReferences.filter((ref) => ref.status === 'ready');
-        if (ready.length > 0) {
-          geminiContents = geminiContents.slice(0, -1);
-          geminiContents.push(buildContentWithFileReferences(content, ready, attachments));
-        }
+    // 如果有文件引用，重新构建最后一条用户消息
+    // 需求: 4.1 - 使用 file_data part 格式
+    // 需求: 4.2 - 支持混合文件引用与文本内容
+    // 需求: 4.3 - 支持混合文件引用与内联 base64 数据
+    if (fileReferences && fileReferences.length > 0) {
+      const ready = fileReferences.filter((ref) => ref.status === 'ready');
+      if (ready.length > 0) {
+        geminiContents = geminiContents.slice(0, -1);
+        geminiContents.push(buildContentWithFileReferences(content, ready, attachments));
       }
+    }
 
-      // 调用 Gemini API
-      const result = await executeGeminiCall(
-        geminiContents, config, window, abortController.signal, set
-      );
-
-      // 生成 AI 消息 ID，保存图片时关联
-      // 需求: 4.3 - 添加消息 ID 关联以便追溯
-      const aiMessageId = generateId();
-
-      // 保存生成的图片到图片库 - 需求: 2.7, 4.3, 5.4
-      await saveGeneratedImages(result.images, {
-        windowId,
-        messageId: aiMessageId,
-        prompt: content,
-        imageConfig: config.effectiveAdvancedConfig.imageConfig,
-      });
-
-      // 构建 AI 消息并保存
-      const aiMessage = buildAiMessage(aiMessageId, result);
-
-      await finalizeAndSave(
-        set, windowId, updatedWindow, subTopicId,
-        [...messagesWithUser, aiMessage]
-      );
-    } catch (error) {
-      // 需求: 5.3, 5.4 - 处理请求取消，保留部分响应
-      if (error instanceof GeminiRequestCancelledWithThoughtsError) {
-        storeLogger.info('请求已取消，保存部分响应', {
-          partialResponseLength: error.partialResponse.length,
+    // 使用 orchestrateSend 统一编排发送流程
+    await orchestrateSend({
+      window,
+      windowId,
+      subTopicId,
+      contextMessages: geminiContents,
+      set,
+      baseWindow: updatedWindow,
+      currentMessages: messagesWithUser,
+      apiConfig,
+      advancedConfig,
+      promptForImageConfig: content,
+      // 成功回调：保存图片并持久化 AI 消息
+      onSuccess: async (aiMessage, result) => {
+        // 保存生成的图片到图片库 - 需求: 2.7, 4.3, 5.4
+        const effectiveImageConfig = advancedConfig?.imageConfig ?? window.config.advancedConfig?.imageConfig;
+        await saveGeneratedImages(result.images, {
           windowId,
-          subTopicId,
+          messageId: aiMessage.id,
+          prompt: content,
+          imageConfig: effectiveImageConfig,
         });
 
+        await finalizeAndSave(
+          set, windowId, updatedWindow, subTopicId,
+          [...messagesWithUser, aiMessage]
+        );
+      },
+      // 取消回调：有部分响应时保存，无部分响应时重置状态
+      // 需求: 5.3, 5.4 - 处理请求取消，保留部分响应
+      onCancelled: async (error) => {
         if (error.partialResponse.length > 0) {
           const partialAiMessage: Message = {
             id: generateId(),
@@ -182,28 +164,21 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         } else {
           set(SENDING_RESET_STATE);
         }
-        return;
-      }
+      },
+      // 错误回调：将错误保存到用户消息中
+      onError: async (error) => {
+        const userMessageWithError: Message = {
+          ...userMessage,
+          error: extractErrorMessage(error, '发送消息失败'),
+        };
 
-      // 需求: 2.4 - 输出错误日志
-      storeLogger.error('发送消息失败', {
-        error: error instanceof Error ? error.message : '未知错误',
-        windowId,
-        subTopicId,
-      });
-
-      // 将错误保存到用户消息中，实现错误状态持久化
-      const userMessageWithError: Message = {
-        ...userMessage,
-        error: extractErrorMessage(error, '发送消息失败'),
-      };
-
-      await finalizeAndSave(
-        set, windowId, updatedWindow, subTopicId,
-        [...subTopic.messages, userMessageWithError],
-        { error: null }
-      );
-    }
+        await finalizeAndSave(
+          set, windowId, updatedWindow, subTopicId,
+          [...subTopic.messages, userMessageWithError],
+          { error: null }
+        );
+      },
+    });
   },
 
   // ============ 编辑消息 ============
@@ -304,67 +279,48 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
     const contextMessages = subTopic.messages.slice(0, messageIndex);
     const lastUserMessage = contextMessages.filter((m) => m.role === 'user').pop();
 
-    // 创建 AbortController 用于取消请求 - 需求: 5.1, 5.2
-    const abortController = new AbortController();
+    // 检测图片生成模型，用于消息格式转换
+    const { useModelStore } = await import('../model');
+    const modelCapabilities = useModelStore.getState().getEffectiveCapabilities(window.config.model);
+    const isImageGenerationModel = modelCapabilities.supportsImageGeneration === true;
 
-    // 需求: 4.2 - 在流式开始时清空 streamingThought 和 streamingText
-    set({
-      isSending: true,
-      error: null,
-      streamingText: '',
-      streamingThought: '',
-      currentRequestController: abortController,
-    });
+    // 转换消息为 Gemini API 格式
+    const geminiContents = messagesToGeminiContents(contextMessages, isImageGenerationModel);
 
-    try {
-      // 解析 API 配置
-      const config = await resolveApiCallConfig(window);
-
-      // 图片生成模型的提示词解析
-      // 需求: 2.1, 2.2, 2.3, 2.4 - 重新生成时使用原始提示词参数
-      if (config.isImageGenerationModel && lastUserMessage) {
-        await applyImagePromptConfig(
-          lastUserMessage.content,
-          config.effectiveAdvancedConfig,
-          true
-        );
-      }
-
-      // 转换消息为 Gemini API 格式
-      const geminiContents = messagesToGeminiContents(contextMessages, config.isImageGenerationModel);
-
-      // 调用 Gemini API
-      const result = await executeGeminiCall(
-        geminiContents, config, window, abortController.signal, set
-      );
-
-      // 保存生成的图片到图片库 - 需求: 2.1, 4.3, 5.4
-      const prompt = lastUserMessage?.content || '';
-      await saveGeneratedImages(result.images, {
-        windowId,
-        messageId,
-        prompt,
-        imageConfig: config.effectiveAdvancedConfig.imageConfig,
-      });
-
-      // 更新消息内容，保持 ID 不变
-      // 需求: 4.3, 8.4, 2.6, 1.3, 2.1 - Property 8: 重新生成消息替换
-      const updatedMessage = buildAiMessage(messageId, result, originalMessage);
-
-      await finalizeAndSave(
-        set, windowId, window, subTopicId,
-        replaceMessageAtIndex(subTopic.messages, messageIndex, updatedMessage)
-      );
-    } catch (error) {
-      // 需求: 5.3, 5.4 - 处理请求取消，保留部分响应
-      if (error instanceof GeminiRequestCancelledWithThoughtsError) {
-        storeLogger.info('重新生成请求已取消，保存部分响应', {
-          partialResponseLength: error.partialResponse.length,
+    // 使用 orchestrateSend 统一编排发送流程
+    await orchestrateSend({
+      window,
+      windowId,
+      subTopicId,
+      contextMessages: geminiContents,
+      set,
+      baseWindow: window,
+      currentMessages: subTopic.messages,
+      // 需求: 2.1, 2.2, 2.3, 2.4 - 重新生成时使用原始提示词参数进行图片配置解析
+      promptForImageConfig: lastUserMessage?.content,
+      // 成功回调：保持原消息 ID 不变，替换消息内容
+      onSuccess: async (_aiMessage, result) => {
+        // 保存生成的图片到图片库 - 需求: 2.1, 4.3, 5.4
+        const prompt = lastUserMessage?.content || '';
+        await saveGeneratedImages(result.images, {
           windowId,
-          subTopicId,
           messageId,
+          prompt,
+          imageConfig: window.config.advancedConfig?.imageConfig,
         });
 
+        // 更新消息内容，保持 ID 不变
+        // 需求: 4.3, 8.4, 2.6, 1.3, 2.1 - Property 8: 重新生成消息替换
+        const updatedMessage = buildAiMessage(messageId, result, originalMessage);
+
+        await finalizeAndSave(
+          set, windowId, window, subTopicId,
+          replaceMessageAtIndex(subTopic.messages, messageIndex, updatedMessage)
+        );
+      },
+      // 取消回调：有部分响应时保存（保持原 ID），无部分响应时重置状态
+      // 需求: 5.3, 5.4 - 处理请求取消，保留部分响应
+      onCancelled: async (error) => {
         if (error.partialResponse.length > 0) {
           const partialMessage: Message = {
             ...originalMessage,
@@ -381,29 +337,22 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           // 没有部分响应，保留原消息
           set(SENDING_RESET_STATE);
         }
-        return;
-      }
-
-      storeLogger.error('重新生成消息失败', {
-        error: error instanceof Error ? error.message : '未知错误',
-        windowId,
-        subTopicId,
-        messageId,
-      });
-
-      // 将错误保存到 AI 消息中，实现错误状态持久化
+      },
+      // 错误回调：将错误保存到 AI 消息中，保留原消息内容
       // 需求: 4.4 - 重新生成失败时保留原消息内容，但添加错误状态
-      const messageWithError: Message = {
-        ...originalMessage,
-        error: extractErrorMessage(error, '重新生成失败'),
-      };
+      onError: async (error) => {
+        const messageWithError: Message = {
+          ...originalMessage,
+          error: extractErrorMessage(error, '重新生成失败'),
+        };
 
-      await finalizeAndSave(
-        set, windowId, window, subTopicId,
-        replaceMessageAtIndex(subTopic.messages, messageIndex, messageWithError),
-        { error: null }
-      );
-    }
+        await finalizeAndSave(
+          set, windowId, window, subTopicId,
+          replaceMessageAtIndex(subTopic.messages, messageIndex, messageWithError),
+          { error: null }
+        );
+      },
+    });
   },
 
   // ============ 取消当前请求 ============
@@ -514,16 +463,7 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
     const clearedUserMessage: Message = { ...userMessage };
     delete clearedUserMessage.error;
 
-    // 获取包含该用户消息的所有消息作为上下文
-    // 需求: 2.3 - contextMessages 包含所有历史消息的 fileReferences
-    const contextMessages = subTopic.messages
-      .slice(0, messageIndex + 1)
-      .map((m, i) => (i === messageIndex ? clearedUserMessage : m));
-
-    // 创建 AbortController 用于取消请求
-    const abortController = new AbortController();
-
-    // 更新状态：清除错误，开始发送
+    // 更新消息列表：将清除错误后的用户消息替换回去
     const updatedMessages = replaceMessageAtIndex(
       subTopic.messages,
       messageIndex,
@@ -531,65 +471,54 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
     );
     const updatedWindow = buildUpdatedWindow(window, subTopicId, updatedMessages);
 
+    // 更新窗口状态并保存（发送状态由 orchestrateSend 设置）
     set((state) => ({
       windows: state.windows.map((w) => (w.id === windowId ? updatedWindow : w)),
-      isSending: true,
-      error: null,
-      streamingText: '',
-      streamingThought: '',
-      currentRequestController: abortController,
     }));
-
-    // 保存清除错误后的状态
     await saveChatWindow(updatedWindow);
 
-    try {
-      // 解析 API 配置
-      const config = await resolveApiCallConfig(window);
+    // 获取包含该用户消息的所有消息作为上下文
+    // 需求: 2.3 - contextMessages 包含所有历史消息的 fileReferences
+    const contextMessages = subTopic.messages
+      .slice(0, messageIndex + 1)
+      .map((m, i) => (i === messageIndex ? clearedUserMessage : m));
 
-      // 图片生成模型的提示词解析
-      await applyImagePromptConfig(
-        userMessage.content,
-        config.effectiveAdvancedConfig,
-        config.isImageGenerationModel
-      );
+    // 检测图片生成模型，用于消息格式转换
+    const { useModelStore } = await import('../model');
+    const modelCapabilities = useModelStore.getState().getEffectiveCapabilities(window.config.model);
+    const isImageGenerationModel = modelCapabilities.supportsImageGeneration === true;
 
-      // 转换消息为 Gemini API 格式
-      const geminiContents = messagesToGeminiContents(contextMessages, config.isImageGenerationModel);
+    // 转换消息为 Gemini API 格式
+    const geminiContents = messagesToGeminiContents(contextMessages, isImageGenerationModel);
 
-      // 调用 Gemini API
-      const result = await executeGeminiCall(
-        geminiContents, config, window, abortController.signal, set
-      );
-
-      // 预生成 AI 消息 ID，确保图片库关联一致
-      const aiMessageId = generateId();
-
-      // 保存生成的图片到图片库 - 需求: 5.4
-      await saveGeneratedImages(result.images, {
-        windowId,
-        messageId: aiMessageId,
-        prompt: userMessage.content,
-        imageConfig: config.effectiveAdvancedConfig.imageConfig,
-      });
-
-      // 构建 AI 响应消息
-      const aiMessage = buildAiMessage(aiMessageId, result);
-
-      await finalizeAndSave(
-        set, windowId, updatedWindow, subTopicId,
-        [...updatedMessages, aiMessage]
-      );
-    } catch (error) {
-      // 处理请求取消
-      if (error instanceof GeminiRequestCancelledWithThoughtsError) {
-        storeLogger.info('重试请求已取消，保存部分响应', {
-          partialResponseLength: error.partialResponse.length,
+    // 使用 orchestrateSend 统一编排发送流程
+    await orchestrateSend({
+      window,
+      windowId,
+      subTopicId,
+      contextMessages: geminiContents,
+      set,
+      baseWindow: updatedWindow,
+      currentMessages: updatedMessages,
+      // 需求: 2.3 - 重试时使用原始提示词参数进行图片配置解析
+      promptForImageConfig: userMessage.content,
+      // 成功回调：保存图片并持久化 AI 消息
+      onSuccess: async (aiMessage, result) => {
+        // 保存生成的图片到图片库 - 需求: 5.4
+        await saveGeneratedImages(result.images, {
           windowId,
-          subTopicId,
-          messageId,
+          messageId: aiMessage.id,
+          prompt: userMessage.content,
+          imageConfig: window.config.advancedConfig?.imageConfig,
         });
 
+        await finalizeAndSave(
+          set, windowId, updatedWindow, subTopicId,
+          [...updatedMessages, aiMessage]
+        );
+      },
+      // 取消回调：有部分响应时保存，无部分响应时重置状态
+      onCancelled: async (error) => {
         if (error.partialResponse.length > 0) {
           const partialAiMessage: Message = {
             id: generateId(),
@@ -606,29 +535,21 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
         } else {
           set(SENDING_RESET_STATE);
         }
-        return;
-      }
+      },
+      // 错误回调：将错误保存回用户消息
+      onError: async (error) => {
+        const userMessageWithError: Message = {
+          ...clearedUserMessage,
+          error: extractErrorMessage(error, '发送消息失败'),
+        };
 
-      // 处理其他错误
-      storeLogger.error('重试用户消息失败', {
-        error: error instanceof Error ? error.message : '未知错误',
-        windowId,
-        subTopicId,
-        messageId,
-      });
-
-      // 将错误保存回用户消息
-      const userMessageWithError: Message = {
-        ...clearedUserMessage,
-        error: extractErrorMessage(error, '发送消息失败'),
-      };
-
-      await finalizeAndSave(
-        set, windowId, window, subTopicId,
-        replaceMessageAtIndex(subTopic.messages, messageIndex, userMessageWithError),
-        { error: null }
-      );
-    }
+        await finalizeAndSave(
+          set, windowId, window, subTopicId,
+          replaceMessageAtIndex(subTopic.messages, messageIndex, userMessageWithError),
+          { error: null }
+        );
+      },
+    });
   },
 
   // ============ 删除指定消息及其后续所有消息 ============

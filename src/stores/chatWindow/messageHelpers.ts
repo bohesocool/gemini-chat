@@ -19,10 +19,12 @@ import {
   sendMessageWithThoughts,
   sendMessageNonStreamingWithThoughts,
   GeminiApiError,
+  GeminiRequestCancelledWithThoughtsError,
   type ImageExtractionResult,
 } from '../../services/gemini';
 import { useModelStore } from '../model';
 import { saveChatWindow } from '../../services/storage';
+import { storeLogger } from '../../services/logger';
 import type { SetState } from './types';
 
 // ============ 类型定义 ============
@@ -344,4 +346,132 @@ export function replaceMessageAtIndex(
   const result = [...messages];
   result[index] = newMessage;
   return result;
+}
+
+
+// ============ 统一消息发送编排 ============
+
+/** 编排配置 */
+export interface OrchestrateSendConfig {
+  // 上下文
+  /** 当前聊天窗口 */
+  window: ChatWindow;
+  /** 窗口 ID */
+  windowId: string;
+  /** 子话题 ID */
+  subTopicId: string;
+  /** 转换后的 Gemini API 格式消息 */
+  contextMessages: GeminiContent[];
+  // 状态管理
+  /** Zustand 状态设置器 */
+  set: SetState;
+  /** 用于 finalizeAndSave 的基础窗口（可能已包含用户消息更新） */
+  baseWindow: ChatWindow;
+  /** 当前消息列表（用于错误时回写） */
+  currentMessages: Message[];
+  // 可选覆盖
+  /** 自定义 API 配置（端点/密钥/模型） */
+  apiConfig?: ApiConfig;
+  /** 自定义高级参数配置 */
+  advancedConfig?: ModelAdvancedConfig;
+  /** 用于图片生成模型的提示词（触发提示词参数解析） */
+  promptForImageConfig?: string;
+  // 结果处理回调
+  /** 成功时的回调，接收 AI 消息和 API 调用结果 */
+  onSuccess: (aiMessage: Message, result: GeminiCallResult) => Promise<void>;
+  /** 请求被取消时的回调（含部分响应和思维链） */
+  onCancelled: (error: GeminiRequestCancelledWithThoughtsError) => Promise<void>;
+  /** 发生其他错误时的回调 */
+  onError: (error: unknown) => Promise<void>;
+}
+
+/**
+ * 统一消息发送编排函数
+ *
+ * 封装 3 个核心函数（sendMessage / regenerateMessage / retryUserMessage）
+ * 的共享流程：
+ * 1. 创建 AbortController
+ * 2. 设置发送状态（isSending、清空 streamingText/streamingThought）
+ * 3. 解析 API 配置（resolveApiCallConfig）
+ * 4. 可选：处理图片生成模型的提示词参数（applyImagePromptConfig）
+ * 5. 执行 Gemini API 调用（executeGeminiCall）
+ * 6. 统一 try-catch 错误处理，通过回调让调用方定制行为
+ *
+ * 需求: 3.1, 3.2, 3.3, 3.4, 3.5
+ */
+export async function orchestrateSend(config: OrchestrateSendConfig): Promise<void> {
+  const {
+    window,
+    windowId,
+    subTopicId,
+    contextMessages,
+    set,
+    apiConfig,
+    advancedConfig,
+    promptForImageConfig,
+    onSuccess,
+    onCancelled,
+    onError,
+  } = config;
+
+  // 1. 创建 AbortController 用于取消请求
+  const abortController = new AbortController();
+
+  // 2. 设置发送状态：标记正在发送，清空流式文本和思维链
+  set({
+    isSending: true,
+    error: null,
+    streamingText: '',
+    streamingThought: '',
+    currentRequestController: abortController,
+  });
+
+  try {
+    // 3. 解析 API 调用所需的完整配置
+    const resolvedConfig = await resolveApiCallConfig(window, apiConfig, advancedConfig);
+
+    // 4. 可选：对图片生成模型应用提示词中的配置参数解析
+    if (promptForImageConfig !== undefined) {
+      await applyImagePromptConfig(
+        promptForImageConfig,
+        resolvedConfig.effectiveAdvancedConfig,
+        resolvedConfig.isImageGenerationModel
+      );
+    }
+
+    // 5. 执行 Gemini API 调用
+    const result = await executeGeminiCall(
+      contextMessages,
+      resolvedConfig,
+      window,
+      abortController.signal,
+      set
+    );
+
+    // 6. 构建 AI 消息并通过 onSuccess 回调交给调用方处理
+    const { generateId } = await import('./utils');
+    const aiMessageId = generateId();
+    const aiMessage = buildAiMessage(aiMessageId, result);
+
+    await onSuccess(aiMessage, result);
+  } catch (error) {
+    // 统一错误处理
+    if (error instanceof GeminiRequestCancelledWithThoughtsError) {
+      // 请求被取消（含部分响应和思维链），交给调用方处理
+      storeLogger.info('请求已取消', {
+        partialResponseLength: error.partialResponse.length,
+        windowId,
+        subTopicId,
+      });
+      await onCancelled(error);
+    } else {
+      // 其他错误：记录日志后交给调用方处理
+      storeLogger.error('消息发送失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+        windowId,
+        subTopicId,
+      });
+      await onError(error);
+    }
+  }
 }
