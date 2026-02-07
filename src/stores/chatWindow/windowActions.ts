@@ -1,6 +1,7 @@
 /**
  * ChatWindow Store 窗口操作
  * 需求: 2.1, 2.4 - 拆分窗口操作到独立文件
+ * 使用 Immer draft 写法简化状态更新
  */
 
 import type { ChatWindow, ChatWindowConfig } from '../../types/chatWindow';
@@ -48,6 +49,7 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
 
   // 创建新窗口
   // 需求: 4.4 - 新窗口继承全局默认配置
+  // 使用 Immer draft 写法：直接 unshift 到 draft 的 windows 数组
   createWindow: (config?: Partial<ChatWindowConfig>, title?: string, subTopicTitle?: string) => {
     const windowId = generateId();
     const subTopicId = generateId();
@@ -66,25 +68,30 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
       subTopicTitle
     );
 
-    set((state) => ({
-      windows: [newWindow, ...state.windows],
-      activeWindowId: newWindow.id,
-    }));
-
-    // 异步保存到存储
-    // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 .catch(console.error)
-    saveChatWindow(newWindow).catch((error) => {
-      storeLogger.error('保存新窗口失败', {
-        error: error instanceof Error ? error.message : '未知错误',
-        windowId,
-      });
+    // Immer draft 写法：直接 unshift 到 windows 数组，直接赋值 activeWindowId
+    set((state) => {
+      state.windows.unshift(newWindow);
+      state.activeWindowId = newWindow.id;
     });
+
+    // 从 get() 获取最新状态后异步保存到存储
+    // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 .catch(console.error)
+    const latestWindow = get().windows.find((w) => w.id === windowId);
+    if (latestWindow) {
+      saveChatWindow(latestWindow).catch((error) => {
+        storeLogger.error('保存新窗口失败', {
+          error: error instanceof Error ? error.message : '未知错误',
+          windowId,
+        });
+      });
+    }
 
     return newWindow;
   },
 
   // 更新窗口
   // 需求: 4.5
+  // 使用 Immer draft 写法：用 find 定位 draft 中的窗口，直接 Object.assign 更新属性
   updateWindow: async (id: string, updates: Partial<ChatWindow>) => {
     const state = get();
     const window = state.windows.find((w) => w.id === id);
@@ -93,22 +100,22 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    const updatedWindow: ChatWindow = {
-      ...window,
-      ...updates,
-      updatedAt: Date.now(),
-    };
+    // Immer draft 写法：直接修改 draft 中的窗口对象
+    set((state) => {
+      const w = state.windows.find((w) => w.id === id);
+      if (w) {
+        Object.assign(w, updates);
+        w.updatedAt = Date.now();
+      }
+    });
 
-    set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? updatedWindow : w
-      ),
-    }));
-
-    // 异步保存到存储
+    // 从 get() 获取最新状态后异步保存到存储
     // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 console.error
     try {
-      await saveChatWindow(updatedWindow);
+      const updatedWindow = get().windows.find((w) => w.id === id);
+      if (updatedWindow) {
+        await saveChatWindow(updatedWindow);
+      }
     } catch (error) {
       storeLogger.error('更新聊天窗口失败', {
         error: error instanceof Error ? error.message : '未知错误',
@@ -118,22 +125,20 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
   },
 
   // 删除窗口
+  // 使用 Immer draft 写法：用 splice 从 draft 的 windows 数组移除
   deleteWindow: async (id: string) => {
-    const state = get();
-    
-    // 从列表中移除
-    const newWindows = state.windows.filter((w) => w.id !== id);
-    
-    // 如果删除的是当前窗口，切换到第一个窗口或清空
-    let newActiveId = state.activeWindowId;
-    if (state.activeWindowId === id) {
-      const firstWindow = newWindows[0];
-      newActiveId = firstWindow ? firstWindow.id : null;
-    }
+    // Immer draft 写法：直接操作 draft 数组
+    set((state) => {
+      const index = state.windows.findIndex((w) => w.id === id);
+      if (index !== -1) {
+        state.windows.splice(index, 1);
+      }
 
-    set({
-      windows: newWindows,
-      activeWindowId: newActiveId,
+      // 如果删除的是当前窗口，切换到第一个窗口或清空
+      if (state.activeWindowId === id) {
+        const firstWindow = state.windows[0];
+        state.activeWindowId = firstWindow ? firstWindow.id : null;
+      }
     });
 
     // 异步从存储删除
@@ -149,16 +154,21 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
   },
 
   // 选择窗口
+  // 使用 Immer draft 写法：直接赋值 state.activeWindowId
   selectWindow: (id: string) => {
     const state = get();
     const window = state.windows.find((w) => w.id === id);
     if (window) {
-      set({ activeWindowId: id, error: null });
+      set((state) => {
+        state.activeWindowId = id;
+        state.error = null;
+      });
     }
   },
 
   // 更新窗口配置
   // 需求: 4.1, 4.2, 4.3, 4.5, 4.6, 1.6, 2.6
+  // 使用 Immer draft 写法：直接赋值 draft 窗口的 config 属性，替代多层展开运算符
   updateWindowConfig: async (id: string, config: Partial<ChatWindowConfig>) => {
     const state = get();
     const window = state.windows.find((w) => w.id === id);
@@ -167,47 +177,50 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    // 深度合并 advancedConfig，确保思考程度和图片配置正确持久化
-    // 需求: 1.6, 2.6
-    const mergedAdvancedConfig: ModelAdvancedConfig | undefined = config.advancedConfig !== undefined
-      ? {
-          ...window.config.advancedConfig,
-          ...config.advancedConfig,
-          // 深度合并 imageConfig
-          imageConfig: config.advancedConfig?.imageConfig !== undefined
-            ? {
-                ...window.config.advancedConfig?.imageConfig,
-                ...config.advancedConfig.imageConfig,
-              }
-            : window.config.advancedConfig?.imageConfig,
+    // Immer draft 写法：直接修改 draft 中窗口的 config 属性
+    set((state) => {
+      const w = state.windows.find((w) => w.id === id);
+      if (w) {
+        // 深度合并 generationConfig
+        if (config.generationConfig) {
+          w.config.generationConfig = {
+            ...w.config.generationConfig,
+            ...config.generationConfig,
+          };
         }
-      : window.config.advancedConfig;
 
-    const updatedWindow: ChatWindow = {
-      ...window,
-      config: {
-        ...window.config,
-        ...config,
-        generationConfig: {
-          ...window.config.generationConfig,
-          ...(config.generationConfig || {}),
-        },
-        advancedConfig: mergedAdvancedConfig,
-      },
-      updatedAt: Date.now(),
-    };
+        // 深度合并 advancedConfig，确保思考程度和图片配置正确持久化
+        // 需求: 1.6, 2.6
+        if (config.advancedConfig !== undefined) {
+          w.config.advancedConfig = {
+            ...w.config.advancedConfig,
+            ...config.advancedConfig,
+            // 深度合并 imageConfig
+            imageConfig: config.advancedConfig?.imageConfig !== undefined
+              ? {
+                  ...w.config.advancedConfig?.imageConfig,
+                  ...config.advancedConfig.imageConfig,
+                }
+              : w.config.advancedConfig?.imageConfig,
+          };
+        }
 
-    set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? updatedWindow : w
-      ),
-    }));
+        // 合并其他顶层 config 属性（排除已单独处理的 generationConfig 和 advancedConfig）
+        const { generationConfig: _gc, advancedConfig: _ac, ...restConfig } = config;
+        Object.assign(w.config, restConfig);
 
-    // 异步保存到存储
+        w.updatedAt = Date.now();
+      }
+    });
+
+    // 从 get() 获取最新状态后异步保存到存储
     // 需求: 4.6 - 配置持久化
     // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 console.error
     try {
-      await saveChatWindow(updatedWindow);
+      const updatedWindow = get().windows.find((w) => w.id === id);
+      if (updatedWindow) {
+        await saveChatWindow(updatedWindow);
+      }
     } catch (error) {
       storeLogger.error('更新窗口配置失败', {
         error: error instanceof Error ? error.message : '未知错误',
@@ -218,6 +231,7 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
 
   // 更新窗口高级配置
   // 需求: 1.6, 2.6, 4.5 - 思考程度和图片配置持久化
+  // 使用 Immer draft 写法：直接赋值 draft 窗口的 config.advancedConfig 属性
   updateAdvancedConfig: async (id: string, advancedConfig: Partial<ModelAdvancedConfig>) => {
     const state = get();
     const window = state.windows.find((w) => w.id === id);
@@ -226,39 +240,34 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
       return;
     }
 
-    // 深度合并 advancedConfig
-    const mergedAdvancedConfig: ModelAdvancedConfig = {
-      ...window.config.advancedConfig,
-      ...advancedConfig,
-      // 深度合并 imageConfig
-      imageConfig: advancedConfig.imageConfig !== undefined
-        ? {
-            ...window.config.advancedConfig?.imageConfig,
-            ...advancedConfig.imageConfig,
-          }
-        : window.config.advancedConfig?.imageConfig,
-    };
+    // Immer draft 写法：直接赋值 config.advancedConfig
+    set((state) => {
+      const w = state.windows.find((w) => w.id === id);
+      if (w) {
+        // 深度合并 advancedConfig
+        w.config.advancedConfig = {
+          ...w.config.advancedConfig,
+          ...advancedConfig,
+          // 深度合并 imageConfig
+          imageConfig: advancedConfig.imageConfig !== undefined
+            ? {
+                ...w.config.advancedConfig?.imageConfig,
+                ...advancedConfig.imageConfig,
+              }
+            : w.config.advancedConfig?.imageConfig,
+        };
+        w.updatedAt = Date.now();
+      }
+    });
 
-    const updatedWindow: ChatWindow = {
-      ...window,
-      config: {
-        ...window.config,
-        advancedConfig: mergedAdvancedConfig,
-      },
-      updatedAt: Date.now(),
-    };
-
-    set((state) => ({
-      windows: state.windows.map((w) =>
-        w.id === id ? updatedWindow : w
-      ),
-    }));
-
-    // 异步保存到存储，实时保存配置修改
+    // 从 get() 获取最新状态后异步保存到存储，实时保存配置修改
     // 需求: 4.5 - 实时保存并应用
     // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 console.error
     try {
-      await saveChatWindow(updatedWindow);
+      const updatedWindow = get().windows.find((w) => w.id === id);
+      if (updatedWindow) {
+        await saveChatWindow(updatedWindow);
+      }
     } catch (error) {
       storeLogger.error('更新高级配置失败', {
         error: error instanceof Error ? error.message : '未知错误',
@@ -269,14 +278,18 @@ export const createWindowActions = (set: SetState, get: GetState) => ({
 
   // 重新排序窗口列表
   // 需求: 7.5
+  // 使用 Immer draft 写法：直接赋值 state.windows
   reorderWindows: async (windows: ChatWindow[]) => {
-    set({ windows });
+    set((state) => {
+      state.windows = windows;
+    });
     
     // 异步保存所有窗口到存储
     // 需求: 7.1, 7.3 - 使用 try-catch + logger 替代 console.error
     try {
       const { saveAllChatWindows } = await import('../../services/storage');
-      await saveAllChatWindows(windows);
+      const latestWindows = get().windows;
+      await saveAllChatWindows(latestWindows);
     } catch (error) {
       storeLogger.error('保存窗口排序失败', {
         error: error instanceof Error ? error.message : '未知错误',

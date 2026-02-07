@@ -166,7 +166,24 @@ export type ChatWindowStore = ChatWindowState & ChatWindowActions;
 
 // ============ Zustand 辅助类型 ============
 
+import type { Draft } from 'immer';
 import type { StoreApi } from 'zustand';
 
-export type SetState = StoreApi<ChatWindowStore>['setState'];
+/**
+ * Immer 中间件下的 set 函数类型
+ * 支持三种调用方式：
+ * 1. 对象替换式：set({ key: value })
+ * 2. 回调返回式：set((state) => ({ key: value }))（向后兼容）
+ * 3. Draft 修改式：set((state) => { state.key = value })（Immer 新增）
+ */
+export type SetState = {
+  (
+    nextStateOrUpdater:
+      | ChatWindowStore
+      | Partial<ChatWindowStore>
+      | ((state: Draft<ChatWindowStore>) => void),
+    shouldReplace?: false,
+  ): void;
+};
+
 export type GetState = StoreApi<ChatWindowStore>['getState'];
