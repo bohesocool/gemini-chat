@@ -9,7 +9,7 @@
  * - 右侧：主聊天区域
  */
 
-import React, { useEffect, useState, useRef, useCallback, createContext, useContext } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, createContext, useContext } from 'react';
 import { useSettingsStore } from '../stores/settings';
 import { useChatWindowStore } from '../stores/chatWindow';
 import { useTemplateStore } from '../stores/template';
@@ -635,15 +635,18 @@ export function Layout({ sidebar, children }: LayoutProps) {
     setSelectedBookmarkId(null);
   }, [removeBookmark]);
 
+  // 缓存 Context value，避免每次渲染创建新对象导致消费者不必要的重渲染
+  const sidebarContextValue = useMemo<SidebarContextType>(() => ({
+    currentView,
+    setCurrentView,
+    selectedTemplateId,
+    setSelectedTemplateId,
+    selectedBookmarkId,
+    setSelectedBookmarkId,
+  }), [currentView, selectedTemplateId, selectedBookmarkId]);
+
   return (
-    <SidebarContext.Provider value={{
-      currentView,
-      setCurrentView,
-      selectedTemplateId,
-      setSelectedTemplateId,
-      selectedBookmarkId,
-      setSelectedBookmarkId
-    }}>
+    <SidebarContext.Provider value={sidebarContextValue}>
       <div className="flex flex-col overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300 relative" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
         {/* 自定义标题栏 - 仅 Electron 环境显示 */}
         <TitleBar effectiveTheme={effectiveTheme} />
