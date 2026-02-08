@@ -8,8 +8,9 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { durationValues, easings, breakpointValues, touchTargets } from '../../design/tokens';
+import { durationValues, easings, touchTargets } from '../../design/tokens';
 import { useReducedMotion } from '../motion';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // ============================================
 // 类型定义
@@ -48,31 +49,6 @@ export const SETTINGS_PANEL_SIZE = {
   navWidth: 200,
   mobileNavWidth: 160,
 } as const;
-
-/**
- * 自定义 Hook：检测是否为移动端
- */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < breakpointValues.md : false
-  );
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < breakpointValues.md);
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, []);
-
-  return isMobile;
-}
 
 /** 设置标签配置 */
 export const SETTINGS_TABS: SettingsTab[] = [
