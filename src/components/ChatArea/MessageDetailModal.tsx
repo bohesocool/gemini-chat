@@ -10,6 +10,10 @@ import { TokenUsageDisplay } from '../Debug/TokenUsageDisplay';
 import { TimingDisplay } from '../Debug/TimingDisplay';
 import { CopyIcon, NoDataIcon } from '../icons';
 import type { Message } from '../../types/models';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('MessageDetail');
 
 // ============ 类型定义 ============
 
@@ -146,7 +150,7 @@ function InfoItem({ label, value, copyable = false }: InfoItemProps) {
     try {
       await navigator.clipboard.writeText(value);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 

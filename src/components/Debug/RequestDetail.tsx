@@ -10,6 +10,10 @@ import type { ApiRequestRecord } from '../../stores/debug';
 import { TokenUsageDisplay } from './TokenUsageDisplay';
 import { TimingDisplay } from './TimingDisplay';
 import { useTranslation } from '@/i18n';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('RequestDetail');
 
 // ============ 类型定义 ============
 
@@ -187,7 +191,7 @@ function JsonViewer({ data, title }: JsonViewerProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   }, [formattedJson]);
 

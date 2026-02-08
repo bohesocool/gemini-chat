@@ -18,6 +18,7 @@ import type {
 } from '../../types/liveApi';
 import { ConnectionError, LiveApiError } from './errors';
 import { AUDIO_CONFIG } from '../../constants/liveApi';
+import { apiLogger } from '../../services/logger';
 
 /**
  * Live API WebSocket 服务类
@@ -446,7 +447,7 @@ export class LiveApiService {
         // console.log('Usage metadata:', data.usageMetadata);
       }
     } catch (error) {
-      console.error('解析消息失败:', error);
+      apiLogger.error('解析消息失败:', error);
     }
   }
 

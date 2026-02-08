@@ -12,6 +12,10 @@ import { LongImageRenderer } from './LongImageRenderer';
 import type { Message } from '../../types';
 import { useTranslation } from '@/i18n';
 import { CloseIcon, MarkdownIcon, ImageFillIcon, ExportIcon, ErrorIcon, SuccessIcon } from '../icons';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('ExportDialog');
 
 // ============ 类型定义 ============
 
@@ -149,7 +153,7 @@ export function ExportDialog({
         setSuccess(false);
       }, 2000);
     } catch (err) {
-      console.error('导出失败:', err);
+      logger.error('导出失败:', err);
       setError(err instanceof Error ? err.message : '导出失败，请重试');
       setIsRenderingImage(false);
     } finally {

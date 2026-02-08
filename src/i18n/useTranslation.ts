@@ -17,6 +17,10 @@ import { useI18nStore } from '../stores/i18n';
 import zhCN from './translations/zh-CN.json';
 import enUS from './translations/en-US.json';
 import type { Locale, TranslateFunction, TranslationResource } from './types';
+import { createLogger } from '../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('I18n');
 
 // ============ 翻译资源映射 ============
 
@@ -142,7 +146,7 @@ export function useTranslation() {
     // 如果翻译键不存在，返回键本身作为回退
     if (value === undefined) {
       // 在开发环境下输出警告，帮助开发者发现缺失的翻译
-      console.warn(`Translation key not found: ${key}`);
+      logger.warn(`Translation key not found: ${key}`);
       return key;
     }
 
@@ -177,7 +181,7 @@ export function getTranslation(key: string, params?: Record<string, string | num
 
   // 如果翻译键不存在，返回键本身作为回退
   if (value === undefined) {
-    console.warn(`Translation key not found: ${key}`);
+    logger.warn(`Translation key not found: ${key}`);
     return key;
   }
 

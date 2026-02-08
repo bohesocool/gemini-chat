@@ -8,6 +8,10 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { GeneratedImage } from '../types';
 import type { GeneratedImage as MessageGeneratedImage } from '../types/models';
+import { createLogger } from '../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('ImagePreview');
 
 /**
  * 简化的图片数据接口
@@ -219,7 +223,7 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
       setDownloadStatus('success');
       setTimeout(() => setDownloadStatus('idle'), 2000);
     } catch (error) {
-      console.error('下载失败:', error);
+      logger.error('下载失败:', error);
       setDownloadStatus('error');
       setTimeout(() => setDownloadStatus('idle'), 2000);
     }
@@ -265,7 +269,7 @@ export function ImagePreviewModal({ image, isOpen, onClose }: ImagePreviewModalP
       setErrorMessage('');
       setTimeout(() => setCopyStatus('idle'), 2000);
     } catch (error) {
-      console.error('复制失败:', error);
+      logger.error('复制失败:', error);
       // 需求 7.5: 显示用户友好的错误信息
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {

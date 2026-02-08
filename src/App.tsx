@@ -21,6 +21,7 @@ import { useSettingsStore } from './stores/settings';
 import { useModelStore } from './stores/model';
 import { performMigrationIfNeeded, needsMigration } from './services/migration';
 import { getAllConversations, saveAllChatWindows } from './services/storage';
+import { appLogger } from './services/logger';
 
 // ============ 应用主组件 ============
 
@@ -96,7 +97,7 @@ function App() {
         ]);
 
       } catch (error) {
-        console.error('应用初始化失败:', error);
+        appLogger.error('应用初始化失败:', error);
         setInitError(error instanceof Error ? error.message : '初始化失败');
       } finally {
         setIsInitializing(false);

@@ -8,6 +8,10 @@ import type {
   ModelCapabilities,
   ModelAdvancedConfig,
 } from '../types/models';
+import { createLogger } from './logger';
+
+// 模块日志记录器
+const logger = createLogger('Model');
 
 // ============ API 提供商检测 ============
 
@@ -693,7 +697,7 @@ export function resolveCapabilitiesChain(
     (model, id) => model.capabilities || detectModelCapabilities(id),
     {},
     (chain, targetId) => {
-      console.warn(`检测到循环重定向: ${chain.join(' -> ')} -> ${targetId}`);
+      logger.warn(`检测到循环重定向: ${chain.join(' -> ')} -> ${targetId}`);
     },
   );
   // 将 ChainResult 映射为 CapabilitiesResult（value → capabilities）

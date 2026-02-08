@@ -8,6 +8,10 @@
 import { toPng } from 'html-to-image';
 import { IMAGE_EXPORT_CONFIG, formatTimestamp, downloadFile } from './export';
 import type { ExportMetadata } from './export';
+import { createLogger } from './logger';
+
+// 模块日志记录器
+const logger = createLogger('ImageExport');
 
 // ============ 类型定义 ============
 
@@ -101,7 +105,7 @@ export async function exportElementToPng(
     const blob = dataUrlToBlob(dataUrl);
     return blob;
   } catch (error) {
-    console.error('导出图片失败:', error);
+    logger.error('导出图片失败:', error);
     throw new ImageExportError('图片生成失败，请重试', error);
   }
 }

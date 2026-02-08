@@ -359,14 +359,14 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
           const before = get().pendingInputTranscript;
           get().updatePendingTranscript('input', text);
           const after = get().pendingInputTranscript;
-          console.log('[LiveAPI] 输入转录累积:', { 增量: text, 之前: before, 之后: after });
+          storeLogger.debug('[LiveAPI] 输入转录累积:', { 增量: text, 之前: before, 之后: after });
         },
         onOutputTranscription: (text) => {
           // 更新输出转录（增量累积）
           const before = get().pendingOutputTranscript;
           get().updatePendingTranscript('output', text);
           const after = get().pendingOutputTranscript;
-          console.log('[LiveAPI] 输出转录累积:', { 增量: text, 之前: before, 之后: after });
+          storeLogger.debug('[LiveAPI] 输出转录累积:', { 增量: text, 之前: before, 之后: after });
         },
         onInterrupted: () => {
           // 处理中断 - 停止音频播放

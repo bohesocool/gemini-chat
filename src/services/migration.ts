@@ -7,6 +7,7 @@
 import type { ChatWindow, ChatWindowConfig, SubTopic, LegacyConversation } from '../types/chatWindow';
 import { DEFAULT_CHAT_WINDOW_CONFIG } from '../types/chatWindow';
 import type { Conversation } from '../types/models';
+import { storageLogger } from './logger';
 
 // ============ 常量定义 ============
 
@@ -221,7 +222,7 @@ export async function performMigrationIfNeeded(
 
     return true;
   } catch (error) {
-    console.error('数据迁移失败:', error);
+    storageLogger.error('数据迁移失败:', error);
     throw new Error(`数据迁移失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 }

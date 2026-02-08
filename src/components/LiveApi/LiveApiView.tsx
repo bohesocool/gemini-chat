@@ -19,6 +19,10 @@ import { TranscriptDisplay } from './TranscriptDisplay';
 import { LiveSessionList } from './LiveSessionList';
 import { LiveHistoryView } from './LiveHistoryView';
 import { useTranslation } from '@/i18n';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('LiveApiView');
 
 /**
  * 视图模式类型
@@ -146,7 +150,7 @@ export function LiveApiView({
             await updateTranscript(messageId, msg.transcript);
           }
         } catch (error) {
-          console.error('保存音频消息失败:', error);
+          logger.error('保存音频消息失败:', error);
         }
       }
     };

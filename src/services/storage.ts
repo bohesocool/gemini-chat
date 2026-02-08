@@ -12,6 +12,7 @@ import {
   setStorageVersion, 
   CURRENT_STORAGE_VERSION
 } from './migration';
+import { storageLogger } from './logger';
 
 // ============ 数据库 Schema 定义 ============
 
@@ -346,7 +347,7 @@ export async function performDataMigration(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('数据迁移失败:', error);
+    storageLogger.error('数据迁移失败:', error);
     throw new Error(`数据迁移失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 }

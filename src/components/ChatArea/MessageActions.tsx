@@ -9,6 +9,10 @@ import type { Message } from '../../types/models';
 import { MessageDetailModal } from './MessageDetailModal';
 import { useBookmarkStore } from '../../stores/bookmark';
 import { CopyIcon, CheckIcon, EditIcon, RegenerateIcon, InfoIcon, DeleteIcon, BookmarkIcon } from '../icons';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('MessageActions');
 
 // ============ 类型定义 ============
 
@@ -91,7 +95,7 @@ export function MessageActions({
       setTimeout(() => setCopied(false), 2000);
       onCopy?.();
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   }, [message.content, onCopy]);
 

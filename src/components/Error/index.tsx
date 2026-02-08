@@ -8,6 +8,10 @@
 import React from 'react';
 import { useReducedMotion } from '../motion';
 import { useTranslation } from '@/i18n';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('ErrorBoundary');
 
 // ============================================
 // 错误图标组件
@@ -251,7 +255,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.props.onError?.(error, errorInfo);
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   handleReset = () => {

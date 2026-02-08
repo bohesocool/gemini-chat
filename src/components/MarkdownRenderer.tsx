@@ -11,6 +11,10 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import type { Components } from 'react-markdown';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
+import { createLogger } from '../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('MarkdownRenderer');
 
 // 引入 KaTeX 样式
 import 'katex/dist/katex.min.css';
@@ -185,7 +189,7 @@ function CodeBlock({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   }, [codeText]);
 

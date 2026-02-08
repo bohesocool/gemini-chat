@@ -13,7 +13,11 @@ import { exportAllData, importData } from '../../services/storage';
 import { ModelList } from '../ModelList';
 import { ModelEditor } from '../ModelEditor';
 import { useTranslation } from '../../i18n/useTranslation';
+import { createLogger } from '../../services/logger';
 import type { ModelConfig } from '../../types/models';
+
+// 模块日志记录器
+const logger = createLogger('Settings');
 import {
   HARM_CATEGORIES,
   HARM_BLOCK_THRESHOLDS,
@@ -854,7 +858,7 @@ export function DataManagementSection() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
     }
   };
 

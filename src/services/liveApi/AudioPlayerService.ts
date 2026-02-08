@@ -6,6 +6,10 @@
 
 import type { AudioPlayerCallbacks } from '../../types/liveApi';
 import { AUDIO_CONFIG } from '../../constants/liveApi';
+import { createLogger } from '../../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('AudioPlayer');
 
 /**
  * 音频播放服务类
@@ -113,7 +117,7 @@ export class AudioPlayerService {
       try {
         this.scheduleAudioChunk(pcmData);
       } catch (error) {
-        console.error('调度音频失败:', error);
+        logger.error('调度音频失败:', error);
       }
     }
 

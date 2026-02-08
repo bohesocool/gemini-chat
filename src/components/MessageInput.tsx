@@ -18,6 +18,10 @@ import { StatusIndicators } from './MessageInput/StatusIndicators';
 import { FilesApiToggle } from './MessageInput/FilesApiToggle';
 import { FileReferencePreview } from './MessageInput/FileReferencePreview';
 import type { FileReference } from '../types/filesApi';
+import { createLogger } from '../services/logger';
+
+// 模块日志记录器
+const logger = createLogger('MessageInput');
 import { generateFileReferenceId, createFileReference } from '../types/filesApi';
 import { uploadFileToFilesApi, validateFilesApiFile, FilesApiError, getErrorMessage } from '../services/filesApi';
 import { useTranslation } from '@/i18n';
@@ -253,7 +257,7 @@ export function MessageInput({
     const newAttachments: Attachment[] = [];
 
     // 调试日志
-    console.log('[MessageInput] handleFiles called', {
+    logger.debug('handleFiles called', {
       filesApiEnabled,
       fileCount: fileArray.length,
       apiKey: apiKey ? '***' : 'empty',
@@ -263,7 +267,7 @@ export function MessageInput({
       // 如果启用了 Files API 模式，使用 Files API 上传
       // 需求: 2.1 - Files API 模式下上传文件到 Gemini Files API
       if (filesApiEnabled) {
-        console.log('[MessageInput] Using Files API mode for:', file.name);
+        logger.debug('Using Files API mode for:', file.name);
         // 验证文件是否可以通过 Files API 上传
         const validation = validateFilesApiFile(file);
         if (!validation.valid) {
@@ -316,7 +320,7 @@ export function MessageInput({
             )
           );
         } catch (err) {
-          console.error('Files API 上传失败:', err);
+          logger.error('Files API 上传失败:', err);
           // 更新文件引用为错误状态
           // 需求: 2.4, 5.1, 5.2, 5.4 - 显示上传错误，保留错误代码和原始文件用于重试
           const errorMessage = getErrorMessage(err);
@@ -341,7 +345,7 @@ export function MessageInput({
       } else {
         // 使用传统的 base64 内联方式
         // 需求: 4.4 - Files API 模式禁用时使用现有内联 base64 上传方法
-        console.log('[MessageInput] Using traditional base64 mode for:', file.name);
+        logger.debug('Using traditional base64 mode for:', file.name);
         const validation = validateFile(file);
         if (!validation.valid) {
           setError(validation.error || '文件验证失败');
@@ -363,7 +367,7 @@ export function MessageInput({
 
           newAttachments.push(attachment);
         } catch (err) {
-          console.error('文件处理失败:', err);
+          logger.error('文件处理失败:', err);
           setError(`文件处理失败: ${file.name}`);
         }
       }
@@ -487,7 +491,7 @@ export function MessageInput({
       // 清除错误提示
       setError(null);
     } catch (err) {
-      console.error('重试上传失败:', err);
+      logger.error('重试上传失败:', err);
       const errorMessage = getErrorMessage(err);
       const errorCode = err instanceof FilesApiError ? err.code : undefined;
 
@@ -509,7 +513,7 @@ export function MessageInput({
 
   // 切换 Files API 模式 - 需求: 1.3
   const handleFilesApiToggle = () => {
-    console.log('[MessageInput] Toggling Files API mode:', !filesApiEnabled);
+    logger.debug('Toggling Files API mode:', !filesApiEnabled);
     setFilesApiEnabled(!filesApiEnabled);
   };
 
