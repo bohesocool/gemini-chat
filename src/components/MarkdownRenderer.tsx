@@ -18,6 +18,10 @@ import 'katex/dist/katex.min.css';
 // 引入代码高亮主题 - 使用 github-dark 主题，适合深色背景
 import 'highlight.js/styles/github-dark.css';
 
+// 模块级常量 - 插件数组引用稳定，避免每次渲染创建新数组引用
+const REMARK_PLUGINS = [remarkGfm, remarkMath];
+const REHYPE_PLUGINS = [rehypeHighlight, rehypeKatex];
+
 /** 代码折叠阈值（超过此行数默认折叠） */
 export const CODE_FOLD_THRESHOLD = 15;
 
@@ -54,7 +58,7 @@ interface MarkdownRendererProps {
  * 支持 GFM、代码高亮、数学公式渲染
  * 需求: 2.1 - 使用缓存避免重复解析
  */
-export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
   // HTML 预览状态
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -116,8 +120,8 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
   const renderedContent = useMemo(() => {
     return (
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeHighlight, rehypeKatex]}
+        remarkPlugins={REMARK_PLUGINS}
+        rehypePlugins={REHYPE_PLUGINS}
         components={componentsWithPreview}
       >
         {content}
@@ -139,7 +143,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
       )}
     </div>
   );
-}
+});
 
 /**
  * 代码块组件（带复制按钮、语言标签和折叠功能）

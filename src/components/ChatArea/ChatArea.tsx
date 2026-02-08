@@ -21,7 +21,6 @@ import type { ChatWindowConfig } from '../../types/chatWindow';
 import type { Attachment, ImageGenerationConfig, ThinkingLevel } from '../../types/models';
 import type { FileReference } from '../../types/filesApi';
 import { DEFAULT_IMAGE_GENERATION_CONFIG } from '../../types/models';
-import { resolveStreamingEnabled } from '../../services/streaming';
 
 // ============ 类型定义 ============
 
@@ -198,8 +197,11 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     : undefined;
 
   // 获取流式设置 - 需求: 4.1
+  const globalSettings = getFullSettings();
   const streamingEnabled = currentWindow
-    ? resolveStreamingEnabled(currentWindow.config, getFullSettings())
+    ? (currentWindow.config.streamingEnabled !== undefined
+        ? currentWindow.config.streamingEnabled
+        : globalSettings.streamingEnabled)
     : true;
 
   // 获取思维链设置 - 需求: 4.2

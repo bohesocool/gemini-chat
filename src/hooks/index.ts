@@ -9,6 +9,9 @@ export type { UseStreamingStateReturn } from './useStreamingState';
 export { useSendMessage } from './useSendMessage';
 export type { UseSendMessageOptions, UseSendMessageReturn } from './useSendMessage';
 
+// 流式 Markdown 渲染防抖优化（需求: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2）
+export { useDebouncedValue } from './useDebouncedValue';
+
 // 侧边栏状态统一相关 Hooks（需求: 3.1, 4.1）
 export { useIsMobile } from './useIsMobile';
 export { useSwipeGesture, SWIPE_CONFIG } from './useSwipeGesture';

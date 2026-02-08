@@ -15,6 +15,7 @@ import { ImagePreviewModal } from '../ImagePreviewModal';
 import { FileReferenceList } from '../MessageList/FileReferenceList';
 import { useTranslation } from '../../i18n/useTranslation';
 import { UserIcon, BotIcon, FileIcon, ErrorIcon, RetryIcon } from '../icons';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 // ============ 类型定义 ============
 
@@ -263,6 +264,7 @@ export function VirtualMessageList({
                     streamingImages={streamingImages}
                     renderContent={renderMessageContent}
                     onImageClick={onImageClick || handleImagePreview}
+                    isSending={isSending}
                   />
                 ) : message ? (
                   // 普通消息或重新生成中的消息
@@ -455,6 +457,8 @@ interface StreamingMessageProps {
   streamingImages?: GeneratedImage[];
   renderContent: (content: string) => React.ReactNode;
   onImageClick?: (images: GeneratedImage[], index: number) => void;
+  // 新增：用于防抖刷新控制，流式结束时立即刷新
+  isSending?: boolean;
 }
 
 function StreamingMessage({
@@ -463,7 +467,13 @@ function StreamingMessage({
   streamingImages = [],
   renderContent,
   onImageClick,
+  isSending = true,
 }: StreamingMessageProps) {
+  // 流式结束时（!isSending）通过 immediate 参数立即刷新，确保最终内容完整显示
+  // 防抖默认延迟 80ms，在响应速度和性能之间取得平衡
+  // 需求: 1.1, 1.2, 1.3, 2.1
+  const debouncedText = useDebouncedValue(streamingText, 80, !isSending);
+
   // 处理图片点击
   const handleImageClick = useCallback((index: number) => {
     if (onImageClick && streamingImages.length > 0) {
@@ -472,6 +482,8 @@ function StreamingMessage({
   }, [onImageClick, streamingImages]);
 
   // 判断是否有内容（文本或图片）
+  // 注意：使用原始 streamingText 判断，确保 UI 状态（如 TypingIndicator）响应及时
+  // 需求: 4.1, 4.2
   const hasContent = streamingText || streamingImages.length > 0;
 
   return (
@@ -494,10 +506,10 @@ function StreamingMessage({
             />
           )}
 
-          {/* 文本内容 */}
-          {streamingText ? (
+          {/* 文本内容 - 使用防抖后的 debouncedText 进行渲染，减少昂贵的 Markdown 重新解析 */}
+          {debouncedText ? (
             <>
-              {renderContent(streamingText)}
+              {renderContent(debouncedText)}
               <TypingCursor />
             </>
           ) : !hasContent ? (
@@ -654,14 +666,21 @@ const MessageItem = memo(function MessageItem({
     }
   }, [onImageClick, isRegenerating, regeneratingImages, message.generatedImages]);
 
+  // 对重新生成的流式内容进行防抖，减少昂贵的 Markdown 重新解析
+  // 重新生成结束时（!isRegenerating）通过 immediate 参数立即刷新
+  // 需求: 1.1, 1.2, 1.3, 2.1
+  const debouncedRegeneratingContent = useDebouncedValue(regeneratingContent, 80, !isRegenerating);
+
   // 确定要显示的内容 - 需求 1.2, 1.3
-  const displayContent = isRegenerating ? regeneratingContent : message.content;
+  // 重新生成时使用防抖后的内容，减少渲染频率
+  const displayContent = isRegenerating ? debouncedRegeneratingContent : message.content;
 
   // 确定要显示的图片 - 需求 2.2, 5.1
   const displayImages = isRegenerating ? regeneratingImages : (message.generatedImages || []);
 
   // 判断是否有内容（文本或图片）- 需求 3.1, 3.2
-  const hasContent = displayContent || displayImages.length > 0;
+  // 注意：使用原始 regeneratingContent 判断，确保 UI 状态（如 TypingIndicator）响应及时
+  const hasContent = (isRegenerating ? regeneratingContent : displayContent) || displayImages.length > 0;
 
   return (
     <div

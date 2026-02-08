@@ -92,11 +92,10 @@ export async function resolveApiCallConfig(
   }
 
   // 解析流式设置（对话级 > 全局级）
-  const { resolveStreamingEnabled } = await import('../../services/streaming');
-  const streamingEnabled = resolveStreamingEnabled(
-    window.config,
-    settingsState.getFullSettings()
-  );
+  const globalSettings = settingsState.getFullSettings();
+  const streamingEnabled = window.config.streamingEnabled !== undefined
+    ? window.config.streamingEnabled
+    : globalSettings.streamingEnabled;
 
   // 解析高级参数配置（传入 > 窗口级 > 模型默认）
   const effectiveAdvancedConfig = advancedConfig || {
