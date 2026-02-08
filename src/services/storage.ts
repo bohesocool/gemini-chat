@@ -443,134 +443,225 @@ export async function resetModelConfigs(): Promise<ModelConfig[]> {
   }));
 }
 
+// ============ 存储配置描述符 ============
+
+/**
+ * 存储版本配置描述符
+ * 将 v1/v2 之间的差异（字段名、store 名、版本号、条目验证器、数据获取函数）抽象为配置对象
+ * 需求: 1.1, 1.4
+ */
+interface StorageConfig<T> {
+  /** 导出数据版本号 */
+  version: string;
+  /** 导出 JSON 中的数据字段名（'conversations' | 'chatWindows'） */
+  dataKey: string;
+  /** IndexedDB object store 名称 */
+  storeName: 'conversations' | 'chatWindows';
+  /** 单条数据的验证函数 */
+  validateItem: (data: unknown) => data is T;
+  /** 获取所有数据的函数 */
+  fetchAll: () => Promise<T[]>;
+}
+
+/**
+ * v1 配置：使用 Conversation 类型，对应旧版导出格式
+ * 需求: 1.2
+ */
+const v1Config: StorageConfig<Conversation> = {
+  version: EXPORT_DATA_VERSION,
+  dataKey: 'conversations',
+  storeName: 'conversations',
+  validateItem: validateConversation,
+  fetchAll: getAllConversations,
+};
+
+/**
+ * v2 配置：使用 ChatWindow 类型，对应新版导出格式
+ * 需求: 1.3
+ */
+const v2Config: StorageConfig<ChatWindow> = {
+  version: EXPORT_DATA_VERSION_V2,
+  dataKey: 'chatWindows',
+  storeName: 'chatWindows',
+  validateItem: validateChatWindow,
+  fetchAll: getAllChatWindows,
+};
+
+/**
+ * 通用验证函数：根据 StorageConfig 验证导入数据的结构
+ * 内部函数，不导出
+ * 需求: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
+ * @param data 待验证的数据
+ * @param config 存储配置描述符
+ * @returns 验证结果，true 表示数据结构合法
+ */
+function validateImportWithConfig<T>(
+  data: unknown,
+  config: StorageConfig<T>
+): boolean {
+  // 1. 检查 data 是非空对象
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  // 2. 检查 version 字段为字符串
+  if (typeof obj.version !== 'string') {
+    return false;
+  }
+
+  // 2. 检查 exportedAt 字段为数字
+  if (typeof obj.exportedAt !== 'number') {
+    return false;
+  }
+
+  // 3. 检查 config.dataKey 对应的字段是数组
+  if (!Array.isArray(obj[config.dataKey])) {
+    return false;
+  }
+
+  // 4. 检查 settings 是非空对象
+  if (typeof obj.settings !== 'object' || obj.settings === null) {
+    return false;
+  }
+
+  // 5. 遍历数组，用 config.validateItem 验证每个条目
+  const items = obj[config.dataKey] as unknown[];
+  for (const item of items) {
+    if (!config.validateItem(item)) {
+      return false;
+    }
+  }
+
+  // 6. 用 validateSettings 验证设置
+  if (!validateSettings(obj.settings)) {
+    return false;
+  }
+
+  return true;
+}
+
+
 // ============ 导入导出功能 ============
 
 /**
- * 导出所有数据（旧版格式，用于兼容）
- * 需求: 10.1, 10.4
+ * 通用导出函数：根据 StorageConfig 从 IndexedDB 获取数据并返回 JSON 字符串
+ * 内部函数，不导出
+ * 需求: 3.1, 3.2, 3.3, 3.4, 3.5
+ * @param config 存储配置描述符
  * @returns JSON 格式的导出数据字符串
  */
-export async function exportAllData(): Promise<string> {
-  const conversations = await getAllConversations();
+async function exportWithConfig<T>(
+  config: StorageConfig<T>
+): Promise<string> {
+  // 1. 调用 config.fetchAll() 获取数据
+  const items = await config.fetchAll();
+
+  // 2. 调用 getSettings() 获取设置
   const settings = await getSettings();
 
-  const exportData: ExportData = {
-    version: EXPORT_DATA_VERSION,
+  // 3. 构建导出对象，使用 config.version 和 config.dataKey
+  const exportData: Record<string, unknown> = {
+    version: config.version,
     exportedAt: Date.now(),
-    conversations,
+    [config.dataKey]: items,
     settings,
   };
 
+  // 4. JSON.stringify 带 2 空格缩进
   return JSON.stringify(exportData, null, 2);
+}
+
+/**
+ * 通用导入函数：根据 StorageConfig 解析 JSON 并写入 IndexedDB
+ * 内部函数，不导出
+ * 需求: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7
+ * @param jsonString JSON 格式的导入数据字符串
+ * @param config 存储配置描述符
+ * @throws 如果 JSON 解析失败抛出"无效的 JSON 格式"
+ * @throws 如果数据验证失败抛出"导入数据格式无效"
+ */
+async function importWithConfig<T>(
+  jsonString: string,
+  config: StorageConfig<T>
+): Promise<void> {
+  // 1. JSON.parse，失败抛出"无效的 JSON 格式"
+  let data: unknown;
+  try {
+    data = JSON.parse(jsonString);
+  } catch {
+    throw new Error('无效的 JSON 格式');
+  }
+
+  // 2. validateImportWithConfig 验证，失败抛出"导入数据格式无效"
+  if (!validateImportWithConfig(data, config)) {
+    throw new Error('导入数据格式无效');
+  }
+
+  const obj = data as Record<string, unknown>;
+  const items = obj[config.dataKey] as T[];
+
+  // 3. 开启事务 [config.storeName, 'settings']
+  const db = await getDB();
+  const tx = db.transaction([config.storeName, 'settings'] as const, 'readwrite');
+
+  // 4. 清除 config.storeName store
+  await tx.objectStore(config.storeName).clear();
+
+  // 5. 遍历 data[config.dataKey] 写入条目
+  const store = tx.objectStore(config.storeName);
+  for (const item of items) {
+    await store.put(item as Conversation & ChatWindow);
+  }
+
+  // 6. 写入 settings
+  await tx.objectStore('settings').put(obj.settings as AppSettings, SETTINGS_KEY);
+
+  // 7. 等待事务完成
+  await tx.done;
+}
+
+/**
+ * 导出所有数据（旧版格式，用于兼容）
+ * 薄包装器，委托给 exportWithConfig
+ * 需求: 5.1
+ * @returns JSON 格式的导出数据字符串
+ */
+export async function exportAllData(): Promise<string> {
+  return exportWithConfig(v1Config);
 }
 
 /**
  * 导出所有数据（新版格式，使用 ChatWindow）
- * 需求: 12.6
+ * 薄包装器，委托给 exportWithConfig
+ * 需求: 5.2
  * @returns JSON 格式的导出数据字符串
  */
 export async function exportAllDataV2(): Promise<string> {
-  const chatWindows = await getAllChatWindows();
-  const settings = await getSettings();
-
-  const exportData: ExportDataV2 = {
-    version: EXPORT_DATA_VERSION_V2,
-    exportedAt: Date.now(),
-    chatWindows,
-    settings,
-  };
-
-  return JSON.stringify(exportData, null, 2);
+  return exportWithConfig(v2Config);
 }
 
 /**
  * 验证导入数据的结构（旧版格式）
- * 需求: 10.3
+ * 薄包装器，委托给 validateImportWithConfig
+ * 需求: 5.3
  * @param data 要验证的数据
  * @returns 验证结果
  */
-function validateImportData(data: unknown): data is ExportData {
-  if (typeof data !== 'object' || data === null) {
-    return false;
-  }
-
-  const obj = data as Record<string, unknown>;
-
-  // 检查必要字段
-  if (typeof obj.version !== 'string') {
-    return false;
-  }
-
-  if (typeof obj.exportedAt !== 'number') {
-    return false;
-  }
-
-  if (!Array.isArray(obj.conversations)) {
-    return false;
-  }
-
-  if (typeof obj.settings !== 'object' || obj.settings === null) {
-    return false;
-  }
-
-  // 验证每个对话的结构
-  for (const conv of obj.conversations) {
-    if (!validateConversation(conv)) {
-      return false;
-    }
-  }
-
-  // 验证设置结构
-  if (!validateSettings(obj.settings)) {
-    return false;
-  }
-
-  return true;
+export function validateImportData(data: unknown): data is ExportData {
+  return validateImportWithConfig(data, v1Config);
 }
 
 /**
  * 验证导入数据的结构（新版格式）
- * 需求: 12.6
+ * 薄包装器，委托给 validateImportWithConfig
+ * 需求: 5.4
  * @param data 要验证的数据
  * @returns 验证结果
  */
-function validateImportDataV2(data: unknown): data is ExportDataV2 {
-  if (typeof data !== 'object' || data === null) {
-    return false;
-  }
-
-  const obj = data as Record<string, unknown>;
-
-  // 检查必要字段
-  if (typeof obj.version !== 'string') {
-    return false;
-  }
-
-  if (typeof obj.exportedAt !== 'number') {
-    return false;
-  }
-
-  if (!Array.isArray(obj.chatWindows)) {
-    return false;
-  }
-
-  if (typeof obj.settings !== 'object' || obj.settings === null) {
-    return false;
-  }
-
-  // 验证每个聊天窗口的结构
-  for (const window of obj.chatWindows) {
-    if (!validateChatWindow(window)) {
-      return false;
-    }
-  }
-
-  // 验证设置结构
-  if (!validateSettings(obj.settings)) {
-    return false;
-  }
-
-  return true;
+export function validateImportDataV2(data: unknown): data is ExportDataV2 {
+  return validateImportWithConfig(data, v2Config);
 }
 
 /**
@@ -682,80 +773,24 @@ function validateSettings(data: unknown): data is AppSettings {
 
 /**
  * 导入数据（旧版格式）
- * 需求: 10.2, 10.3, 10.6
+ * 薄包装器，委托给 importWithConfig
+ * 需求: 5.3
  * @param jsonString JSON 格式的导入数据字符串
  * @throws 如果数据格式无效则抛出错误
  */
 export async function importData(jsonString: string): Promise<void> {
-  // 解析 JSON
-  let data: unknown;
-  try {
-    data = JSON.parse(jsonString);
-  } catch {
-    throw new Error('无效的 JSON 格式');
-  }
-
-  // 验证数据结构
-  if (!validateImportData(data)) {
-    throw new Error('导入数据格式无效');
-  }
-
-  const db = await getDB();
-
-  // 使用事务确保数据一致性
-  const tx = db.transaction(['conversations', 'settings'], 'readwrite');
-
-  // 清除现有对话
-  await tx.objectStore('conversations').clear();
-
-  // 导入对话
-  for (const conversation of data.conversations) {
-    await tx.objectStore('conversations').put(conversation);
-  }
-
-  // 导入设置
-  await tx.objectStore('settings').put(data.settings, SETTINGS_KEY);
-
-  await tx.done;
+  return importWithConfig(jsonString, v1Config);
 }
 
 /**
  * 导入数据（新版格式，使用 ChatWindow）
- * 需求: 12.6
+ * 薄包装器，委托给 importWithConfig
+ * 需求: 5.4
  * @param jsonString JSON 格式的导入数据字符串
  * @throws 如果数据格式无效则抛出错误
  */
 export async function importDataV2(jsonString: string): Promise<void> {
-  // 解析 JSON
-  let data: unknown;
-  try {
-    data = JSON.parse(jsonString);
-  } catch {
-    throw new Error('无效的 JSON 格式');
-  }
-
-  // 验证数据结构
-  if (!validateImportDataV2(data)) {
-    throw new Error('导入数据格式无效');
-  }
-
-  const db = await getDB();
-
-  // 使用事务确保数据一致性
-  const tx = db.transaction(['chatWindows', 'settings'], 'readwrite');
-
-  // 清除现有聊天窗口
-  await tx.objectStore('chatWindows').clear();
-
-  // 导入聊天窗口
-  for (const chatWindow of data.chatWindows) {
-    await tx.objectStore('chatWindows').put(chatWindow);
-  }
-
-  // 导入设置
-  await tx.objectStore('settings').put(data.settings, SETTINGS_KEY);
-
-  await tx.done;
+  return importWithConfig(jsonString, v2Config);
 }
 
 /**
