@@ -9,13 +9,16 @@
  * - 右侧：主聊天区域
  */
 
-import React, { useEffect, useState, useRef, useCallback, useMemo, createContext, useContext } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, createContext, useContext } from 'react';
 import { useSettingsStore } from '../stores/settings';
 import { useChatWindowStore } from '../stores/chatWindow';
 import { useTemplateStore } from '../stores/template';
 import type { PromptTemplate, CreateTemplateInput, UpdateTemplateInput } from '../stores/template';
-import { breakpointValues } from '../design/tokens';
 import type { ThemeMode } from '../types/models';
+import { useIsMobile } from '../hooks/useIsMobile';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
+import { useViewportHeight } from '../hooks/useViewportHeight';
+import { useSidebarResponsive } from '../hooks/useSidebarResponsive';
 import { SettingsModal } from './Settings/SettingsModal';
 import type { SettingsTabId } from './Settings/SettingsPanel';
 import {
@@ -89,129 +92,7 @@ function getEffectiveTheme(theme: ThemeMode): 'light' | 'dark' {
   return theme === 'dark' ? 'dark' : 'light';
 }
 
-/**
- * 自定义 Hook：检测是否为移动端
- */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < breakpointValues.md : false
-  );
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < breakpointValues.md);
-    };
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, []);
-
-  return isMobile;
-}
-
-/**
- * 自定义 Hook：修复移动端浏览器视口高度问题
- * 解决手机 Edge 等浏览器地址栏导致 100vh 不准确的问题
- */
-function useViewportHeight(): void {
-  useEffect(() => {
-    // 设置真实视口高度的 CSS 变量
-    const setViewportHeight = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    };
-
-    // 初始设置
-    setViewportHeight();
-
-    // 监听窗口大小变化和方向变化
-    window.addEventListener('resize', setViewportHeight);
-    window.addEventListener('orientationchange', setViewportHeight);
-
-    // 某些移动端浏览器在滚动时会改变视口高度，需要延迟处理
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const debouncedSetHeight = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(setViewportHeight, 100);
-    };
-    window.addEventListener('scroll', debouncedSetHeight);
-
-    return () => {
-      window.removeEventListener('resize', setViewportHeight);
-      window.removeEventListener('orientationchange', setViewportHeight);
-      window.removeEventListener('scroll', debouncedSetHeight);
-      clearTimeout(timeoutId);
-    };
-  }, []);
-}
-
-/**
- * 触摸手势配置
- */
-const SWIPE_CONFIG = {
-  threshold: 50,
-  edgeWidth: 20,
-  maxTime: 300,
-};
-
-/**
- * 自定义 Hook：触摸手势处理
- */
-function useSwipeGesture(
-  onSwipeLeft: () => void,
-  onSwipeRight: () => void,
-  enabled: boolean = true
-) {
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const touchStartTime = useRef<number | null>(null);
-  const isEdgeSwipe = useRef<boolean>(false);
-
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (!enabled) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-    touchStartX.current = touch.clientX;
-    touchStartY.current = touch.clientY;
-    touchStartTime.current = Date.now();
-    isEdgeSwipe.current = touch.clientX <= SWIPE_CONFIG.edgeWidth;
-  }, [enabled]);
-
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
-    if (!enabled || touchStartX.current === null || touchStartY.current === null) return;
-    const touch = e.changedTouches[0];
-    if (!touch) return;
-    const deltaX = touch.clientX - touchStartX.current;
-    const deltaY = touch.clientY - touchStartY.current;
-    const deltaTime = Date.now() - (touchStartTime.current || 0);
-    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
-    const isValidSwipe = Math.abs(deltaX) >= SWIPE_CONFIG.threshold && deltaTime <= SWIPE_CONFIG.maxTime;
-    if (isHorizontalSwipe && isValidSwipe) {
-      if (deltaX > 0 && isEdgeSwipe.current) {
-        onSwipeRight();
-      } else if (deltaX < 0) {
-        onSwipeLeft();
-      }
-    }
-    touchStartX.current = null;
-    touchStartY.current = null;
-    touchStartTime.current = null;
-    isEdgeSwipe.current = false;
-  }, [enabled, onSwipeLeft, onSwipeRight]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [enabled, handleTouchStart, handleTouchEnd]);
-}
 
 /**
  * 渲染设置内容
@@ -276,16 +157,9 @@ export function Layout({ sidebar, children }: LayoutProps) {
     isMobile
   );
 
-  // 移动端默认折叠侧边栏
-  useEffect(() => {
-    if (isMobile && !sidebarCollapsed) {
-      const hasInitialized = sessionStorage.getItem('layout-initialized');
-      if (!hasInitialized) {
-        setSidebarCollapsed(true);
-        sessionStorage.setItem('layout-initialized', 'true');
-      }
-    }
-  }, [isMobile, sidebarCollapsed, setSidebarCollapsed]);
+  // 侧边栏响应式驱动：监听视口变化，自动调整侧边栏状态
+  // 替代原有的 sessionStorage 初始化逻辑
+  useSidebarResponsive();
 
   // 应用主题 - 优化过渡效果
   useEffect(() => {
