@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.13](https://github.com/bohesocool/gemini-chat/compare/v0.2.12...v0.2.13) (2026-02-08)
+
+
+### ⚡ 性能优化 (Performance)
+
+* **Layout:** memoize SidebarContext value to prevent unnecessary re-renders ([0d7136d](https://github.com/bohesocool/gemini-chat/commit/0d7136d2e294c55be4b573185645d670347f6044))
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* **chatWindow:** migrate to Immer for immutable state updates ([b298d21](https://github.com/bohesocool/gemini-chat/commit/b298d21b3402d28137421d5bcb0cd05a97fbe6b2))
+* **model:** extract generic chain resolution logic for reusable redirect handling ([4820cd3](https://github.com/bohesocool/gemini-chat/commit/4820cd324dd506d087826fad5894bc9338ee2a8d))
+* remove MessageList component in favor of shared component library ([2017fe6](https://github.com/bohesocool/gemini-chat/commit/2017fe6466e249f5964b3cf0d415b4bcb63db84a))
+* **storage:** extract storage configuration descriptors for import/export ([03ea2d8](https://github.com/bohesocool/gemini-chat/commit/03ea2d84cb5cdc03641ae4dc7fd1f18850c77e61))
+
+
+### ✨ 新功能 (Features)
+
+* 优化移动端响应式布局和侧边栏交互 ([b8826d6](https://github.com/bohesocool/gemini-chat/commit/b8826d6c7dd7774de1d69ef0a8997e1e0f221f9b))
+
 ### [0.2.12](https://github.com/bohesocool/gemini-chat/compare/v0.2.11...v0.2.12) (2026-02-07)
 
 
