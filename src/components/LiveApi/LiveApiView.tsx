@@ -16,6 +16,7 @@ import { useLiveHistoryStore } from '../../stores/liveHistory';
 import { LiveControlPanel } from './LiveControlPanel';
 import { LiveConfigPanel } from './LiveConfigPanel';
 import { TranscriptDisplay } from './TranscriptDisplay';
+import { ScreenPreview } from './ScreenPreview';
 import { LiveSessionList } from './LiveSessionList';
 import { LiveHistoryView } from './LiveHistoryView';
 import { useTranslation } from '@/i18n';
@@ -75,6 +76,13 @@ export function LiveApiView({
     updateConfig,
     clearTranscripts,
     consumePendingMessages,
+    // 屏幕共享状态和操作
+    screenShareStatus,
+    screenShareError,
+    screenShareConfig,
+    latestScreenFrame,
+    toggleScreenShare,
+    updateScreenShareConfig,
   } = useLiveStore();
 
   // 从 LiveHistoryStore 获取状态和操作
@@ -346,6 +354,13 @@ export function LiveApiView({
               </div>
             </div>
 
+            {/* 屏幕共享预览 - 在转录显示上方 */}
+            {/* 需求: 6.1 - 屏幕共享时显示预览缩略图 */}
+            <ScreenPreview
+              frameData={latestScreenFrame}
+              isSharing={screenShareStatus === 'sharing'}
+            />
+
             {/* 转录显示 */}
             <TranscriptDisplay
               messages={transcripts}
@@ -371,6 +386,9 @@ export function LiveApiView({
                 onEndSession={handleEndSession}
                 onToggleMute={toggleMute}
                 onVolumeChange={setOutputVolume}
+                screenShareStatus={screenShareStatus}
+                screenShareError={screenShareError}
+                onToggleScreenShare={toggleScreenShare}
               />
             </div>
           </>
@@ -385,6 +403,9 @@ export function LiveApiView({
             config={config}
             onConfigChange={updateConfig}
             disabled={isConnected || isConnecting}
+            screenShareConfig={screenShareConfig}
+            screenShareStatus={screenShareStatus}
+            onScreenShareConfigChange={updateScreenShareConfig}
           />
         </aside>
       )}

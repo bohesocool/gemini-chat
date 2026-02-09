@@ -1,6 +1,6 @@
 /**
  * Live API 服务层导出入口
- * Requirements: 2.1, 2.2
+ * Requirements: 2.1, 2.2, 3.1
  * 
  * 导出所有 Live API 相关的服务类和类型
  */
@@ -11,6 +11,7 @@ export { AudioCaptureService } from './AudioCaptureService';
 export { AudioPlayerService } from './AudioPlayerService';
 export { VoicePlayerService, PlaybackError } from './VoicePlayerService';
 export type { VoicePlayerCallbacks } from './VoicePlayerService';
+export { ScreenCaptureService } from './ScreenCaptureService';
 
 // 历史记录存储服务导出
 export {
@@ -30,6 +31,7 @@ export {
   ConnectionError,
   AudioDeviceError,
   SessionTimeoutError,
+  ScreenCaptureError,
   ERROR_MESSAGES,
   getFriendlyErrorMessage,
 } from './errors';
@@ -79,6 +81,13 @@ export type {
   LiveSessionSummary,
   LiveMessageRecord,
   LiveVoiceMessage,
+
+  // 屏幕共享类型
+  // Requirements: 3.1, 4.1
+  ScreenShareStatus,
+  ScreenShareConfig,
+  ScreenCaptureCallbacks,
+  ScreenCaptureState,
 } from '../../types/liveApi';
 
 // 从常量文件重新导出
@@ -89,6 +98,8 @@ export {
   AUDIO_CONFIG,
   SESSION_LIMITS,
   VAD_DEFAULTS,
+  DEFAULT_SCREEN_SHARE_CONFIG,
+  SCREEN_SHARE_LIMITS,
 } from '../../constants/liveApi';
 
 export type { VoiceId, LiveModelId } from '../../constants/liveApi';

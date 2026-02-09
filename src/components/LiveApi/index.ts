@@ -21,6 +21,10 @@ export type { LiveConfigPanelProps } from './LiveConfigPanel';
 export { TranscriptDisplay, getMessageRoleClassName } from './TranscriptDisplay';
 export type { TranscriptDisplayProps } from './TranscriptDisplay';
 
+// 屏幕预览组件
+export { ScreenPreview } from './ScreenPreview';
+export type { ScreenPreviewProps } from './ScreenPreview';
+
 // 连接状态组件
 export { 
   ConnectionStatus, 

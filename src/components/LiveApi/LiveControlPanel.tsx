@@ -6,7 +6,7 @@
  */
 
 
-import type { ConnectionStatus, Speaker } from '../../types/liveApi';
+import type { ConnectionStatus, Speaker, ScreenShareStatus } from '../../types/liveApi';
 import { ConnectionStatusBadge } from './ConnectionStatus';
 import { AudioLevelIndicator, CircularAudioLevel } from './AudioLevelIndicator';
 
@@ -36,6 +36,12 @@ export interface LiveControlPanelProps {
   onToggleMute: () => void;
   /** 设置音量回调 */
   onVolumeChange: (volume: number) => void;
+  /** 屏幕共享状态 - 需求: 5.1, 5.2, 5.3, 5.4, 5.5 */
+  screenShareStatus?: ScreenShareStatus;
+  /** 屏幕共享错误消息 - 需求: 4.4 */
+  screenShareError?: string | null;
+  /** 切换屏幕共享回调 - 需求: 5.3, 5.4 */
+  onToggleScreenShare?: () => void;
   /** 自定义类名 */
   className?: string;
 }
@@ -55,6 +61,9 @@ export function LiveControlPanel({
   onEndSession,
   onToggleMute,
   onVolumeChange,
+  screenShareStatus = 'inactive',
+  screenShareError,
+  onToggleScreenShare,
   className = '',
 }: LiveControlPanelProps): JSX.Element {
   const isConnected = connectionStatus === 'connected';
@@ -82,6 +91,16 @@ export function LiveControlPanel({
       {hasError && errorMessage && (
         <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+        </div>
+      )}
+
+      {/* 屏幕共享错误消息 - 需求: 4.4 */}
+      {isConnected && screenShareError && (
+        <div className="px-3 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+          <p className="text-sm text-orange-600 dark:text-orange-400">
+            <ScreenShareIcon className="w-4 h-4 inline-block mr-1 align-text-bottom" />
+            {screenShareError}
+          </p>
         </div>
       )}
 
@@ -129,6 +148,14 @@ export function LiveControlPanel({
           >
             {isMuted ? <MicOffIcon className="w-5 h-5" /> : <MicIcon className="w-5 h-5" />}
           </button>
+        )}
+
+        {/* 屏幕共享按钮 - 需求: 5.1, 5.2, 5.3, 5.4, 5.5, 4.2, 4.4 */}
+        {isConnected && onToggleScreenShare && (
+          <ScreenShareButton
+            status={screenShareStatus}
+            onToggle={onToggleScreenShare}
+          />
         )}
       </div>
 
@@ -218,6 +245,86 @@ export function LiveControlPanel({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * 屏幕共享按钮属性
+ */
+interface ScreenShareButtonProps {
+  /** 屏幕共享状态 */
+  status: ScreenShareStatus;
+  /** 切换屏幕共享回调 */
+  onToggle: () => void;
+}
+
+/**
+ * 屏幕共享按钮组件
+ * 需求: 5.1, 5.3, 5.4, 5.5, 4.2
+ *
+ * 根据 screenShareStatus 显示不同状态：
+ * - inactive: 默认样式，点击开始共享
+ * - requesting: 加载指示器，禁用点击
+ * - sharing: 激活样式（高亮），点击停止共享
+ * - error: 默认样式，可重新开始共享
+ */
+function ScreenShareButton({ status, onToggle }: ScreenShareButtonProps): JSX.Element {
+  const isRequesting = status === 'requesting';
+  const isSharing = status === 'sharing';
+
+  /** 根据状态获取按钮样式 */
+  const getButtonClassName = (): string => {
+    const base = 'flex items-center justify-center w-12 h-12 rounded-xl transition-colors';
+
+    if (isSharing) {
+      // 激活样式（高亮）- 需求: 5.3
+      return `${base} bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50`;
+    }
+
+    if (isRequesting) {
+      // 加载中样式 - 需求: 5.5
+      return `${base} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 cursor-not-allowed`;
+    }
+
+    // 默认样式（inactive 和 error）- 需求: 5.4
+    return `${base} bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700`;
+  };
+
+  /** 根据状态获取按钮提示文字 */
+  const getTitle = (): string => {
+    switch (status) {
+      case 'sharing':
+        return '停止屏幕共享';
+      case 'requesting':
+        return '正在请求屏幕共享...';
+      case 'error':
+        return '重新开始屏幕共享';
+      default:
+        return '开始屏幕共享';
+    }
+  };
+
+  /** 渲染按钮图标 */
+  const renderIcon = (): JSX.Element => {
+    if (isRequesting) {
+      // 加载指示器 - 需求: 5.5
+      return <LoadingIcon className="w-5 h-5 animate-spin" />;
+    }
+    if (isSharing) {
+      return <ScreenShareActiveIcon className="w-5 h-5" />;
+    }
+    return <ScreenShareIcon className="w-5 h-5" />;
+  };
+
+  return (
+    <button
+      onClick={onToggle}
+      disabled={isRequesting}
+      className={getButtonClassName()}
+      title={getTitle()}
+    >
+      {renderIcon()}
+    </button>
   );
 }
 
@@ -324,6 +431,26 @@ function VolumeHighIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+    </svg>
+  );
+}
+
+/** 屏幕共享图标（默认状态） */
+function ScreenShareIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  );
+}
+
+/** 屏幕共享图标（激活状态，带共享指示） */
+function ScreenShareActiveIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      {/* 共享中指示点 */}
+      <circle cx="12" cy="9" r="2" fill="currentColor" />
     </svg>
   );
 }

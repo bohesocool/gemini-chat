@@ -328,7 +328,18 @@
     "voiceCharon": "沉稳专业",
     "voiceKore": "温暖亲切",
     "voiceFenrir": "深沉有力",
-    "voiceAoede": "清晰明亮"
+    "voiceAoede": "清晰明亮",
+    "screenShare": "屏幕共享",
+    "screenShareFps": "帧率 (FPS)",
+    "screenShareFpsHint": "每秒截取的屏幕帧数，值越高画面越流畅但带宽消耗越大",
+    "screenShareResolution": "分辨率",
+    "screenShareResolutionHint": "屏幕截取的最大分辨率",
+    "screenShareQuality": "图片质量",
+    "screenShareQualityHint": "JPEG 编码质量，值越高画质越好但文件越大",
+    "screenShareConfigDisabled": "屏幕共享进行中，配置不可修改",
+    "resolution640x480": "640×480 (VGA)",
+    "resolution1280x720": "1280×720 (HD)",
+    "resolution1920x1080": "1920×1080 (Full HD)"
   },
   "about": {
     "checkUpdate": "检查更新",

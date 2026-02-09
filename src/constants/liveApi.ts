@@ -5,7 +5,7 @@
  * 定义 Live API 相关的常量，包括可用语音、模型列表和默认配置。
  */
 
-import type { LiveSessionConfig, LiveApiModel, AvailableVoice } from '../types/liveApi';
+import type { LiveSessionConfig, LiveApiModel, AvailableVoice, ScreenShareConfig } from '../types/liveApi';
 
 // ============ 可用语音列表 ============
 
@@ -113,3 +113,45 @@ export type VoiceId = typeof AVAILABLE_VOICES[number]['id'];
 
 /** 模型 ID 类型 */
 export type LiveModelId = typeof LIVE_API_MODELS[number]['id'];
+
+// ============ 屏幕共享配置常量 ============
+
+/**
+ * 屏幕共享默认配置
+ * 需求: 3.1, 3.2
+ */
+export const DEFAULT_SCREEN_SHARE_CONFIG: ScreenShareConfig = {
+  /** 默认帧率：每秒 1 帧 */
+  fps: 1,
+  /** 默认最大宽度：1280 像素 */
+  maxWidth: 1280,
+  /** 默认最大高度：720 像素 */
+  maxHeight: 720,
+  /** 默认 JPEG 质量：0.8 */
+  quality: 0.8,
+};
+
+/**
+ * 屏幕共享配置限制
+ * 需求: 3.1, 3.2
+ * 
+ * 定义各配置参数的最小值和最大值，用于 UI 配置面板的输入验证。
+ */
+export const SCREEN_SHARE_LIMITS = {
+  /** 最小帧率（FPS） */
+  MIN_FPS: 0.5,
+  /** 最大帧率（FPS） */
+  MAX_FPS: 5,
+  /** 最小宽度（像素） */
+  MIN_WIDTH: 640,
+  /** 最大宽度（像素） */
+  MAX_WIDTH: 1920,
+  /** 最小高度（像素） */
+  MIN_HEIGHT: 480,
+  /** 最大高度（像素） */
+  MAX_HEIGHT: 1080,
+  /** 最小 JPEG 质量 */
+  MIN_QUALITY: 0.3,
+  /** 最大 JPEG 质量 */
+  MAX_QUALITY: 1.0,
+} as const;

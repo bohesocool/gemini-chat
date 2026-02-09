@@ -7,8 +7,8 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import type { LiveSessionConfig, ResponseModality, VadSensitivity } from '../../types/liveApi';
-import { AVAILABLE_VOICES, LIVE_API_MODELS } from '../../constants/liveApi';
+import type { LiveSessionConfig, ResponseModality, VadSensitivity, ScreenShareConfig, ScreenShareStatus } from '../../types/liveApi';
+import { AVAILABLE_VOICES, LIVE_API_MODELS, SCREEN_SHARE_LIMITS } from '../../constants/liveApi';
 import { useTranslation } from '@/i18n';
 
 /**
@@ -23,6 +23,12 @@ export interface LiveConfigPanelProps {
   disabled?: boolean;
   /** 自定义类名 */
   className?: string;
+  /** 屏幕共享配置 */
+  screenShareConfig?: ScreenShareConfig;
+  /** 屏幕共享状态 */
+  screenShareStatus?: ScreenShareStatus;
+  /** 屏幕共享配置变更回调 */
+  onScreenShareConfigChange?: (config: Partial<ScreenShareConfig>) => void;
 }
 
 /**
@@ -33,8 +39,15 @@ export function LiveConfigPanel({
   onConfigChange,
   disabled = false,
   className = '',
+  screenShareConfig,
+  screenShareStatus,
+  onScreenShareConfigChange,
 }: LiveConfigPanelProps): JSX.Element {
   const { t } = useTranslation();
+
+  // 屏幕共享活动时禁用配置修改
+  // 需求: 3.4 - 屏幕共享处于活动状态时禁用配置参数修改
+  const isScreenShareActive = screenShareStatus === 'sharing' || screenShareStatus === 'requesting';
   
   // 获取当前选中模型的信息
   const currentModel = useMemo(() => {
@@ -114,6 +127,22 @@ export function LiveConfigPanel({
       vadConfig: { ...config.vadConfig, silenceDurationMs: duration } 
     });
   }, [config.vadConfig, onConfigChange]);
+
+  // 处理屏幕共享帧率变更 - 需求: 3.3
+  const handleScreenShareFpsChange = useCallback((fps: number) => {
+    onScreenShareConfigChange?.({ fps });
+  }, [onScreenShareConfigChange]);
+
+  // 处理屏幕共享分辨率变更 - 需求: 3.3
+  const handleScreenShareResolutionChange = useCallback((resolution: string) => {
+    const [maxWidth, maxHeight] = resolution.split('x').map(Number);
+    onScreenShareConfigChange?.({ maxWidth, maxHeight });
+  }, [onScreenShareConfigChange]);
+
+  // 处理屏幕共享质量变更 - 需求: 3.3
+  const handleScreenShareQualityChange = useCallback((quality: number) => {
+    onScreenShareConfigChange?.({ quality });
+  }, [onScreenShareConfigChange]);
 
   return (
     <div className={`flex flex-col gap-4 p-4 ${className}`}>
@@ -360,6 +389,96 @@ export function LiveConfigPanel({
           )}
         </div>
       </ConfigSection>
+
+      {/* 屏幕共享配置 - 需求: 3.3, 3.4 */}
+      {screenShareConfig && onScreenShareConfigChange && (
+        <ConfigSection title={t('live.screenShare')}>
+          {/* 屏幕共享活动时的禁用提示 */}
+          {isScreenShareActive && (
+            <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                {t('live.screenShareConfigDisabled')}
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {/* 帧率滑块 - 范围 0.5-5 FPS，步长 0.5 */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-neutral-600 dark:text-neutral-400">
+                {t('live.screenShareFps')}: {screenShareConfig.fps} FPS
+              </label>
+              <input
+                type="range"
+                min={SCREEN_SHARE_LIMITS.MIN_FPS}
+                max={SCREEN_SHARE_LIMITS.MAX_FPS}
+                step={0.5}
+                value={screenShareConfig.fps}
+                onChange={(e) => handleScreenShareFpsChange(parseFloat(e.target.value))}
+                disabled={isScreenShareActive}
+                className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-3
+                  [&::-webkit-slider-thumb]:h-3
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-primary-500
+                  [&::-webkit-slider-thumb]:cursor-pointer
+                "
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {t('live.screenShareFpsHint')}
+              </p>
+            </div>
+
+            {/* 分辨率选择 - 预设选项 */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-neutral-600 dark:text-neutral-400">
+                {t('live.screenShareResolution')}
+              </label>
+              <select
+                value={`${screenShareConfig.maxWidth}x${screenShareConfig.maxHeight}`}
+                onChange={(e) => handleScreenShareResolutionChange(e.target.value)}
+                disabled={isScreenShareActive}
+                className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="640x480">{t('live.resolution640x480')}</option>
+                <option value="1280x720">{t('live.resolution1280x720')}</option>
+                <option value="1920x1080">{t('live.resolution1920x1080')}</option>
+              </select>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {t('live.screenShareResolutionHint')}
+              </p>
+            </div>
+
+            {/* 质量滑块 - 范围 0.3-1.0，步长 0.1 */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-neutral-600 dark:text-neutral-400">
+                {t('live.screenShareQuality')}: {screenShareConfig.quality.toFixed(1)}
+              </label>
+              <input
+                type="range"
+                min={SCREEN_SHARE_LIMITS.MIN_QUALITY}
+                max={SCREEN_SHARE_LIMITS.MAX_QUALITY}
+                step={0.1}
+                value={screenShareConfig.quality}
+                onChange={(e) => handleScreenShareQualityChange(parseFloat(e.target.value))}
+                disabled={isScreenShareActive}
+                className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-3
+                  [&::-webkit-slider-thumb]:h-3
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-primary-500
+                  [&::-webkit-slider-thumb]:cursor-pointer
+                "
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {t('live.screenShareQualityHint')}
+              </p>
+            </div>
+          </div>
+        </ConfigSection>
+      )}
     </div>
   );
 }

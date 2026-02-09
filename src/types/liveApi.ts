@@ -225,6 +225,11 @@ export interface AudioData {
 export interface RealtimeInputContent {
   /** 音频数据 */
   audio?: AudioData;
+  /** 视频/图片数据（屏幕帧） */
+  video?: {
+    data: string;
+    mimeType: string;
+  };
   /** 活动开始信号（手动 VAD 模式） */
   activityStart?: Record<string, never>;
   /** 活动结束信号（手动 VAD 模式） */
@@ -568,3 +573,46 @@ export interface LiveVoiceMessage {
   /** 消息时间戳 */
   timestamp: number;
 }
+
+/**
+ * 屏幕共享状态
+ * 需求: 4.1
+ */
+export type ScreenShareStatus = 'inactive' | 'requesting' | 'sharing' | 'error';
+
+/**
+ * 屏幕共享配置
+ * 需求: 3.1
+ */
+export interface ScreenShareConfig {
+  /** 帧率（每秒帧数） */
+  fps: number;
+  /** 最大宽度（像素） */
+  maxWidth: number;
+  /** 最大高度（像素） */
+  maxHeight: number;
+  /** JPEG 图片质量 (0-1) */
+  quality: number;
+}
+
+/**
+ * 屏幕捕获回调
+ * 需求: 1.2, 1.4, 1.5, 7.3
+ */
+export interface ScreenCaptureCallbacks {
+  /** 截取到一帧屏幕 */
+  onFrame: (base64Data: string) => void;
+  /** 屏幕共享开始 */
+  onStart: () => void;
+  /** 屏幕共享停止 */
+  onStop: () => void;
+  /** 发生错误 */
+  onError: (error: Error) => void;
+}
+
+/**
+ * 屏幕捕获状态
+ * 需求: 4.1
+ */
+export type ScreenCaptureState = 'inactive' | 'capturing';
+

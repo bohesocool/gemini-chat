@@ -14,14 +14,18 @@ import type {
   TranscriptMessage,
   LiveSessionConfig,
   LiveApiCallbacks,
+  ScreenShareStatus,
+  ScreenShareConfig,
 } from '../types/liveApi';
 import {
   LiveApiService,
   AudioCaptureService,
   AudioPlayerService,
+  ScreenCaptureService,
   getFriendlyErrorMessage,
   DEFAULT_LIVE_CONFIG,
 } from '../services/liveApi';
+import { DEFAULT_SCREEN_SHARE_CONFIG } from '../constants/liveApi';
 import { useSettingsStore } from './settings';
 import { storeLogger } from '../services/logger';
 
@@ -101,6 +105,17 @@ interface LiveState {
   // 需求: 2.1, 2.2
   /** 待保存的完成消息队列 */
   pendingMessages: CompletedAudioMessage[];
+
+  // 屏幕共享状态
+  // 需求: 4.1, 3.1
+  /** 屏幕共享状态 */
+  screenShareStatus: ScreenShareStatus;
+  /** 屏幕共享错误消息 */
+  screenShareError: string | null;
+  /** 屏幕共享配置 */
+  screenShareConfig: ScreenShareConfig;
+  /** 最新屏幕帧（用于预览） */
+  latestScreenFrame: string | null;
 }
 
 // ============ Store 操作接口 ============
@@ -152,6 +167,15 @@ interface LiveActions {
   // 需求: 2.1, 2.2
   /** 获取并清除待保存的消息 */
   consumePendingMessages: () => CompletedAudioMessage[];
+
+  // 屏幕共享控制
+  // 需求: 1.1, 1.6, 2.1, 2.2, 2.3, 4.1
+  /** 切换屏幕共享 */
+  toggleScreenShare: () => Promise<void>;
+  /** 停止屏幕共享 */
+  stopScreenShare: () => void;
+  /** 更新屏幕共享配置 */
+  updateScreenShareConfig: (config: Partial<ScreenShareConfig>) => void;
 }
 
 // ============ Store 类型 ============
@@ -166,6 +190,8 @@ let liveApiService: LiveApiService | null = null;
 let audioCaptureService: AudioCaptureService | null = null;
 /** 音频播放服务实例 */
 let audioPlayerService: AudioPlayerService | null = null;
+/** 屏幕捕获服务实例 */
+let screenCaptureService: ScreenCaptureService | null = null;
 
 // ============ 音频累积器 ============
 // 需求: 2.1, 2.2
@@ -286,6 +312,13 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
   // 音频消息队列
   // 需求: 2.1, 2.2
   pendingMessages: [],
+
+  // 屏幕共享状态
+  // 需求: 4.1, 3.1
+  screenShareStatus: 'inactive',
+  screenShareError: null,
+  screenShareConfig: { ...DEFAULT_SCREEN_SHARE_CONFIG },
+  latestScreenFrame: null,
 
   // ============ 会话控制 ============
 
@@ -538,10 +571,14 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
 
   /**
    * 结束会话
-   * 需求: 2.4
+   * 需求: 2.4, 1.6
    */
   endSession: () => {
     storeLogger.info('结束 Live 会话');
+    
+    // 停止屏幕共享并清理资源
+    // 需求: 1.6
+    get().stopScreenShare();
     
     // 清理服务
     cleanupServices();
@@ -745,6 +782,112 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
     const messages = get().pendingMessages;
     set({ pendingMessages: [] });
     return messages;
+  },
+
+  // ============ 屏幕共享控制 ============
+
+  /**
+   * 切换屏幕共享
+   * 需求: 1.1, 1.6, 2.1, 2.2, 2.3, 4.1
+   * 
+   * 如果当前正在共享或请求中，则停止共享；
+   * 否则创建 ScreenCaptureService 实例并开始屏幕捕获。
+   */
+  toggleScreenShare: async () => {
+    const state = get();
+
+    // 如果当前状态是 'sharing' 或 'requesting'，停止屏幕共享
+    if (state.screenShareStatus === 'sharing' || state.screenShareStatus === 'requesting') {
+      get().stopScreenShare();
+      return;
+    }
+
+    // 设置状态为请求中
+    set({ screenShareStatus: 'requesting', screenShareError: null });
+
+    // 创建 ScreenCaptureService 实例，传入配置和回调
+    screenCaptureService = new ScreenCaptureService(state.screenShareConfig, {
+      // 截取到一帧屏幕时的回调
+      // 需求: 2.1 - 发送帧到 Live API
+      onFrame: (base64Data: string) => {
+        // 通过 LiveApiService 发送屏幕帧
+        if (liveApiService?.isConnected()) {
+          try {
+            liveApiService.sendScreenFrame(base64Data);
+          } catch (error) {
+            storeLogger.warn('发送屏幕帧失败', {
+              error: error instanceof Error ? error.message : '未知错误',
+            });
+          }
+        }
+        // 更新最新屏幕帧（用于预览）
+        set({ latestScreenFrame: base64Data });
+      },
+
+      // 屏幕共享开始回调
+      onStart: () => {
+        storeLogger.info('屏幕共享已开始');
+        set({ screenShareStatus: 'sharing' });
+      },
+
+      // 屏幕共享停止回调（包括用户通过浏览器原生 UI 停止）
+      // 需求: 1.5
+      onStop: () => {
+        storeLogger.info('屏幕共享已停止');
+        screenCaptureService = null;
+        set({
+          screenShareStatus: 'inactive',
+          latestScreenFrame: null,
+        });
+      },
+
+      // 屏幕共享错误回调
+      // 需求: 7.1, 7.2
+      onError: (error: Error) => {
+        storeLogger.error('屏幕共享错误', { error: error.message });
+        screenCaptureService = null;
+        set({
+          screenShareStatus: 'inactive',
+          screenShareError: error.message,
+        });
+      },
+    });
+
+    // 启动屏幕捕获
+    await screenCaptureService.start();
+  },
+
+  /**
+   * 停止屏幕共享
+   * 需求: 1.4, 1.6
+   * 
+   * 停止 ScreenCaptureService 并重置所有屏幕共享相关状态。
+   */
+  stopScreenShare: () => {
+    // 如果 screenCaptureService 存在，调用 stop() 停止捕获
+    if (screenCaptureService) {
+      screenCaptureService.stop();
+      screenCaptureService = null;
+    }
+
+    // 重置屏幕共享状态
+    set({
+      screenShareStatus: 'inactive',
+      screenShareError: null,
+      latestScreenFrame: null,
+    });
+  },
+
+  /**
+   * 更新屏幕共享配置
+   * 需求: 3.3
+   * 
+   * 合并传入的部分配置到现有配置（部分更新）。
+   */
+  updateScreenShareConfig: (config: Partial<ScreenShareConfig>) => {
+    const currentConfig = get().screenShareConfig;
+    const newConfig = { ...currentConfig, ...config };
+    set({ screenShareConfig: newConfig });
   },
 }));
 

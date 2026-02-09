@@ -59,6 +59,18 @@ export class SessionTimeoutError extends LiveApiError {
 }
 
 /**
+ * 屏幕捕获错误类
+ * 用于屏幕共享权限被拒绝或浏览器不支持的情况
+ * Requirements: 7.1, 7.2
+ */
+export class ScreenCaptureError extends LiveApiError {
+  constructor(message: string) {
+    super(message, 'SCREEN_CAPTURE_ERROR');
+    this.name = 'ScreenCaptureError';
+  }
+}
+
+/**
  * 错误消息映射 - 将技术错误代码转换为用户友好的中文提示
  * Requirements: 8.3
  */
@@ -98,6 +110,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
   'AUDIO_CONTEXT_ERROR': '音频系统初始化失败，请刷新页面重试',
   'AUDIO_PLAYBACK_ERROR': '音频播放失败',
   'AUDIO_CAPTURE_ERROR': '音频捕获失败',
+  
+  // 屏幕共享相关
+  'SCREEN_CAPTURE_ERROR': '屏幕捕获失败',
+  'SCREEN_SHARE_PERMISSION_DENIED': '屏幕共享权限被拒绝，请在浏览器设置中允许',
+  'SCREEN_SHARE_NOT_SUPPORTED': '当前浏览器不支持屏幕共享功能',
 };
 
 /**

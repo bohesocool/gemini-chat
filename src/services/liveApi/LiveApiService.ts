@@ -220,6 +220,29 @@ export class LiveApiService {
   }
 
   /**
+   * 发送屏幕帧
+   * 构造 BidiGenerateContentRealtimeInput 消息，通过 realtimeInput.video 字段发送屏幕截图
+   * Requirements: 2.1
+   */
+  sendScreenFrame(base64ImageData: string): void {
+    if (!this.isConnected()) {
+      throw new LiveApiError('未连接到服务器', 'NOT_CONNECTED');
+    }
+
+    const message: BidiGenerateContentRealtimeInput = {
+      realtimeInput: {
+        video: {
+          data: base64ImageData,
+          mimeType: 'image/jpeg',
+        },
+      },
+    };
+
+    this.sendMessage(message);
+  }
+
+
+  /**
    * 获取连接状态
    * Requirements: 2.3
    */

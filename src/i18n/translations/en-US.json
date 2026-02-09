@@ -328,7 +328,18 @@
     "voiceCharon": "Calm and professional",
     "voiceKore": "Warm and approachable",
     "voiceFenrir": "Deep and powerful",
-    "voiceAoede": "Clear and bright"
+    "voiceAoede": "Clear and bright",
+    "screenShare": "Screen Share",
+    "screenShareFps": "Frame Rate (FPS)",
+    "screenShareFpsHint": "Number of screen frames captured per second. Higher values provide smoother visuals but consume more bandwidth",
+    "screenShareResolution": "Resolution",
+    "screenShareResolutionHint": "Maximum resolution for screen capture",
+    "screenShareQuality": "Image Quality",
+    "screenShareQualityHint": "JPEG encoding quality. Higher values provide better quality but larger file size",
+    "screenShareConfigDisabled": "Screen sharing in progress, config cannot be modified",
+    "resolution640x480": "640×480 (VGA)",
+    "resolution1280x720": "1280×720 (HD)",
+    "resolution1920x1080": "1920×1080 (Full HD)"
   },
   "about": {
     "checkUpdate": "Check for Updates",
