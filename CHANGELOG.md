@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.14](https://github.com/bohesocool/gemini-chat/compare/v0.2.13...v0.2.14) (2026-02-09)
+
+
+### 🔧 其他更改 (Chores)
+
+* **docker:** enhance security and performance with non-root user and debouncing ([ff4aa95](https://github.com/bohesocool/gemini-chat/commit/ff4aa95474402ba80cbb746f3fdef2a599fb249e))
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* **logging:** replace console methods with centralized logger service ([1a6b9ea](https://github.com/bohesocool/gemini-chat/commit/1a6b9ea4bc34295db0689adfc108ca8c528b254c))
+
+
+### 🐛 Bug 修复 (Bug Fixes)
+
+* **ErrorBoundary:** improve error logging with structured object format ([6d2852d](https://github.com/bohesocool/gemini-chat/commit/6d2852da0afeaa91667e81f5cb3bd1a4d9630e3a))
+
+
+### ✨ 新功能 (Features)
+
+* 添加屏幕共享功能支持 Live API ([8f49515](https://github.com/bohesocool/gemini-chat/commit/8f495159ec233d40ca5f8eeb2b10eefbf8ce5f30))
+
 ### [0.2.13](https://github.com/bohesocool/gemini-chat/compare/v0.2.12...v0.2.13) (2026-02-08)
 
 
