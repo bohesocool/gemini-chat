@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.16](https://github.com/bohesocool/gemini-chat/compare/v0.2.15...v0.2.16) (2026-02-24)
+
+
+### 🐛 Bug 修复 (Bug Fixes)
+
+* add missing activeSubTopicId to ChatWindow mocks in tests ([78a864f](https://github.com/bohesocool/gemini-chat/commit/78a864f1ff0c115812e421c79e9aea3be10136c5))
+* exclude test files from production tsconfig to fix Docker build ([4b8c0fe](https://github.com/bohesocool/gemini-chat/commit/4b8c0fe364990ad95ab71c758759c46e9be9e016))
+
 ### [0.2.15](https://github.com/bohesocool/gemini-chat/compare/v0.2.14...v0.2.15) (2026-02-24)
 
 

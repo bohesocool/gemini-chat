@@ -1,7 +1,7 @@
 {
   "name": "gemini-chat",
   "private": true,
-  "version": "0.2.15",
+  "version": "0.2.16",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
