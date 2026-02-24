@@ -49,6 +49,12 @@ interface SettingsState {
   /** 自定义主题色 */
   customThemeColor?: string;
 
+  // 自动标题生成设置
+  /** 是否启用自动标题生成 - Requirements: 3.2 */
+  autoTitleEnabled: boolean;
+  /** 标题生成使用的模型 - Requirements: 3.1 */
+  titleModel: string;
+
   // 状态标志
   /** 是否已初始化 */
   initialized: boolean;
@@ -106,6 +112,12 @@ interface SettingsActions {
   /** 设置自定义主题色 */
   setCustomThemeColor: (color: string) => void;
 
+  // 自动标题生成操作
+  /** 设置自动标题生成开关 - Requirements: 3.2 */
+  setAutoTitleEnabled: (enabled: boolean) => void;
+  /** 设置标题生成模型 - Requirements: 3.3 */
+  setTitleModel: (model: string) => void;
+
   // 连接测试
   /** 测试 API 连接，可指定测试模型 */
   testConnection: (modelId?: string) => Promise<boolean>;
@@ -141,6 +153,8 @@ async function persistSettings(state: SettingsState): Promise<void> {
     streamingEnabled: state.streamingEnabled,
     filesApiEnabled: state.filesApiEnabled,
     customThemeColor: state.customThemeColor,
+    autoTitleEnabled: state.autoTitleEnabled,
+    titleModel: state.titleModel,
   };
   await saveSettings(settings);
 }
@@ -163,6 +177,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   streamingEnabled: DEFAULT_APP_SETTINGS.streamingEnabled,
   filesApiEnabled: DEFAULT_APP_SETTINGS.filesApiEnabled,
   customThemeColor: DEFAULT_APP_SETTINGS.customThemeColor,
+  autoTitleEnabled: DEFAULT_APP_SETTINGS.autoTitleEnabled,
+  titleModel: DEFAULT_APP_SETTINGS.titleModel,
   initialized: false,
   isLoading: false,
   connectionStatus: 'idle',
@@ -185,6 +201,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         streamingEnabled: settings.streamingEnabled ?? DEFAULT_APP_SETTINGS.streamingEnabled,
         filesApiEnabled: settings.filesApiEnabled ?? DEFAULT_APP_SETTINGS.filesApiEnabled,
         customThemeColor: settings.customThemeColor,
+        autoTitleEnabled: settings.autoTitleEnabled ?? DEFAULT_APP_SETTINGS.autoTitleEnabled,
+        titleModel: settings.titleModel ?? DEFAULT_APP_SETTINGS.titleModel,
         initialized: true,
         isLoading: false,
       });
@@ -356,6 +374,30 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     });
   },
 
+  // 设置自动标题生成开关
+  // Requirements: 3.2 - 自动标题生成开关持久化存储
+  setAutoTitleEnabled: (enabled: boolean) => {
+    set({ autoTitleEnabled: enabled });
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化自动标题生成设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
+  },
+
+  // 设置标题生成模型
+  // Requirements: 3.3 - 标题生成模型设置持久化存储
+  setTitleModel: (model: string) => {
+    set({ titleModel: model });
+    // 需求: 7.1, 7.3 - 使用 storeLogger 替代 console.error
+    persistSettings(get()).catch((error) => {
+      storeLogger.error('持久化标题生成模型设置失败', {
+        error: error instanceof Error ? error.message : '未知错误',
+      });
+    });
+  },
+
   // 测试连接
   // 需求: 1.4 - 支持指定模型进行测试
   testConnection: async (modelId?: string) => {
@@ -408,6 +450,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       streamingEnabled: state.streamingEnabled,
       filesApiEnabled: state.filesApiEnabled,
       customThemeColor: state.customThemeColor,
+      autoTitleEnabled: state.autoTitleEnabled,
+      titleModel: state.titleModel,
     };
   },
 
@@ -425,6 +469,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       streamingEnabled: DEFAULT_APP_SETTINGS.streamingEnabled,
       filesApiEnabled: DEFAULT_APP_SETTINGS.filesApiEnabled,
       customThemeColor: DEFAULT_APP_SETTINGS.customThemeColor,
+      autoTitleEnabled: DEFAULT_APP_SETTINGS.autoTitleEnabled,
+      titleModel: DEFAULT_APP_SETTINGS.titleModel,
       connectionStatus: 'idle',
       connectionError: null,
     });

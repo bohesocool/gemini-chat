@@ -707,6 +707,11 @@ function validateChatWindow(data: unknown): data is ChatWindow {
     }
   }
 
+  // 检查可选字段 titleGenerated（如果存在，必须是布尔值）
+  if (window.titleGenerated !== undefined && typeof window.titleGenerated !== 'boolean') {
+    return false;
+  }
+
   return true;
 }
 
