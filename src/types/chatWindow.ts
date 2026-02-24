@@ -75,6 +75,8 @@ export interface ChatWindow {
   createdAt: number;
   /** 更新时间戳 */
   updatedAt: number;
+  /** 标题是否已由 AI 生成或用户手动设置（可选，默认 undefined 等同于 false） */
+  titleGenerated?: boolean;
 }
 
 // ============ 旧版数据格式（用于迁移） ============

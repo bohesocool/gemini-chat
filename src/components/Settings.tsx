@@ -664,7 +664,8 @@ function LoadingSpinner({ className }: { className?: string }) {
 // 需求: 2.1, 2.2, 2.3, 2.4, 2.5
 
 function GenerationConfigSection() {
-  const { generationConfig, updateGenerationConfig } = useSettingsStore();
+  const { generationConfig, updateGenerationConfig, autoTitleEnabled, setAutoTitleEnabled, titleModel, setTitleModel } = useSettingsStore();
+  const { models } = useModelStore();
   const [stopSequencesInput, setStopSequencesInput] = useState(
     generationConfig.stopSequences?.join(', ') || ''
   );
@@ -796,6 +797,70 @@ function GenerationConfigSection() {
           当 AI 生成这些序列时会停止输出，用逗号分隔多个序列
         </p>
       </div>
+
+      {/* 分隔线 */}
+      <hr className="border-slate-200 dark:border-slate-700" />
+
+      {/* 自动标题生成设置 */}
+      <div>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">自动标题生成</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          新对话收到第一条 AI 回复后，自动为对话生成简洁的标题。
+        </p>
+      </div>
+
+      {/* 自动标题生成开关 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            启用自动标题生成
+          </label>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            关闭后将使用用户消息前 30 个字符作为标题
+          </p>
+        </div>
+        <button
+          role="switch"
+          aria-checked={autoTitleEnabled}
+          onClick={() => setAutoTitleEnabled(!autoTitleEnabled)}
+          className={`
+            relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+            ${autoTitleEnabled ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}
+          `}
+        >
+          <span
+            className={`
+              inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+              ${autoTitleEnabled ? 'translate-x-6' : 'translate-x-1'}
+            `}
+          />
+        </button>
+      </div>
+
+      {/* 标题生成模型选择（仅在开关开启时显示） */}
+      {autoTitleEnabled && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            标题生成模型
+          </label>
+          <select
+            value={titleModel}
+            onChange={(e) => setTitleModel(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 
+              bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name || model.id}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            建议使用较便宜的模型（如 gemini-2.5-flash）以节省成本
+          </p>
+        </div>
+      )}
     </div>
   );
 }

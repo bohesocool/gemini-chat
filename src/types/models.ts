@@ -138,6 +138,10 @@ export interface AppSettings {
   filesApiEnabled: boolean;
   /** 自定义主题色（可选） */
   customThemeColor?: string;
+  /** 是否启用自动标题生成 - Requirements: 3.2 */
+  autoTitleEnabled: boolean;
+  /** 标题生成使用的模型 - Requirements: 3.1 */
+  titleModel: string;
 }
 
 /**
@@ -523,6 +527,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   streamingEnabled: true, // 默认启用流式输出 - Requirements: 10.6
   filesApiEnabled: false, // 默认关闭 Files API 模式 - Requirements: 1.2
   customThemeColor: undefined,
+  autoTitleEnabled: true, // 默认启用自动标题生成 - Requirements: 3.2
+  titleModel: 'gemini-2.5-flash', // 默认标题生成模型 - Requirements: 3.1
 };
 
 // ============ 文件限制常量 ============

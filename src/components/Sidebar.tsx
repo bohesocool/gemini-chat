@@ -75,10 +75,10 @@ export function Sidebar() {
     setEditingTitle(currentTitle);
   };
 
-  // 保存重命名
+  // 保存重命名，同时标记 titleGenerated 防止自动标题生成覆盖用户自定义标题
   const handleSaveRename = async () => {
     if (editingId && editingTitle.trim()) {
-      await updateWindow(editingId, { title: editingTitle.trim() });
+      await updateWindow(editingId, { title: editingTitle.trim(), titleGenerated: true });
     }
     setEditingId(null);
     setEditingTitle('');

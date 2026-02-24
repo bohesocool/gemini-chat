@@ -24,6 +24,7 @@ import {
   orchestrateSend,
   SENDING_RESET_STATE,
 } from './messageHelpers';
+import { triggerTitleGeneration } from '../../services/titleGeneration';
 
 /**
  * 创建消息操作
@@ -147,6 +148,13 @@ export const createMessageActions = (set: SetState, get: GetState) => ({
           set, get, windowId, subTopicId,
           (st) => { st.messages.push(aiMessage); }
         );
+
+        // 异步触发标题生成（不 await，不阻塞主流程）
+        // 需求: 1.1, 1.3 - 第一条 AI 回复成功返回后，后台异步生成标题
+        // 检测条件：发送前子话题消息数为 0 且窗口只有一个子话题
+        if (subTopic.messages.length === 0 && window.subTopics.length === 1) {
+          triggerTitleGeneration(windowId, content, result.text);
+        }
       },
       // 取消回调：有部分响应时保存，无部分响应时重置状态
       // 需求: 5.3, 5.4 - 处理请求取消，保留部分响应
