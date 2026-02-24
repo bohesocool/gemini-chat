@@ -352,6 +352,7 @@
     "unknownError": "检查更新时发生未知错误"
   },
   "models": {
+    "gemini31Pro": "最智能的多模态理解模型，最强大的代理和编程模型",
     "gemini3Pro": "最智能的多模态理解模型，最强大的代理和编程模型",
     "gemini3Flash": "快速智能模型，支持四级思考深度调节",
     "gemini3ProImage": "支持图像生成的 Gemini 3 Pro",

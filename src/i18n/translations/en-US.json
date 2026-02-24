@@ -352,6 +352,7 @@
     "unknownError": "Unknown error occurred while checking for updates"
   },
   "models": {
+    "gemini31Pro": "Most intelligent multimodal model, most powerful agent and coding model",
     "gemini3Pro": "Most intelligent multimodal model, most powerful agent and coding model",
     "gemini3Flash": "Fast intelligent model with four-level thinking depth adjustment",
     "gemini3ProImage": "Gemini 3 Pro with image generation support",
