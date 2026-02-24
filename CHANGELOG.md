@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.17](https://github.com/bohesocool/gemini-chat/compare/v0.2.16...v0.2.17) (2026-02-24)
+
+
+### ✨ 新功能 (Features)
+
+* add gemini-3.1-pro-preview model ([d5f1414](https://github.com/bohesocool/gemini-chat/commit/d5f14140f51cc95a081018ad08b66ef963d1eb95))
+
 ### [0.2.16](https://github.com/bohesocool/gemini-chat/compare/v0.2.15...v0.2.16) (2026-02-24)
 
 
