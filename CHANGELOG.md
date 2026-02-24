@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.15](https://github.com/bohesocool/gemini-chat/compare/v0.2.14...v0.2.15) (2026-02-24)
+
+
+### ✨ 新功能 (Features)
+
+* add AI title generation and related improvements ([04ff6f0](https://github.com/bohesocool/gemini-chat/commit/04ff6f084608b805f1d3aa7e24fa7401fad908c0))
+
 ### [0.2.14](https://github.com/bohesocool/gemini-chat/compare/v0.2.13...v0.2.14) (2026-02-09)
 
 
