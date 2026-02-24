@@ -341,6 +341,16 @@ export interface ModelManagerState {
  * 需求: 1.1, 2.1, 3.1, 3.2, 3.3, 5.4
  */
 export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
+  'gemini-3.1-pro-preview': {
+    supportsThinking: true,
+    supportsImageGeneration: false,
+    supportsMediaResolution: true,
+    maxInputTokens: 1000000,
+    maxOutputTokens: 65536,
+    thinkingConfigType: 'level',
+    supportedThinkingLevels: ['low', 'high'],
+    supportsThoughtSummary: true,
+  },
   'gemini-3-pro-preview': {
     supportsThinking: true,
     supportsImageGeneration: false,
@@ -472,6 +482,7 @@ export function getModelCapabilities(modelId: string): ModelCapabilities {
  */
 export const GEMINI_MODELS: ModelInfo[] = [
   // Gemini 3 系列 - 最智能的模型
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', description: 'models.gemini31Pro' },
   { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', description: 'models.gemini3Pro' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', description: 'models.gemini3Flash' },
   { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image', description: 'models.gemini3ProImage' },
