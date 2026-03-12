@@ -24,39 +24,54 @@ export interface ImageConfigPanelProps {
    * Requirements: 3.1, 3.2, 3.3, 3.4
    */
   supportsImageSize?: boolean;
+  /** 是否支持扩展宽高比（1:4, 4:1, 1:8, 8:1） */
+  supportsExtendedAspectRatios?: boolean;
+  /** 是否支持 512 分辨率 */
+  supports512Resolution?: boolean;
 }
 
 /**
  * 图片宽高比选项配置
  * Requirements: 7.1, 7.3
  */
-const ASPECT_RATIO_OPTIONS: Array<{
-  value: ImageAspectRatio;
-  label: string;
-  icon: string;
-}> = [
-    { value: '1:1', label: '1:1', icon: '□' },
-    { value: '16:9', label: '16:9', icon: '▭' },
-    { value: '9:16', label: '9:16', icon: '▯' },
-    { value: '4:3', label: '4:3', icon: '▭' },
-    { value: '3:4', label: '3:4', icon: '▯' },
-    { value: '3:2', label: '3:2', icon: '▭' },
-    { value: '2:3', label: '2:3', icon: '▯' },
-    { value: '5:4', label: '5:4', icon: '▭' },
-    { value: '4:5', label: '4:5', icon: '▯' },
-    { value: '21:9', label: '21:9', icon: '▭' },
-  ];
+type AspectRatioOption = { value: ImageAspectRatio; label: string; icon: string };
+
+const BASE_ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
+  { value: '1:1', label: '1:1', icon: '□' },
+  { value: '16:9', label: '16:9', icon: '▭' },
+  { value: '9:16', label: '9:16', icon: '▯' },
+  { value: '4:3', label: '4:3', icon: '▭' },
+  { value: '3:4', label: '3:4', icon: '▯' },
+  { value: '3:2', label: '3:2', icon: '▭' },
+  { value: '2:3', label: '2:3', icon: '▯' },
+  { value: '5:4', label: '5:4', icon: '▭' },
+  { value: '4:5', label: '4:5', icon: '▯' },
+  { value: '21:9', label: '21:9', icon: '▭' },
+];
+
+const EXTENDED_ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
+  { value: '4:1', label: '4:1', icon: '▭' },
+  { value: '1:4', label: '1:4', icon: '▯' },
+  { value: '8:1', label: '8:1', icon: '▭' },
+  { value: '1:8', label: '1:8', icon: '▯' },
+];
 
 /**
  * 图片分辨率选项配置（动态获取以支持 i18n）
  */
-function useImageSizeOptions() {
+function useImageSizeOptions(include512: boolean) {
   const { t } = useTranslation();
-  return useMemo(() => [
-    { value: '1K' as ImageSize, label: '1K', description: t('chat.resolutionStandard') },
-    { value: '2K' as ImageSize, label: '2K', description: t('chat.resolutionHD') },
-    { value: '4K' as ImageSize, label: '4K', description: t('chat.resolutionUltraHD') },
-  ], [t]);
+  return useMemo(() => {
+    const options = [
+      { value: '1K' as ImageSize, label: '1K', description: t('chat.resolutionStandard') },
+      { value: '2K' as ImageSize, label: '2K', description: t('chat.resolutionHD') },
+      { value: '4K' as ImageSize, label: '4K', description: t('chat.resolutionUltraHD') },
+    ];
+    if (include512) {
+      options.unshift({ value: '512' as ImageSize, label: '512', description: t('chat.resolution512') });
+    }
+    return options;
+  }, [t, include512]);
 }
 
 /**
@@ -69,9 +84,17 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
   disabled = false,
   variant = 'full',
   supportsImageSize = true,
+  supportsExtendedAspectRatios = false,
+  supports512Resolution = false,
 }) => {
   const { t } = useTranslation();
-  const imageSizeOptions = useImageSizeOptions();
+  const imageSizeOptions = useImageSizeOptions(supports512Resolution);
+  const aspectRatioOptions = useMemo(
+    () => supportsExtendedAspectRatios
+      ? [...BASE_ASPECT_RATIO_OPTIONS, ...EXTENDED_ASPECT_RATIO_OPTIONS]
+      : BASE_ASPECT_RATIO_OPTIONS,
+    [supportsExtendedAspectRatios]
+  );
   // 紧凑模式：使用简单的按钮组
   if (variant === 'compact') {
     return (
@@ -80,7 +103,7 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
         <div className="flex items-center gap-1">
           <span className="text-xs text-[var(--text-secondary)]">{t('chat.aspectRatio')}:</span>
           <div className="flex rounded-md overflow-hidden border border-[var(--border-primary)]">
-            {ASPECT_RATIO_OPTIONS.map((option) => (
+            {aspectRatioOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
@@ -141,7 +164,7 @@ export const ImageConfigPanel: React.FC<ImageConfigPanelProps> = ({
           {t('chat.aspectRatio')}
         </label>
         <div className="flex gap-2">
-          {ASPECT_RATIO_OPTIONS.map((option) => (
+          {aspectRatioOptions.map((option) => (
             <button
               key={option.value}
               type="button"

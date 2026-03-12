@@ -122,6 +122,18 @@ export const modelColors = {
     darkBg: '#9d174d',
     darkText: '#fce7f3',
   },
+  'gemini-3.1-flash-image': {
+    bg: '#fce7f3',
+    text: '#9d174d',
+    darkBg: '#9d174d',
+    darkText: '#fce7f3',
+  },
+  'gemini-3.1-flash-image-preview': {
+    bg: '#fce7f3',
+    text: '#9d174d',
+    darkBg: '#9d174d',
+    darkText: '#fce7f3',
+  },
   // Gemini 2 系列 - 蓝色系
   'gemini-2': {
     bg: '#dbeafe',
@@ -191,6 +203,9 @@ export function getModelColor(modelId: string): ModelColorConfig {
   }
   
   // 前缀匹配
+  if (modelId.startsWith('gemini-3.1-flash-image')) {
+    return modelColors['gemini-3.1-flash-image'];
+  }
   if (modelId.startsWith('gemini-3-pro-image')) {
     return modelColors['gemini-3-pro-image'];
   }

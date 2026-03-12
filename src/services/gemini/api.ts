@@ -32,6 +32,7 @@ interface PipelineConfig {
   signal?: AbortSignal;
   webSearchEnabled?: boolean;
   urlContextEnabled?: boolean;
+  imageSearchEnabled?: boolean;
   // 流式回调（仅流式模式使用）
   onChunk?: (text: string) => void;
   onThoughtChunk?: (thought: string) => void;
@@ -274,6 +275,7 @@ async function executeRequest(config: PipelineConfig): Promise<PipelineResult> {
     signal,
     webSearchEnabled,
     urlContextEnabled,
+    imageSearchEnabled,
     onChunk,
     onThoughtChunk,
   } = config;
@@ -306,7 +308,8 @@ async function executeRequest(config: PipelineConfig): Promise<PipelineResult> {
     advancedConfig,
     apiConfig.model,
     webSearchEnabled,
-    urlContextEnabled
+    urlContextEnabled,
+    imageSearchEnabled
   );
   // 构建请求头（通过 header 传递 API key，避免密钥暴露在 URL 中）
   const headers = {
@@ -591,7 +594,8 @@ export async function sendMessageWithThoughts(
   signal?: AbortSignal,
   webSearchEnabled?: boolean,
   onThoughtChunk?: (thought: string) => void,
-  urlContextEnabled?: boolean
+  urlContextEnabled?: boolean,
+  imageSearchEnabled?: boolean
 ): Promise<SendMessageResult> {
   // 调用统一管道 → 直接返回 PipelineResult（兼容 SendMessageResult）
   return await executeRequest({
@@ -605,6 +609,7 @@ export async function sendMessageWithThoughts(
     signal,
     webSearchEnabled,
     urlContextEnabled,
+    imageSearchEnabled,
     onChunk,
     onThoughtChunk,
   });
@@ -665,7 +670,8 @@ export async function sendMessageNonStreamingWithThoughts(
   systemInstruction?: string,
   advancedConfig?: ModelAdvancedConfig,
   webSearchEnabled?: boolean,
-  urlContextEnabled?: boolean
+  urlContextEnabled?: boolean,
+  imageSearchEnabled?: boolean
 ): Promise<NonStreamingResult> {
   // 调用统一管道 → 直接返回 PipelineResult（兼容 NonStreamingResult）
   return await executeRequest({
@@ -678,6 +684,7 @@ export async function sendMessageNonStreamingWithThoughts(
     stream: false,
     webSearchEnabled,
     urlContextEnabled,
+    imageSearchEnabled,
   });
 }
 

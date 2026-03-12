@@ -440,7 +440,85 @@ export function ChatConfigPanel({
               onChange={handleImageConfigChange}
               variant="full"
               supportsImageSize={supportsImageSize}
+              supportsExtendedAspectRatios={capabilities.supportsExtendedAspectRatios === true}
+              supports512Resolution={capabilities.supports512Resolution === true}
             />
+          )}
+
+          {/* 图片输出模式切换 */}
+          {capabilities.supportsImageOutputModeToggle && (
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  {t('chat.imageOutputMode')}
+                </label>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {(config.advancedConfig?.imageOutputMode ?? 'imageAndText') === 'imageOnly'
+                    ? t('chat.imageOutputModeImageOnly')
+                    : t('chat.imageOutputModeImageAndText')}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={(config.advancedConfig?.imageOutputMode ?? 'imageAndText') === 'imageOnly'}
+                onClick={() => handleAdvancedConfigChange({
+                  imageOutputMode: (config.advancedConfig?.imageOutputMode ?? 'imageAndText') === 'imageOnly'
+                    ? 'imageAndText'
+                    : 'imageOnly',
+                })}
+                className={`
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                  ${(config.advancedConfig?.imageOutputMode ?? 'imageAndText') === 'imageOnly'
+                    ? 'bg-primary-500'
+                    : 'bg-neutral-300 dark:bg-neutral-600'
+                  }
+                `}
+              >
+                <span
+                  className={`
+                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                    ${(config.advancedConfig?.imageOutputMode ?? 'imageAndText') === 'imageOnly' ? 'translate-x-6' : 'translate-x-1'}
+                  `}
+                />
+              </button>
+            </div>
+          )}
+
+          {/* 图片搜索开关 */}
+          {capabilities.supportsImageSearch && (
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  {t('chat.imageSearch')}
+                </label>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {t('chat.imageSearchDesc')}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={config.imageSearchEnabled ?? false}
+                onClick={() => onConfigChange({ imageSearchEnabled: !config.imageSearchEnabled })}
+                className={`
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                  ${config.imageSearchEnabled
+                    ? 'bg-primary-500'
+                    : 'bg-neutral-300 dark:bg-neutral-600'
+                  }
+                `}
+              >
+                <span
+                  className={`
+                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                    ${config.imageSearchEnabled ? 'translate-x-6' : 'translate-x-1'}
+                  `}
+                />
+              </button>
+            </div>
           )}
 
           {/* 媒体分辨率配置 - Requirements: 4.1, 4.3, 4.4, 4.5, 4.6, 4.7 */}

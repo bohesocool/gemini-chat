@@ -205,6 +205,9 @@
     "filesApiEnabled": "Files API enabled",
     "webSearchEnabled": "Web search enabled",
     "urlContextEnabled": "URL context enabled",
+    "enableImageSearch": "Enable Image Search",
+    "disableImageSearch": "Disable Image Search",
+    "imageSearchEnabled": "Image search enabled",
     "remove": "Remove",
     "adjustThinkingHint": "Adjust thinking level to balance speed and quality",
     "imageParamsHint": "Set image generation parameters",
@@ -233,7 +236,13 @@
     "imageResolution": "Image Resolution",
     "resolutionStandard": "Standard",
     "resolutionHD": "HD",
-    "resolutionUltraHD": "Ultra HD"
+    "resolutionUltraHD": "Ultra HD",
+    "resolution512": "Low Res",
+    "imageOutputMode": "Image Output Mode",
+    "imageOutputModeImageOnly": "Image only",
+    "imageOutputModeImageAndText": "Image and text",
+    "imageSearch": "Image Search",
+    "imageSearchDesc": "Enable Google image search for generation"
   },
   "auth": {
     "title": "Please enter password to continue",
@@ -356,6 +365,7 @@
     "gemini3Pro": "Most intelligent multimodal model, most powerful agent and coding model",
     "gemini3Flash": "Fast intelligent model with four-level thinking depth adjustment",
     "gemini3ProImage": "Gemini 3 Pro with image generation support",
+    "gemini31FlashImage": "Gemini 3.1 Flash with image generation and image search",
     "gemini25Pro": "Most advanced thinking model, excels at code, math and STEM reasoning",
     "gemini25Flash": "Best value, ideal for large-scale processing and agent use cases",
     "gemini25FlashLite": "Ultra-fast model optimized for cost efficiency and high throughput",

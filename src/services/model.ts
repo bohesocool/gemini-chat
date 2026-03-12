@@ -86,6 +86,21 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     thinkingConfigType: 'none',
     supportsThoughtSummary: true,
   },
+  'gemini-3.1-flash-image-preview': {
+    supportsThinking: true,
+    supportsMediaResolution: false,
+    supportsImageGeneration: true,
+    supportsImageSize: true,
+    supportsImageOutputModeToggle: true,
+    supportsImageSearch: true,
+    supportsExtendedAspectRatios: true,
+    supports512Resolution: true,
+    maxInputTokens: 65536,
+    maxOutputTokens: 32768,
+    thinkingConfigType: 'level',
+    supportedThinkingLevels: ['minimal', 'high'],
+    supportsThoughtSummary: true,
+  },
   
   // Gemini 2.5 系列 - 支持 thinking budget
   'gemini-2.5-pro': {

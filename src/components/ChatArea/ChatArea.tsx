@@ -188,6 +188,14 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     });
   }, [currentWindowId, currentWindow, updateWindowConfig]);
 
+  // 处理图片搜索切换
+  const handleImageSearchToggle = useCallback(() => {
+    if (!currentWindowId || !currentWindow) return;
+    updateWindowConfig(currentWindowId, {
+      imageSearchEnabled: !currentWindow.config.imageSearchEnabled,
+    });
+  }, [currentWindowId, currentWindow, updateWindowConfig]);
+
   // 获取当前图片配置 - 需求: 5.2
   const currentImageConfig: ImageGenerationConfig = currentWindow?.config.advancedConfig?.imageConfig || DEFAULT_IMAGE_GENERATION_CONFIG;
 
@@ -411,6 +419,8 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
         onWebSearchToggle={handleWebSearchToggle}
         urlContextEnabled={currentWindow.config.urlContextEnabled}
         onUrlContextToggle={handleUrlContextToggle}
+        imageSearchEnabled={currentWindow.config.imageSearchEnabled}
+        onImageSearchToggle={handleImageSearchToggle}
         currentModel={currentWindow.config.model}
         imageConfig={currentImageConfig}
         onImageConfigChange={handleImageConfigChange}

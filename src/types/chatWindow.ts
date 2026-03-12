@@ -31,6 +31,8 @@ export interface ChatWindowConfig {
   webSearchEnabled?: boolean;
   /** 是否启用 URL 上下文（默认 false） */
   urlContextEnabled?: boolean;
+  /** 是否启用图片搜索（默认 false） */
+  imageSearchEnabled?: boolean;
 }
 
 // ============ 子话题 ============
@@ -119,6 +121,7 @@ export const DEFAULT_CHAT_WINDOW_CONFIG: ChatWindowConfig = {
   safetySettings: [],
   webSearchEnabled: false,
   urlContextEnabled: false,
+  imageSearchEnabled: false,
 };
 
 /**
