@@ -13,14 +13,15 @@ import type { ImageAspectRatio, ImageSize, ImageGenerationConfig } from '../type
  */
 export const SUPPORTED_ASPECT_RATIOS = [
   '1:1', '9:16', '16:9', '3:4', '4:3',
-  '3:2', '2:3', '5:4', '4:5', '21:9'
+  '3:2', '2:3', '5:4', '4:5', '21:9',
+  '1:4', '4:1', '1:8', '8:1'
 ] as const;
 
 /**
  * 支持的分辨率列表
  * Requirements: 2.1
  */
-export const SUPPORTED_IMAGE_SIZES = ['1K', '2K', '4K'] as const;
+export const SUPPORTED_IMAGE_SIZES = ['512', '1K', '2K', '4K'] as const;
 
 /**
  * 提示词解析结果

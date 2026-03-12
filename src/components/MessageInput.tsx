@@ -53,6 +53,10 @@ interface MessageInputProps {
   urlContextEnabled?: boolean;
   /** 切换 URL 上下文回调 - 需求: 1.2 */
   onUrlContextToggle?: () => void;
+  /** 是否启用图片搜索 */
+  imageSearchEnabled?: boolean;
+  /** 切换图片搜索回调 */
+  onImageSearchToggle?: () => void;
   /** 当前模型 ID - 用于判断是否显示图片配置 - 需求: 1.1, 1.2 */
   currentModel?: string;
   /** 当前图片配置 - 需求: 1.1, 1.2 */
@@ -157,6 +161,8 @@ export function MessageInput({
   onWebSearchToggle,
   urlContextEnabled = false,
   onUrlContextToggle,
+  imageSearchEnabled = false,
+  onImageSearchToggle,
   currentModel,
   imageConfig,
   onImageConfigChange,
@@ -862,6 +868,19 @@ export function MessageInput({
             <LinkIcon className="w-4 h-4" />
           </ToolbarButton>
 
+          {/* 图片搜索按钮 */}
+          {modelCapabilities?.supportsImageSearch && (
+            <ToolbarButton
+              onClick={() => onImageSearchToggle?.()}
+              disabled={isDisabled}
+              title={imageSearchEnabled ? t('chat.disableImageSearch') : t('chat.enableImageSearch')}
+              active={imageSearchEnabled}
+              reducedMotion={reducedMotion}
+            >
+              <ImageSearchIcon className="w-4 h-4" />
+            </ToolbarButton>
+          )}
+
           {/* 图片配置工具栏 - 需求: 2.1, 3.1 */}
           {showImageConfig && imageConfig && onImageConfigChange && (
             <>
@@ -872,6 +891,8 @@ export function MessageInput({
                 onChange={onImageConfigChange}
                 disabled={isDisabled}
                 supportsImageSize={supportsImageSize}
+                supportsExtendedAspectRatios={modelCapabilities?.supportsExtendedAspectRatios === true}
+                supports512Resolution={modelCapabilities?.supports512Resolution === true}
               />
             </>
           )}
@@ -917,6 +938,13 @@ export function MessageInput({
           {urlContextEnabled && (
             <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
               {t('chat.urlContextEnabled')}
+            </span>
+          )}
+
+          {/* 图片搜索状态指示 */}
+          {imageSearchEnabled && (
+            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
+              {t('chat.imageSearchEnabled')}
             </span>
           )}
 
@@ -1227,6 +1255,17 @@ function LinkIcon({ className }: { className?: string }) {
         strokeWidth={2}
         d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
       />
+    </svg>
+  );
+}
+
+function ImageSearchIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
     </svg>
   );
 }

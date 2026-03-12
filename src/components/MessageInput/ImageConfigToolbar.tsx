@@ -22,13 +22,17 @@ export interface ImageConfigToolbarProps {
   disabled?: boolean;
   /** 是否支持图片分辨率设置 - Requirements: 3.1, 3.4 */
   supportsImageSize?: boolean;
+  /** 是否支持扩展宽高比（1:4, 4:1, 1:8, 8:1） */
+  supportsExtendedAspectRatios?: boolean;
+  /** 是否支持 512 分辨率 */
+  supports512Resolution?: boolean;
 }
 
 /**
  * 宽高比选项列表
  * Requirements: 2.2
  */
-const ASPECT_RATIO_OPTIONS: DropdownOption<ImageAspectRatio>[] = [
+const BASE_ASPECT_RATIO_OPTIONS: DropdownOption<ImageAspectRatio>[] = [
   { value: '1:1', label: '1:1' },
   { value: '16:9', label: '16:9' },
   { value: '9:16', label: '9:16' },
@@ -41,17 +45,30 @@ const ASPECT_RATIO_OPTIONS: DropdownOption<ImageAspectRatio>[] = [
   { value: '21:9', label: '21:9' },
 ];
 
+const EXTENDED_ASPECT_RATIO_OPTIONS: DropdownOption<ImageAspectRatio>[] = [
+  { value: '4:1', label: '4:1' },
+  { value: '1:4', label: '1:4' },
+  { value: '8:1', label: '8:1' },
+  { value: '1:8', label: '1:8' },
+];
+
 /**
  * 分辨率选项列表（动态获取以支持 i18n）
  * Requirements: 3.2
  */
-function useImageSizeOptions(): DropdownOption<ImageSize>[] {
+function useImageSizeOptions(include512: boolean): DropdownOption<ImageSize>[] {
   const { t } = useTranslation();
-  return useMemo(() => [
-    { value: '1K', label: '1K', description: t('chat.resolutionStandard') },
-    { value: '2K', label: '2K', description: t('chat.resolutionHD') },
-    { value: '4K', label: '4K', description: t('chat.resolutionUltraHD') },
-  ], [t]);
+  return useMemo(() => {
+    const options: DropdownOption<ImageSize>[] = [
+      { value: '1K', label: '1K', description: t('chat.resolutionStandard') },
+      { value: '2K', label: '2K', description: t('chat.resolutionHD') },
+      { value: '4K', label: '4K', description: t('chat.resolutionUltraHD') },
+    ];
+    if (include512) {
+      options.unshift({ value: '512', label: '512', description: t('chat.resolution512') });
+    }
+    return options;
+  }, [t, include512]);
 }
 
 /**
@@ -69,9 +86,17 @@ export function ImageConfigToolbar({
   onChange,
   disabled = false,
   supportsImageSize = true,
+  supportsExtendedAspectRatios = false,
+  supports512Resolution = false,
 }: ImageConfigToolbarProps) {
   const { t } = useTranslation();
-  const imageSizeOptions = useImageSizeOptions();
+  const imageSizeOptions = useImageSizeOptions(supports512Resolution);
+  const aspectRatioOptions = useMemo(
+    () => supportsExtendedAspectRatios
+      ? [...BASE_ASPECT_RATIO_OPTIONS, ...EXTENDED_ASPECT_RATIO_OPTIONS]
+      : BASE_ASPECT_RATIO_OPTIONS,
+    [supportsExtendedAspectRatios]
+  );
   /**
    * 处理宽高比选择
    * Requirements: 2.3, 2.4, 4.1, 4.3
@@ -99,7 +124,7 @@ export function ImageConfigToolbar({
       {/* 宽高比选择按钮 - Requirements: 2.2, 2.3, 2.4, 4.1 */}
       <DropdownButton
         value={config.aspectRatio}
-        options={ASPECT_RATIO_OPTIONS}
+        options={aspectRatioOptions}
         onSelect={handleAspectRatioChange}
         label={t('chat.aspectRatio')}
         disabled={disabled}

@@ -103,7 +103,7 @@ export function getShortModelName(modelId: string): string {
       return `${version} Pro Img`;
     }
     if (type === 'flash') {
-      return `${version} Img`;
+      return `${version} Flash Img`;
     }
     return `${version} Img`;
   }

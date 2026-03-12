@@ -205,6 +205,9 @@
     "filesApiEnabled": "Files API 已开启",
     "webSearchEnabled": "联网搜索已开启",
     "urlContextEnabled": "URL 上下文已开启",
+    "enableImageSearch": "开启图片搜索",
+    "disableImageSearch": "关闭图片搜索",
+    "imageSearchEnabled": "图片搜索已开启",
     "remove": "删除",
     "adjustThinkingHint": "调整思考程度以平衡速度和质量",
     "imageParamsHint": "设置图片生成参数",
@@ -233,7 +236,13 @@
     "imageResolution": "图片分辨率",
     "resolutionStandard": "标准",
     "resolutionHD": "高清",
-    "resolutionUltraHD": "超清"
+    "resolutionUltraHD": "超清",
+    "resolution512": "低分辨率",
+    "imageOutputMode": "图片输出模式",
+    "imageOutputModeImageOnly": "仅输出图片",
+    "imageOutputModeImageAndText": "输出图片与文字",
+    "imageSearch": "图片搜索",
+    "imageSearchDesc": "启用 Google 图片搜索辅助生成"
   },
   "auth": {
     "title": "请输入密码以继续",
@@ -356,6 +365,7 @@
     "gemini3Pro": "最智能的多模态理解模型，最强大的代理和编程模型",
     "gemini3Flash": "快速智能模型，支持四级思考深度调节",
     "gemini3ProImage": "支持图像生成的 Gemini 3 Pro",
+    "gemini31FlashImage": "支持图像生成的 Gemini 3.1 Flash，支持图片搜索",
     "gemini25Pro": "最先进的思考模型，擅长代码、数学和 STEM 推理",
     "gemini25Flash": "性价比最佳，适合大规模处理和代理用例",
     "gemini25FlashLite": "超快速模型，优化成本效率和高吞吐量",

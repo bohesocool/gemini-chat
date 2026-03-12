@@ -63,6 +63,17 @@ export interface GoogleSearchTool {
 }
 
 /**
+ * Google 图片搜索工具配置
+ */
+export interface GoogleImageSearchTool {
+  googleSearch: {
+    searchTypes: {
+      imageSearch: Record<string, never>;
+    };
+  };
+}
+
+/**
  * URL 上下文工具配置
  * 需求: URL 上下文功能 2.1
  */
@@ -75,7 +86,7 @@ export interface UrlContextTool {
  * Gemini API 工具配置
  * 需求: 联网搜索功能, URL 上下文功能
  */
-export type GeminiTool = GoogleSearchTool | UrlContextTool;
+export type GeminiTool = GoogleSearchTool | GoogleImageSearchTool | UrlContextTool;
 
 /**
  * Gemini API 请求体

@@ -160,6 +160,7 @@ export async function executeGeminiCall(
     systemInstruction,
     webSearchEnabled,
     urlContextEnabled,
+    imageSearchEnabled,
   } = window.config;
 
   if (streamingEnabled) {
@@ -183,7 +184,8 @@ export async function executeGeminiCall(
         fullThought += thoughtChunk;
         set({ streamingThought: fullThought });
       },
-      urlContextEnabled
+      urlContextEnabled,
+      imageSearchEnabled
     );
 
     return result;
@@ -196,7 +198,8 @@ export async function executeGeminiCall(
       systemInstruction,
       effectiveAdvancedConfig,
       webSearchEnabled,
-      urlContextEnabled
+      urlContextEnabled,
+      imageSearchEnabled
     );
 
     return result;

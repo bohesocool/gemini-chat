@@ -157,6 +157,7 @@ export function buildRequestUrl(config: ApiConfig, stream: boolean = true): stri
  * @param modelId - 模型 ID（可选，用于确定思考配置类型）
  * @param webSearchEnabled - 是否启用联网搜索（可选）
  * @param urlContextEnabled - 是否启用 URL 上下文（可选）
+ * @param imageSearchEnabled - 是否启用图片搜索（可选）
  * @returns 符合 Gemini API 格式的请求体
  */
 export function buildRequestBody(
@@ -167,7 +168,8 @@ export function buildRequestBody(
   advancedConfig?: ModelAdvancedConfig,
   modelId?: string,
   webSearchEnabled?: boolean,
-  urlContextEnabled?: boolean
+  urlContextEnabled?: boolean,
+  imageSearchEnabled?: boolean
 ): GeminiRequest {
   const request: GeminiRequest = {
     contents,
@@ -238,12 +240,14 @@ export function buildRequestBody(
   if (modelId) {
     const capabilities = getModelCapabilities(modelId);
     if (capabilities.supportsImageGeneration) {
-      // 确保 generationConfig 存在
       if (!request.generationConfig) {
         request.generationConfig = {};
       }
-      // 添加 responseModalities 以支持文本和图片输出
-      request.generationConfig.responseModalities = ['TEXT', 'IMAGE'];
+      if (capabilities.supportsImageOutputModeToggle && advancedConfig?.imageOutputMode === 'imageOnly') {
+        request.generationConfig.responseModalities = ['IMAGE'];
+      } else {
+        request.generationConfig.responseModalities = ['TEXT', 'IMAGE'];
+      }
     }
   }
 
@@ -281,12 +285,16 @@ export function buildRequestBody(
     request.generationConfig.mediaResolution = advancedConfig.mediaResolution;
   }
 
-  // 添加联网搜索和 URL 上下文工具配置
+  // 添加联网搜索、图片搜索和 URL 上下文工具配置
   // 需求: 联网搜索功能, URL 上下文功能 2.1, 2.2, 2.3
   const tools: GeminiTool[] = [];
   
   if (webSearchEnabled) {
     tools.push({ googleSearch: {} });
+  }
+  
+  if (imageSearchEnabled) {
+    tools.push({ googleSearch: { searchTypes: { imageSearch: {} } } });
   }
   
   if (urlContextEnabled) {

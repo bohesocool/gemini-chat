@@ -231,13 +231,13 @@ export type MediaResolution =
  * 图片宽高比
  * 需求: 2.1, 2.2, 7.2
  */
-export type ImageAspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3' | '5:4' | '4:5' | '21:9';
+export type ImageAspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3' | '5:4' | '4:5' | '21:9' | '1:4' | '4:1' | '1:8' | '8:1';
 
 /**
  * 图片分辨率
  * 需求: 2.3, 2.4
  */
-export type ImageSize = '1K' | '2K' | '4K';
+export type ImageSize = '512' | '1K' | '2K' | '4K';
 
 /**
  * 图片生成配置
@@ -285,6 +285,14 @@ export interface ModelCapabilities {
   supportsThoughtSummary?: boolean;
   /** 是否支持 URL 上下文工具 - 需求: 5.1, 5.3 */
   supportsUrlContext?: boolean;
+  /** 是否支持输出模式切换（仅图片 / 图片+文字） */
+  supportsImageOutputModeToggle?: boolean;
+  /** 是否支持图片搜索工具 */
+  supportsImageSearch?: boolean;
+  /** 是否支持扩展宽高比（1:4, 4:1, 1:8, 8:1） */
+  supportsExtendedAspectRatios?: boolean;
+  /** 是否支持 512 分辨率 */
+  supports512Resolution?: boolean;
 }
 
 /**
@@ -302,6 +310,8 @@ export interface ModelAdvancedConfig {
   thinkingBudget?: number;
   /** 是否显示思维链 - 需求: 4.2 */
   includeThoughts?: boolean;
+  /** 图片输出模式（仅支持 supportsImageOutputModeToggle 的模型） */
+  imageOutputMode?: 'imageAndText' | 'imageOnly';
 }
 
 /**
@@ -382,6 +392,21 @@ export const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     maxOutputTokens: 32768,  // 需求: 2.2
     // 思考配置 - 需求: 5.4
     thinkingConfigType: 'none',
+    supportsThoughtSummary: true,
+  },
+  'gemini-3.1-flash-image-preview': {
+    supportsThinking: true,
+    supportsImageGeneration: true,
+    supportsMediaResolution: false,
+    supportsImageSize: true,
+    supportsImageOutputModeToggle: true,
+    supportsImageSearch: true,
+    supportsExtendedAspectRatios: true,
+    supports512Resolution: true,
+    maxInputTokens: 65536,
+    maxOutputTokens: 32768,
+    thinkingConfigType: 'level',
+    supportedThinkingLevels: ['minimal', 'high'],
     supportsThoughtSummary: true,
   },
   'gemini-2.5-pro': {
@@ -486,6 +511,7 @@ export const GEMINI_MODELS: ModelInfo[] = [
   { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', description: 'models.gemini3Pro' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', description: 'models.gemini3Flash' },
   { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image', description: 'models.gemini3ProImage' },
+  { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash Image', description: 'models.gemini31FlashImage' },
 
   // Gemini 2.5 Pro 系列 - 高级思考模型
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'models.gemini25Pro' },
