@@ -38,15 +38,14 @@ RUN npm run build
 FROM node:20-alpine AS production
 
 RUN apk add --no-cache nginx && \
-    mkdir -p /var/cache/nginx /var/log/nginx /run/nginx && \
-    sed -i 's|/var/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf
+    mkdir -p /var/cache/nginx /var/log/nginx /run/nginx
 
 RUN addgroup -g 1001 -S appuser && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G appuser appuser
 
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
 WORKDIR /app
 
