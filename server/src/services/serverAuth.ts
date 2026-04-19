@@ -70,8 +70,12 @@ function getJwtSecret(): string {
 export function verifyPasswordInput(input: { password?: string; passwordHash?: string }): boolean {
   const target = getAuthPasswordHash();
   let candidate: string | undefined;
-  if (typeof input.passwordHash === 'string' && input.passwordHash.length > 0) {
-    candidate = input.passwordHash.toLowerCase();
+  const hashCandidate =
+    typeof input.passwordHash === 'string' && /^[a-f0-9]{64}$/i.test(input.passwordHash)
+      ? input.passwordHash.toLowerCase()
+      : undefined;
+  if (hashCandidate) {
+    candidate = hashCandidate;
   } else if (typeof input.password === 'string' && input.password.length > 0) {
     candidate = sha256Hex(input.password);
   }
