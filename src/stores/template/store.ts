@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import type { TemplateStore, CreateTemplateInput, UpdateTemplateInput, PromptTemplate } from './types';
 import { DEFAULT_TEMPLATES, generateTemplateId } from './defaults';
-import { saveTemplates, loadTemplates as loadTemplatesFromStorage } from '../../services/templateStorage';
+import { saveTemplates, loadTemplates as loadTemplatesFromStorage } from '../../services/templateStorageProxy';
 import { storeLogger } from '../../services/logger';
 
 /**

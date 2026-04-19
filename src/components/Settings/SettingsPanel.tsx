@@ -16,7 +16,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 // 类型定义
 // ============================================
 
-export type SettingsTabId = 'appearance' | 'api' | 'model' | 'generation' | 'system' | 'safety' | 'data' | 'about';
+export type SettingsTabId = 'appearance' | 'api' | 'model' | 'generation' | 'system' | 'safety' | 'data' | 'sync' | 'about';
 
 export interface SettingsTab {
   /** 标签 ID */

@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import type { BookmarkStore, CreateBookmarkInput, Bookmark } from './types';
-import { saveBookmarks, loadBookmarks as loadBookmarksFromStorage } from '../../services/bookmarkStorage';
+import { saveBookmarks, loadBookmarks as loadBookmarksFromStorage } from '../../services/bookmarkStorageProxy';
 import { storeLogger } from '../../services/logger';
 
 /**

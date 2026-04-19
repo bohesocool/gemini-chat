@@ -5,11 +5,13 @@
  * Requirements: 3.5, 3.6
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSettingsStore } from '../../stores/settings';
 import { useChatWindowStore } from '../../stores/chatWindow';
 import { useModelStore } from '../../stores/model';
-import { exportAllData, importData } from '../../services/storage';
+import { exportAllData, importData } from '../../services/storageProxy';
+import { isApiMode } from '../../services/storageAdapter';
+import { getSyncStatus, triggerSyncExport, triggerSyncImport, type SyncStatus } from '../../services/apiClient';
 import { ModelList } from '../ModelList';
 import { ModelEditor } from '../ModelEditor';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -954,6 +956,157 @@ export function DataManagementSection() {
           <strong>{t('common.note')}：</strong>{t('settings.importWarning')}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// WebDAV 同步设置
+// ============================================
+
+export function SyncSection() {
+  const { t } = useTranslation();
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [message, setMessage] = useState('');
+  const showSync = isApiMode();
+
+  const refreshStatus = useCallback(async () => {
+    try {
+      const status = await getSyncStatus();
+      setSyncStatus(status);
+    } catch {
+      setSyncStatus(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showSync) refreshStatus();
+  }, [showSync, refreshStatus]);
+
+  if (!showSync) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.syncTitle') || '数据同步'}</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            {t('settings.syncDisabledDesc') || '数据库模式未启用。启用后可使用 WebDAV 同步功能。'}
+          </p>
+        </div>
+        <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('settings.syncDbRequired') || '请在 Docker 环境变量中设置 DB_ENABLED=true 以启用数据库和同步功能。'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleExportSync = async () => {
+    setSyncing(true);
+    setMessage('');
+    try {
+      await triggerSyncExport();
+      setMessage(t('settings.syncExportSuccess') || '已导出到 WebDAV');
+      await refreshStatus();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : '同步失败');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const handleImportSync = async () => {
+    setSyncing(true);
+    setMessage('');
+    try {
+      await triggerSyncImport();
+      setMessage(t('settings.syncImportSuccess') || '已从 WebDAV 导入');
+      await refreshStatus();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : '同步失败');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const lastSync = syncStatus?.lastSyncAt
+    ? new Date(syncStatus.lastSyncAt).toLocaleString()
+    : '-';
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">{t('settings.syncTitle') || '数据同步'}</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          {t('settings.syncDesc') || '通过 WebDAV 在多设备间同步数据。'}
+        </p>
+      </div>
+
+      {/* 状态 */}
+      <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-600 dark:text-slate-300">
+            {t('settings.syncStatus') || '同步状态'}
+          </span>
+          <span className={`text-sm font-medium ${
+            syncStatus?.lastSyncStatus === 'success' ? 'text-green-600 dark:text-green-400' :
+            syncStatus?.lastSyncStatus === 'error' ? 'text-red-600 dark:text-red-400' :
+            'text-slate-500 dark:text-slate-400'
+          }`}>
+            {syncStatus?.webdavEnabled
+              ? (syncStatus.lastSyncStatus === 'success' ? '✓ ' + (t('settings.syncOk') || '正常') :
+                 syncStatus.lastSyncStatus === 'error' ? '✗ ' + (t('settings.syncError') || '错误') :
+                 t('settings.syncWaiting') || '等待中')
+              : t('settings.syncWebdavOff') || 'WebDAV 未启用'}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-600 dark:text-slate-300">
+            {t('settings.syncLastTime') || '上次同步'}
+          </span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">{lastSync}</span>
+        </div>
+        {syncStatus?.lastError && (
+          <p className="text-xs text-red-500 dark:text-red-400 mt-1">{syncStatus.lastError}</p>
+        )}
+        {syncStatus?.webdavEnabled && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-600 dark:text-slate-300">
+              {t('settings.syncInterval') || '同步间隔'}
+            </span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{syncStatus.syncInterval}s</span>
+          </div>
+        )}
+      </div>
+
+      {/* 操作按钮 */}
+      {syncStatus?.webdavEnabled && (
+        <div className="flex gap-3">
+          <button
+            onClick={handleExportSync}
+            disabled={syncing}
+            className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors text-sm"
+          >
+            {syncing ? (t('settings.syncing') || '同步中...') : (t('settings.syncExportNow') || '立即备份到 WebDAV')}
+          </button>
+          <button
+            onClick={handleImportSync}
+            disabled={syncing}
+            className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-50 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors text-sm"
+          >
+            {t('settings.syncImportNow') || '从 WebDAV 恢复'}
+          </button>
+        </div>
+      )}
+
+      {message && (
+        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm">
+          {message}
+        </div>
+      )}
     </div>
   );
 }

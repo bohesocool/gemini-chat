@@ -56,6 +56,7 @@ export function getSettingsTabs(t: TranslateFunction): SettingsTab[] {
     { id: 'system', label: t('settings.systemInstruction'), icon: <MessageIcon /> },
     { id: 'safety', label: t('settings.safety'), icon: <ShieldIcon /> },
     { id: 'data', label: t('settings.dataManagement'), icon: <DatabaseIcon /> },
+    { id: 'sync', label: t('settings.syncTitle') || '数据同步', icon: <CloudSyncIcon /> },
     { id: 'about', label: t('settings.about'), icon: <InfoIcon /> },
   ];
 }
@@ -72,6 +73,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
   { id: 'system', label: '系统指令', icon: <MessageIcon /> },
   { id: 'safety', label: '安全设置', icon: <ShieldIcon /> },
   { id: 'data', label: '数据管理', icon: <DatabaseIcon /> },
+  { id: 'sync', label: '数据同步', icon: <CloudSyncIcon /> },
   { id: 'about', label: '关于', icon: <InfoIcon /> },
 ];
 
@@ -460,6 +462,15 @@ function EyeIcon() {
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
+}
+
+function CloudSyncIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
     </svg>
   );
 }

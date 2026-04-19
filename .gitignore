@@ -55,3 +55,8 @@ coverage/
 
 # Kiro
 .kiro/
+
+# Server
+server/node_modules/
+server/dist/
+server/data/

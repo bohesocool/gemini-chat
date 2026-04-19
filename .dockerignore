@@ -3,7 +3,11 @@ dist
 .git
 .gitignore
 *.md
+!server/**
 .kiro
 .vscode
 .env
-.env.*
+.env.local
+.env.*.local
+server/node_modules
+server/dist

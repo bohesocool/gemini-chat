@@ -23,7 +23,7 @@ import {
   type ImageExtractionResult,
 } from '../../services/gemini';
 import { useModelStore } from '../model';
-import { saveChatWindow } from '../../services/storage';
+import { saveChatWindow } from '../../services/storageProxy';
 import { storeLogger } from '../../services/logger';
 import type { SetState, GetState } from './types';
 
