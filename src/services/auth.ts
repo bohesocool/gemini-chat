@@ -60,66 +60,18 @@ function simpleHashRound(str: string): number {
 }
 
 /**
- * 简单的密码哈希函数
- * 使用 SHA-256 算法对密码进行哈希
- * 当 crypto.subtle 不可用时（非 HTTPS 环境），使用简单的 JavaScript 哈希
- * 注意：这是一个简化实现，生产环境应使用更安全的方案如 bcrypt
+ * 密码哈希函数
+ * 始终返回标准 SHA-256（64 位十六进制），保证和后端一致。
+ * - 优先使用 crypto.subtle（HTTPS / localhost 下可用）
+ * - 回退到纯 JavaScript 实现的 SHA-256（HTTP 公网 IP 场景）
+ *
+ * 注意：历史版本在非 HTTPS 环境下曾经降级为非标准的 simpleHash，
+ * 这会导致与后端 SHA-256 哈希不匹配，登录 401。现已统一为 SHA-256。
  * 
  * @param password - 原始密码
- * @returns 哈希后的密码字符串
+ * @returns 64 位十六进制的 SHA-256 哈希
  */
 export async function hashPassword(password: string): Promise<string> {
-  // 检查 crypto.subtle 是否可用
-  if (!isCryptoSubtleAvailable()) {
-    logger.warn('crypto.subtle 不可用（非安全上下文），使用简单哈希');
-    return simpleHash(password);
-  }
-  
-  try {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-  } catch (error) {
-    // 如果 crypto.subtle 调用失败，回退到简单哈希
-    logger.warn('crypto.subtle 调用失败，回退到简单哈希', error);
-    return simpleHash(password);
-  }
-}
-
-/**
- * 验证密码是否匹配
- * 支持两种哈希格式：
- * 1. SHA-256（64位十六进制，Docker 环境）
- * 2. simpleHash（16位十六进制，非 HTTPS 环境）
- * 
- * @param inputPassword - 用户输入的密码
- * @param storedHash - 存储的密码哈希
- * @returns 密码是否匹配
- */
-export async function verifyPassword(inputPassword: string, storedHash: string): Promise<boolean> {
-  // 检查存储的哈希是否为 SHA-256 格式（64位十六进制）
-  const isSha256 = /^[a-f0-9]{64}$/i.test(storedHash);
-  
-  if (isSha256) {
-    // Docker 环境：使用 SHA-256 验证
-    const inputHash = await hashPasswordSha256(inputPassword);
-    return inputHash === storedHash;
-  } else {
-    // 本地环境：使用当前环境的哈希方法
-    const inputHash = await hashPassword(inputPassword);
-    return inputHash === storedHash;
-  }
-}
-
-/**
- * 强制使用 SHA-256 计算哈希
- * 用于 Docker 环境下的密码验证
- */
-async function hashPasswordSha256(password: string): Promise<string> {
-  // 优先使用 crypto.subtle
   if (isCryptoSubtleAvailable()) {
     try {
       const encoder = new TextEncoder();
@@ -128,12 +80,33 @@ async function hashPasswordSha256(password: string): Promise<string> {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (error) {
-      logger.warn('crypto.subtle SHA-256 失败，使用 JS 实现', error);
+      logger.warn('crypto.subtle 调用失败，使用纯 JS SHA-256', error);
     }
   }
-  
-  // 回退：使用纯 JavaScript 实现的 SHA-256
   return jsSha256(password);
+}
+
+/**
+ * 验证密码是否匹配
+ * 支持两种已存储的哈希格式：
+ * 1. SHA-256（64 位十六进制，当前版本 / Docker 环境）
+ * 2. 历史 simpleHash（16 位十六进制，仅保留以兼容本地旧 localStorage）
+ *
+ * @param inputPassword - 用户输入的密码
+ * @param storedHash - 存储的密码哈希
+ * @returns 密码是否匹配
+ */
+export async function verifyPassword(inputPassword: string, storedHash: string): Promise<boolean> {
+  const isSha256 = /^[a-f0-9]{64}$/i.test(storedHash);
+
+  if (isSha256) {
+    const inputHash = await hashPassword(inputPassword);
+    return inputHash === storedHash;
+  }
+
+  // 兼容老版本 localStorage 里遗留的 simpleHash（16 位）
+  const legacyHash = simpleHash(inputPassword);
+  return legacyHash === storedHash;
 }
 
 /**
