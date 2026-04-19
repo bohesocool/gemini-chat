@@ -24,7 +24,7 @@ WEBDAV_FLAG="${WEBDAV_ENABLED:-false}"
 sed -i "s|__DB_ENABLED__|$DB_FLAG|g" "$CONFIG_FILE"
 sed -i "s|__WEBDAV_ENABLED__|$WEBDAV_FLAG|g" "$CONFIG_FILE"
 
-if [ "$DB_ENABLED" = "true" ]; then
+if [ "$DB_FLAG" = "true" ]; then
   echo "=== Starting Node.js server (database mode) ==="
 
   DB_PROVIDER="${DB_TYPE:-sqlite}"
