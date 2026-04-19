@@ -166,13 +166,19 @@ docker run --rm -v "$PWD":/app -w /app node:20-alpine \
 ```bash
 cd /opt/gemini-chat-test
 cp .env.example .env
-# 编辑 .env：只保留这一行即可
-sed -i 's/^.*VITE_AUTH_PASSWORD=.*/VITE_AUTH_PASSWORD=123456/' .env
-grep -v '^#' .env | grep -v '^$'
-# 输出应该只有：VITE_AUTH_PASSWORD=123456
+
+# 只需要设置登录密码，其他项保持默认（DB_ENABLED=false、WEBDAV_ENABLED=false）
+sed -i 's/^VITE_AUTH_PASSWORD=.*/VITE_AUTH_PASSWORD=123456/' .env
+
+# 关键项检查
+grep -E '^(VITE_AUTH_PASSWORD|DB_ENABLED|WEBDAV_ENABLED)=' .env
+# 预期：
+# VITE_AUTH_PASSWORD=123456
+# DB_ENABLED=false
+# WEBDAV_ENABLED=false
 ```
 
-`docker-compose.yml` 保持默认（数据库、WebDAV 相关环境变量全部注释）。
+> 说明：`.env` 是 docker-compose 的唯一配置来源，`docker-compose.yml` 本身不需要改动。
 
 ### 1.2 启动
 
@@ -226,23 +232,35 @@ openssl rand -hex 32
 # 例：复制这个 64 位 16 进制字符串，下面会用到
 ```
 
-### 2.2 修改 `docker-compose.yml`
+### 2.2 修改 `.env`
 
-把 `environment` 节里这几行取消注释并填值：
+把 `.env` 里这几个变量调成：
 
-```yaml
-    environment:
-      - VITE_AUTH_PASSWORD=${VITE_AUTH_PASSWORD:-}
+```bash
+VITE_AUTH_PASSWORD=123456
+NODE_ENV=production
 
-      - DB_ENABLED=true
-      - DB_TYPE=sqlite
-      - SQL_DSN=file:/app/data/gemini-chat.db
+DB_ENABLED=true
+DB_TYPE=sqlite
+SQL_DSN=file:/app/data/gemini-chat.db
 
-      - JWT_SECRET=把刚才 openssl 生成的字符串贴这里
-      - NODE_ENV=production
+# 粘贴上一步 openssl rand -hex 32 生成的 64 位字符串
+JWT_SECRET=把刚才 openssl 生成的字符串贴这里
 ```
 
-> **不要** 把 JWT_SECRET 直接写死在仓库里。测试完记得换。
+可以用 sed 批量改：
+
+```bash
+JWT=$(openssl rand -hex 32)
+sed -i "s/^DB_ENABLED=.*/DB_ENABLED=true/" .env
+sed -i "s|^SQL_DSN=.*|SQL_DSN=file:/app/data/gemini-chat.db|" .env
+sed -i "s/^JWT_SECRET=.*/JWT_SECRET=${JWT}/" .env
+
+# 验证
+grep -E '^(DB_ENABLED|DB_TYPE|SQL_DSN|JWT_SECRET)=' .env
+```
+
+> **不要** 把 `.env` 提交到 git。仓库里的 `.gitignore` 已默认忽略它；生产环境的 `JWT_SECRET` 用一次性随机值。
 
 ### 2.3 重新启动 & 观察启动日志
 
@@ -373,56 +391,45 @@ docker compose up -d
 
 **目标**：验证多 provider 方案在运行时能切到 MySQL，构建期预生成的 Prisma client 被正确装载。
 
-### 3.1 修改 `docker-compose.yml`
+### 3.1 修改 `.env`
 
-把 MySQL 服务块整块取消注释，并把 `gemini-chat` 的 `DB_TYPE` 改成 mysql：
-
-```yaml
-services:
-  gemini-chat:
-    # ...
-    environment:
-      - VITE_AUTH_PASSWORD=${VITE_AUTH_PASSWORD:-}
-      - DB_ENABLED=true
-      - DB_TYPE=mysql
-      - SQL_DSN=mysql://root:123456@mysql:3306/gemini-chat
-      - JWT_SECRET=你上一轮生成的那个
-      - NODE_ENV=production
-    depends_on:
-      mysql:
-        condition: service_healthy
-
-  mysql:
-    image: mysql:8.0
-    container_name: gemini-chat-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: "123456"
-      MYSQL_DATABASE: gemini-chat
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_unicode_ci
-    ports:
-      - "3306:3306"       # 测试期开，测试完删掉这行
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  chat_data:
-  mysql_data:
-```
-
-### 3.2 彻底清空旧 SQLite 数据，重启
+只需要把数据库相关两行改成 MySQL：
 
 ```bash
+DB_TYPE=mysql
+SQL_DSN=mysql://root:123456@mysql:3306/gemini-chat
+
+# 其余保持场景 B 设置的值：DB_ENABLED=true、JWT_SECRET=...、NODE_ENV=production
+```
+
+用 sed 批量改：
+
+```bash
+sed -i "s/^DB_TYPE=.*/DB_TYPE=mysql/" .env
+sed -i "s|^SQL_DSN=.*|SQL_DSN=mysql://root:123456@mysql:3306/gemini-chat|" .env
+
+grep -E '^(DB_ENABLED|DB_TYPE|SQL_DSN)=' .env
+```
+
+> MySQL 容器的 root 密码、数据库名默认是 `.env` 里的 `MYSQL_ROOT_PASSWORD=123456` / `MYSQL_DATABASE=gemini-chat`，如需修改，两边（`SQL_DSN` 与 `MYSQL_*`）都要改。
+> 服务名 `mysql` 来自 `docker-compose.yml` 里内置的 MySQL 服务，默认不启动，需要在启动命令里加 `--profile mysql` 才会起来。
+
+### 3.2 彻底清空旧 SQLite 数据，重启（启用 mysql profile）
+
+```bash
+# 方式 1（推荐）：设一次 COMPOSE_PROFILES，本 session 之后所有 docker compose 命令都自动带
+export COMPOSE_PROFILES=mysql
 docker compose down -v
 docker compose up --build -d
 docker compose logs -f gemini-chat
+
+# 方式 2：每条 docker compose 命令显式加 --profile mysql
+# docker compose --profile mysql down -v
+# docker compose --profile mysql up --build -d
+# docker compose --profile mysql logs -f gemini-chat
 ```
+
+> 后续 `docker compose exec mysql ...`、`docker compose down` 等命令都需要保持 profile 生效；用方式 1 最省事。
 
 **预期关键日志**：
 
@@ -437,7 +444,7 @@ Database connected successfully
 Server listening on port 8080
 ```
 
-> `depends_on.condition: service_healthy` 会让 gemini-chat 等 MySQL 就绪（10-30 秒）。如果看到 "Can't reach database server" 过一会儿会自愈。
+> MySQL 容器启动需要 10-30 秒；gemini-chat 首次启动时如果 MySQL 还没就绪，日志会打 "Can't reach database server"，但应用会自动重试，过一会儿自愈。如想更稳，可以先 `docker compose up -d mysql` 等 `docker compose ps` 显示 healthy 再 `docker compose up -d gemini-chat`。
 
 ### 3.3 浏览器 / curl 验证
 
@@ -465,50 +472,28 @@ docker compose exec mysql mysql -uroot -p123456 gemini-chat -e "SELECT id, title
 
 **目标**：同 C，换 Postgres 验证第三种 provider。
 
-### 4.1 修改 `docker-compose.yml`
+### 4.1 修改 `.env` + 切换 profile
 
-参考场景 C 的方式，把 `postgres` 服务块整块放开，gemini-chat 的环境变量改成：
-
-```yaml
-    environment:
-      - DB_ENABLED=true
-      - DB_TYPE=postgresql
-      - SQL_DSN=postgresql://root:123456@postgres:5432/gemini-chat
-      - JWT_SECRET=...
-      - NODE_ENV=production
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: gemini-chat-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: "123456"
-      POSTGRES_DB: gemini-chat
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d gemini-chat"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  chat_data:
-  postgres_data:
-```
-
-> 如果你同时保留了 `mysql` 服务块，要记得把 `gemini-chat` 的 `depends_on` 改为依赖 postgres，否则 gemini-chat 起不来。
-
-### 4.2 重启 & 验证
+把数据库相关两行改成 PostgreSQL：
 
 ```bash
-docker compose down -v
+sed -i "s/^DB_TYPE=.*/DB_TYPE=postgresql/" .env
+sed -i "s|^SQL_DSN=.*|SQL_DSN=postgresql://root:123456@postgres:5432/gemini-chat|" .env
+
+grep -E '^(DB_ENABLED|DB_TYPE|SQL_DSN)=' .env
+```
+
+> Postgres 的账号 / 库名来自 `.env` 的 `POSTGRES_USER=root` / `POSTGRES_DB=gemini-chat`；如需改，`SQL_DSN` 和 `POSTGRES_*` 要同步调整。
+
+### 4.2 重启 & 验证（启用 postgres profile）
+
+```bash
+# 上一轮如果是 mysql profile，要先切干净
+unset COMPOSE_PROFILES
+docker compose --profile mysql down -v
+
+# 切到 postgres profile
+export COMPOSE_PROFILES=postgres
 docker compose up --build -d
 docker compose logs -f gemini-chat
 ```
@@ -550,39 +535,34 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN_NEW" -H "Content-Type: applicat
 
 ## 5. 场景 E：WebDAV 自动备份（gzip + AES-256-GCM）
 
-**目标**：在 compose 里顺便起一个 `dufs` 作 WebDAV 对端，验证自动备份、加密、手动同步、恢复、超时、并发互斥。
+**目标**：用 compose 内置的 `dufs` 服务作 WebDAV 对端，验证自动备份、加密、手动同步、恢复、超时、并发互斥。
 
-### 5.1 在 `docker-compose.yml` 加一个 dufs 服务
+### 5.1 启用 WebDAV profile（dufs 对端容器）
 
-```yaml
-  dufs:
-    image: sigoden/dufs
-    container_name: gemini-chat-dufs
-    restart: unless-stopped
-    ports:
-      - "5000:5000"    # 浏览器可视化用，测试完可删
-    volumes:
-      - dufs_data:/data
-    command: /data --auth 'admin:secret@/:rw' --allow-all
+`docker-compose.yml` 里内置了 `dufs` 服务（`profiles: ["webdav"]`），默认不启动。只需要把当前的 profiles 追加上 `webdav` 即可：
 
-volumes:
-  chat_data:
-  mysql_data:      # 如果你在跑 MySQL
-  postgres_data:   # 如果你在跑 Postgres
-  dufs_data:
+```bash
+# 假设场景 B 里已经 export COMPOSE_PROFILES=... (例如 postgres / mysql)
+# 想在此基础上同时启用 webdav：
+export COMPOSE_PROFILES=${COMPOSE_PROFILES:+${COMPOSE_PROFILES},}webdav
+echo "$COMPOSE_PROFILES"
+# 例：postgres,webdav
 ```
 
-### 5.2 给 gemini-chat 加 WebDAV 环境变量
+dufs 默认账号 / 密码是 `admin` / `secret`，监听 5000 端口；如需自定义可修改 `.env` 里的 `DUFS_AUTH` / `DUFS_PORT`。
 
-把现有 `environment` 节追加：
+### 5.2 给 gemini-chat 加 WebDAV 环境变量（改 `.env`）
 
-```yaml
-      - WEBDAV_ENABLED=true
-      - WEBDAV_URL=http://dufs:5000/
-      - WEBDAV_USER=admin
-      - WEBDAV_PASSWORD=secret
-      - WEBDAV_SYNC_INTERVAL=30
-      # - WEBDAV_ENCRYPTION_KEY=my-test-enc-key-2026   # 先留空测试明文，下一步再开
+```bash
+sed -i "s/^WEBDAV_ENABLED=.*/WEBDAV_ENABLED=true/" .env
+sed -i "s|^WEBDAV_URL=.*|WEBDAV_URL=http://dufs:5000/|" .env
+sed -i "s/^WEBDAV_USER=.*/WEBDAV_USER=admin/" .env
+sed -i "s/^WEBDAV_PASSWORD=.*/WEBDAV_PASSWORD=secret/" .env
+sed -i "s/^WEBDAV_SYNC_INTERVAL=.*/WEBDAV_SYNC_INTERVAL=30/" .env
+# 先留空测试明文同步，下一步 5.5 再开加密
+# sed -i "s/^WEBDAV_ENCRYPTION_KEY=.*/WEBDAV_ENCRYPTION_KEY=my-test-enc-key-2026/" .env
+
+grep -E '^WEBDAV_' .env
 ```
 
 > **关键**：`WEBDAV_URL` 用服务名 `dufs`，不用 `localhost` 也不用 `host.docker.internal`——在同一个 compose 网络里，容器之间通过服务名直接通信。
@@ -622,13 +602,10 @@ head -c 500 /tmp/backup.json
 
 ### 5.5 打开加密再测一遍
 
-编辑 `docker-compose.yml` 把加密 key 那行取消注释：
-
-```yaml
-      - WEBDAV_ENCRYPTION_KEY=my-test-enc-key-2026
-```
+修改 `.env` 把加密 key 填上：
 
 ```bash
+sed -i "s/^WEBDAV_ENCRYPTION_KEY=.*/WEBDAV_ENCRYPTION_KEY=my-test-enc-key-2026/" .env
 docker compose up -d       # 只重启 gemini-chat
 # 浏览器再做一次写入，触发新备份
 ```
@@ -643,9 +620,12 @@ head -c 6 /tmp/enc.bin
 # 预期输出：GCENC1
 ```
 
-**负向用例**：把 `WEBDAV_ENCRYPTION_KEY` 环境变量删掉重启，然后手动触发恢复：
+**负向用例**：把 `.env` 里 `WEBDAV_ENCRYPTION_KEY` 清空再重启，然后手动触发恢复：
 
 ```bash
+sed -i "s/^WEBDAV_ENCRYPTION_KEY=.*/WEBDAV_ENCRYPTION_KEY=/" .env
+docker compose up -d
+
 TOKEN=$(curl -s -X POST http://localhost:5173/api/v1/auth/login -H "Content-Type: application/json" -d '{"password":"123456"}' | jq -r .token)
 curl -i -X POST -H "Authorization: Bearer $TOKEN" http://localhost:5173/api/v1/sync/import
 # 预期：500，生产环境响应只有 {"error":"Internal server error","requestId":"..."}
@@ -653,7 +633,12 @@ docker compose logs gemini-chat | grep -i 'encryption'
 # 日志里能看到 "Encrypted backup detected but WEBDAV_ENCRYPTION_KEY is not configured"
 ```
 
-把 key 加回来重启，再次 import 就能成功。
+把 key 加回来重启，再次 import 就能成功：
+
+```bash
+sed -i "s/^WEBDAV_ENCRYPTION_KEY=.*/WEBDAV_ENCRYPTION_KEY=my-test-enc-key-2026/" .env
+docker compose up -d
+```
 
 ### 5.6 手动触发 & 状态查询
 
@@ -691,14 +676,12 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" http://localhost:5173/api/v1/s
 
 ### 5.8 WebDAV 不可达 → 超时
 
-编辑 `docker-compose.yml` 把 `WEBDAV_URL` 改为一个黑洞地址：
-
-```yaml
-      - WEBDAV_URL=http://10.255.255.1:9999/
-```
+编辑 `.env` 把 `WEBDAV_URL` 改为一个黑洞地址：
 
 ```bash
+sed -i "s|^WEBDAV_URL=.*|WEBDAV_URL=http://10.255.255.1:9999/|" .env
 docker compose up -d
+
 TOKEN=$(curl -s -X POST http://localhost:5173/api/v1/auth/login -H "Content-Type: application/json" -d '{"password":"123456"}' | jq -r .token)
 
 # 测试一次手动 export，计时
@@ -710,7 +693,12 @@ time curl -s -X POST -H "Authorization: Bearer $TOKEN" http://localhost:5173/api
 - 响应体或日志里能看到 `WebDAV request timed out after 30000ms`。
 - 再查 status：`lastSyncStatus: "error"`，`lastError` 含超时文本。
 
-测完把 `WEBDAV_URL` 改回 `http://dufs:5000/`。
+测完把 `WEBDAV_URL` 改回来：
+
+```bash
+sed -i "s|^WEBDAV_URL=.*|WEBDAV_URL=http://dufs:5000/|" .env
+docker compose up -d
+```
 
 ### 5.9 保留条数
 
@@ -729,23 +717,32 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5173/api/v1/sync/back
 
 ### 6.1 制造本地旧数据
 
-1. 先把 `docker-compose.yml` 里 `DB_ENABLED` 改成 `false`（或整行注释），其余保持。
-2. `docker compose up -d`。
-3. **清空浏览器 state**：DevTools → Application → Clear site data（彻底清理所有数据）。
-4. 刷新 `http://SERVER_IP:5173`，登录，创建 3 个聊天窗口 + 各发几条消息 + 收藏 1 条。
-5. DevTools → IndexedDB 确认有数据。**同时** DevTools → Local Storage 不能有 `indexeddb-migration-done` 键（有就删掉）。
+1. 先把 `.env` 里 `DB_ENABLED` 改回 `false`（退回 IndexedDB 模式）：
+
+   ```bash
+   # 如果上一轮是 mysql/postgres profile，先把那些容器停掉
+   docker compose --profile mysql --profile postgres --profile webdav down
+
+   sed -i "s/^DB_ENABLED=.*/DB_ENABLED=false/" .env
+   unset COMPOSE_PROFILES
+   docker compose up -d
+   ```
+
+2. **清空浏览器 state**：DevTools → Application → Clear site data（彻底清理所有数据）。
+3. 刷新 `http://SERVER_IP:5173`，登录，创建 3 个聊天窗口 + 各发几条消息 + 收藏 1 条。
+4. DevTools → IndexedDB 确认有数据。**同时** DevTools → Local Storage 不能有 `indexeddb-migration-done` 键（有就删掉）。
 
 ### 6.2 切换到数据库模式
 
-```yaml
-      - DB_ENABLED=true
-      - DB_TYPE=sqlite          # 或 mysql / postgresql
-      - SQL_DSN=file:/app/data/gemini-chat.db
-      - JWT_SECRET=...
-```
+改 `.env`：
 
 ```bash
-# 注意：不要 -v，否则会把刚才 A 模式下的 chat_data volume 也清掉（虽然 IndexedDB 场景里 chat_data 是空的，但保持习惯）
+sed -i "s/^DB_ENABLED=.*/DB_ENABLED=true/" .env
+sed -i "s/^DB_TYPE=.*/DB_TYPE=sqlite/" .env       # 或 mysql / postgresql
+sed -i "s|^SQL_DSN=.*|SQL_DSN=file:/app/data/gemini-chat.db|" .env
+# 确保 JWT_SECRET 已设置
+
+# 注意：不要 -v，否则会把 chat_data volume 一起清掉
 docker compose down
 docker compose up --build -d
 ```
@@ -855,13 +852,10 @@ done | sort | uniq -c
 
 ### 7.6 CORS 白名单
 
-加一行到 `docker-compose.yml`：
-
-```yaml
-      - CORS_ORIGINS=https://chat.example.com
-```
+改 `.env`：
 
 ```bash
+sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=https://chat.example.com|" .env
 docker compose up -d
 
 # 非白名单 origin
@@ -877,7 +871,12 @@ curl -i -X OPTIONS $SERVER/api/v1/chat-windows \
 # 预期：响应头含 Access-Control-Allow-Origin: https://chat.example.com
 ```
 
-测完删掉这一行重启。
+测完恢复为允许所有：
+
+```bash
+sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=|" .env
+docker compose up -d
+```
 
 ### 7.7 错误详情脱敏（NODE_ENV=production）
 
@@ -912,17 +911,31 @@ curl -I $SERVER/api/v1/health
 
 ### 7.9 JWT_SECRET 缺失 → 旧 token 失效
 
-1. 把 compose 里 `JWT_SECRET` 那行注释掉。
-2. `docker compose up -d`。
-3. 启动日志应出现：`[auth] JWT_SECRET not configured, generated ephemeral secret (tokens invalidated on restart)`。
-4. 用旧 token：
+1. 把 `.env` 里 `JWT_SECRET` 清空：
+
+   ```bash
+   # 先备份当前值，方便测完恢复
+   OLD_JWT=$(grep '^JWT_SECRET=' .env | cut -d= -f2-)
+   sed -i "s/^JWT_SECRET=.*/JWT_SECRET=/" .env
+   docker compose up -d
+   ```
+
+2. 启动日志应出现：`[auth] JWT_SECRET not configured, generated ephemeral secret (tokens invalidated on restart)`。
+3. 用旧 token：
 
    ```bash
    curl -i -H "Authorization: Bearer $TOKEN" $SERVER/api/v1/chat-windows
    # 预期：401
    ```
 
-5. 重新登录拿新 token 恢复可用。**这是预期行为，提醒生产环境必须配置 JWT_SECRET。** 测完加回去。
+4. 重新登录拿新 token 恢复可用。**这是预期行为，提醒生产环境必须配置 JWT_SECRET。**
+
+5. 测完恢复原 JWT_SECRET：
+
+   ```bash
+   sed -i "s/^JWT_SECRET=.*/JWT_SECRET=${OLD_JWT}/" .env
+   docker compose up -d
+   ```
 
 ---
 
@@ -1106,23 +1119,29 @@ docker compose stop gemini-chat
 测试机有公网 IP 非常危险，测试完必须立刻：
 
 ```bash
-# 1) 关闭数据库端口的公网访问
-# 编辑 docker-compose.yml，把 mysql/postgres 的 ports: 3306:3306 / 5432:5432 删掉
-# 然后 docker compose up -d
+# 1) 数据库 / dufs 容器直接从 profile 退出（不启动就等于不暴露）
+unset COMPOSE_PROFILES
+docker compose --profile mysql --profile postgres --profile webdav down
+# 之后只启动主服务：
+docker compose up -d
 
-# 2) 关闭 dufs 端口（如果不打算继续测 WebDAV）
-# docker-compose.yml 里删掉 dufs 的 ports: 5000:5000
-
-# 3) ufw 关口
+# 2) ufw 关口
 sudo ufw delete allow 5173/tcp
 sudo ufw delete allow 5000/tcp
 sudo ufw delete allow 3306/tcp 2>/dev/null
 sudo ufw delete allow 5432/tcp 2>/dev/null
 
-# 4) 改一次强密码
-# 修改 .env 里 VITE_AUTH_PASSWORD
-# 修改 docker-compose.yml 里 MYSQL_ROOT_PASSWORD / POSTGRES_PASSWORD（如果还保留数据库容器）
-# 生成全新 JWT_SECRET：openssl rand -hex 32
+# 3) 如果某些数据库容器仍需要保留但不想暴露到宿主，改 .env 里的端口映射：
+#    把 MYSQL_PORT / POSTGRES_PORT / DUFS_PORT 改成只绑 127.0.0.1
+#    （例如在 docker-compose.yml 的 ports 段改为 "127.0.0.1:3306:3306"）
+
+# 4) 改一次强密码，全改到 .env：
+#    VITE_AUTH_PASSWORD       强密码（≥12 位）
+#    MYSQL_ROOT_PASSWORD      随机值
+#    POSTGRES_PASSWORD        随机值
+#    WEBDAV_ENCRYPTION_KEY    openssl rand -hex 32
+#    JWT_SECRET               openssl rand -hex 32
+# 然后 docker compose up -d 让新值生效
 
 # 5) 云厂商安全组同步收紧
 ```
@@ -1187,7 +1206,7 @@ Docker Compose 部署下会自动对齐：entrypoint 根据 `VITE_AUTH_PASSWORD`
 
 ### Q8. 公网 IP 访问能连通，但浏览器 Console 报 CORS 错
 
-如果你把 `CORS_ORIGINS` 配成具体白名单，又用 `SERVER_IP:5173` 直连，origin 不在白名单里。测试期可以临时把 `CORS_ORIGINS` 那一行注释掉（默认允许所有），或者把 `http://SERVER_IP:5173` 加进白名单。
+如果你把 `CORS_ORIGINS` 配成具体白名单，又用 `SERVER_IP:5173` 直连，origin 不在白名单里。测试期可以把 `.env` 里 `CORS_ORIGINS` 清空（默认允许所有），或者把 `http://SERVER_IP:5173` 加进白名单，然后 `docker compose up -d` 让新值生效。
 
 ### Q9. 日志太多刷屏
 
@@ -1201,7 +1220,8 @@ docker compose logs gemini-chat | grep -i error      # 只看错误
 ### Q10. 我想彻底推倒重来
 
 ```bash
-docker compose down -v                  # 容器 + volume 一起清
+# 把所有 profile 的容器 + volume 一起清
+docker compose --profile mysql --profile postgres --profile webdav down -v
 docker volume prune -f                  # 再清一次悬挂 volume
 # 浏览器里：DevTools → Application → Clear site data
 ```
@@ -1228,8 +1248,8 @@ TOKEN=$(curl -s -X POST http://localhost:5173/api/v1/auth/login -H "Content-Type
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5173/api/v1/sync/dump > /tmp/final-dump-$(date +%Y%m%d).json
 ls -lh /tmp/final-dump-*.json
 
-# 2) 停服务、清 volume
-docker compose down -v
+# 2) 停服务、清 volume（带上所有用过的 profile，保证 mysql/postgres/dufs 的容器和卷也一起清）
+docker compose --profile mysql --profile postgres --profile webdav down -v
 docker volume prune -f
 
 # 3) 关闭防火墙临时开放的端口
