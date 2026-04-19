@@ -14,7 +14,7 @@ import {
   saveChatWindow,
   getAllChatWindows,
   deleteChatWindow as deleteChatWindowFromStorage,
-} from '../../services/storage';
+} from '../../services/storageProxy';
 import { storeLogger } from '../../services/logger';
 import { generateId } from './utils';
 import type { SetState, GetState } from './types';

@@ -6,7 +6,7 @@
 import React, { useState, useRef } from 'react';
 import { useSettingsStore } from '../stores/settings';
 import { useChatWindowStore } from '../stores/chatWindow';
-import { exportAllData, importData } from '../services/storage';
+import { exportAllData, importData } from '../services/storageProxy';
 import { useTranslation } from '../i18n/useTranslation';
 import { createLogger } from '../services/logger';
 

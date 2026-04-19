@@ -7,7 +7,7 @@ import { create } from 'zustand';
 import type { AppSettings, ApiConfig, ThemeMode } from '../types/models';
 import type { GenerationConfig, SafetySetting } from '../types/gemini';
 import { DEFAULT_APP_SETTINGS } from '../types/models';
-import { saveSettings, getSettings } from '../services/storage';
+import { saveSettings, getSettings } from '../services/storageProxy';
 import { testConnection as testApiConnection, normalizeApiEndpoint } from '../services/gemini';
 import { storeLogger } from '../services/logger';
 

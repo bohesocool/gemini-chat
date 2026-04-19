@@ -16,118 +16,85 @@ import { ChatArea } from './components/ChatArea/ChatArea';
 import { AppLoader } from './components/Loading';
 import { ErrorBoundary, ErrorMessage } from './components/Error';
 import { AuthGuard } from './components/Auth';
+import { MigrationPrompt } from './components/MigrationPrompt';
 import { useChatWindowStore } from './stores/chatWindow';
 import { useSettingsStore } from './stores/settings';
 import { useModelStore } from './stores/model';
+import { useAuthStore } from './stores/auth';
 import { performMigrationIfNeeded, needsMigration } from './services/migration';
-import { getAllConversations, saveAllChatWindows } from './services/storage';
+import { getAllConversations, saveAllChatWindows } from './services/storageProxy';
+import { detectStorageMode, isApiMode, hasApiModeConfig } from './services/storageAdapter';
 import { appLogger } from './services/logger';
+import { isElectronEnvironment } from './types/auth';
 
-// ============ 应用主组件 ============
-
-/**
- * 应用主组件
- * 
- * Requirements:
- * - 4.1: 聊天窗口独立配置（侧边栏集成设置面板）
- * - 5.1: 子话题对话管理
- * - 6.1: 聊天窗口内置配置面板
- * - 11.1: 应用初始化加载动画
- * - 12.4: 数据迁移
- */
-function App() {
-  // 初始化状态
+function AppContent() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
 
-  // ChatWindow 状态
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+
   const {
     initialized: windowsInitialized,
     loadWindows,
   } = useChatWindowStore();
 
-  // 设置状态
   const {
     initialized: settingsInitialized,
     loadSettings,
   } = useSettingsStore();
 
-  // 模型状态
   const {
     initialized: modelsInitialized,
     loadModels,
   } = useModelStore();
 
-  // 应用初始化 - 执行数据迁移和加载数据
-  // Requirements: 11.1, 12.4
-  useEffect(() => {
-    const initializeApp = async () => {
-      setIsInitializing(true);
-      setInitError(null);
-
-      try {
-        // 1. 首先加载设置
-        await loadSettings();
-
-        // 2. 检查并执行数据迁移
-        if (needsMigration()) {
-          await performMigrationIfNeeded(
-            // 加载旧版数据
-            async () => {
-              const conversations = await getAllConversations();
-              return conversations;
-            },
-            // 保存新版数据
-            async (windows) => {
-              await saveAllChatWindows(windows);
-            },
-            // 默认配置
-            {
-              model: useSettingsStore.getState().currentModel,
-              generationConfig: useSettingsStore.getState().generationConfig,
-              systemInstruction: useSettingsStore.getState().systemInstruction,
-            }
-          );
-        }
-
-        // 3. 并行加载聊天窗口和模型配置
-        await Promise.all([
-          loadWindows(),
-          loadModels(),
-        ]);
-
-      } catch (error) {
-        appLogger.error('应用初始化失败:', error);
-        setInitError(error instanceof Error ? error.message : '初始化失败');
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initializeApp();
-  }, [loadSettings, loadWindows, loadModels]);
-
-  // 处理重试初始化
-  const handleRetryInit = useCallback(() => {
-    setInitError(null);
+  const loadAllData = useCallback(async () => {
     setIsInitializing(true);
-    
-    // 重新触发初始化
-    Promise.all([
-      loadSettings(),
-      loadWindows(),
-      loadModels(),
-    ]).catch((error) => {
+    setInitError(null);
+    try {
+      await loadSettings();
+
+      if (needsMigration()) {
+        await performMigrationIfNeeded(
+          async () => {
+            const conversations = await getAllConversations();
+            return conversations;
+          },
+          async (windows) => {
+            await saveAllChatWindows(windows);
+          },
+          {
+            model: useSettingsStore.getState().currentModel,
+            generationConfig: useSettingsStore.getState().generationConfig,
+            systemInstruction: useSettingsStore.getState().systemInstruction,
+          }
+        );
+      }
+
+      await Promise.all([
+        loadWindows(),
+        loadModels(),
+      ]);
+    } catch (error) {
+      appLogger.error('应用初始化失败:', error);
       setInitError(error instanceof Error ? error.message : '初始化失败');
-    }).finally(() => {
+    } finally {
       setIsInitializing(false);
-    });
+    }
   }, [loadSettings, loadWindows, loadModels]);
 
-  // 计算加载状态
-  const isLoading = isInitializing || !windowsInitialized || !settingsInitialized || !modelsInitialized;
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (hasApiModeConfig() && !isApiMode()) return;
+    void loadAllData();
+  }, [isAuthenticated, loadAllData]);
 
-  // 显示初始化错误
+  const handleRetryInit = useCallback(() => {
+    void loadAllData();
+  }, [loadAllData]);
+
+  const isLoading = isAuthenticated && (isInitializing || !windowsInitialized || !settingsInitialized || !modelsInitialized);
+
   if (initError) {
     return (
       <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-900">
@@ -142,16 +109,69 @@ function App() {
   }
 
   return (
+    <AppLoader isLoading={isLoading} minLoadTime={500}>
+      <Layout
+        sidebar={<Sidebar />}
+      >
+        <ChatArea />
+      </Layout>
+      <MigrationPrompt />
+    </AppLoader>
+  );
+}
+
+function App() {
+  const [storageModeReady, setStorageModeReady] = useState(false);
+  const [storageModeError, setStorageModeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await detectStorageMode();
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        appLogger.error('存储模式检测失败', err);
+        if (isElectronEnvironment()) {
+          setStorageModeReady(true);
+          return;
+        }
+        setStorageModeError(message);
+      } finally {
+        if (!cancelled) setStorageModeReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (storageModeError) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-900">
+        <ErrorMessage
+          title="无法连接服务端"
+          message={`${storageModeError}（已启用数据库模式但后端不可用，请检查服务是否运行或联系管理员）`}
+          onRetry={() => window.location.reload()}
+          size="lg"
+        />
+      </div>
+    );
+  }
+
+  if (!storageModeReady) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-900">
+        <AppLoader isLoading minLoadTime={0}><div /></AppLoader>
+      </div>
+    );
+  }
+
+  return (
     <ErrorBoundary>
       <AuthGuard>
-        <AppLoader isLoading={isLoading} minLoadTime={500}>
-          <Layout
-            sidebar={<Sidebar />}
-          >
-            {/* 聊天区域 - 直接使用 ChatArea，不需要额外包装 */}
-            <ChatArea />
-          </Layout>
-        </AppLoader>
+        <AppContent />
       </AuthGuard>
     </ErrorBoundary>
   );

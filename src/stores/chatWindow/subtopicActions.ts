@@ -6,7 +6,7 @@
 
 import type { SubTopic } from '../../types/chatWindow';
 import { createDefaultSubTopic } from '../../types/chatWindow';
-import { saveChatWindow } from '../../services/storage';
+import { saveChatWindow } from '../../services/storageProxy';
 import { storeLogger } from '../../services/logger';
 import { generateId } from './utils';
 import type { SetState, GetState } from './types';

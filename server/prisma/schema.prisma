@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("SQL_DSN")
+}
+
+model ChatWindow {
+  id               String     @id
+  title            String
+  config           Json
+  activeSubTopicId String
+  titleGenerated   Boolean    @default(false)
+  createdAt        BigInt
+  updatedAt        BigInt
+  subTopics        SubTopic[]
+
+  @@index([updatedAt])
+}
+
+model SubTopic {
+  id           String     @id
+  title        String
+  messages     Json
+  createdAt    BigInt
+  updatedAt    BigInt
+  chatWindowId String
+  chatWindow   ChatWindow @relation(fields: [chatWindowId], references: [id], onDelete: Cascade)
+
+  @@index([chatWindowId])
+  @@index([updatedAt])
+}
+
+model AppSetting {
+  key   String @id @default("app-settings")
+  value Json
+}
+
+model ModelConfigStore {
+  key   String @id @default("model-configs")
+  value Json
+}
+
+model Bookmark {
+  id             String @id
+  messageId      String
+  windowId       String
+  subTopicId     String
+  messagePreview String
+  messageRole    String
+  windowTitle    String
+  createdAt      BigInt
+
+  @@index([messageId])
+  @@index([createdAt])
+}
+
+model Template {
+  id                String  @id
+  name              String
+  description       String
+  systemInstruction String
+  isBuiltIn         Boolean @default(false)
+  createdAt         BigInt
+  updatedAt         BigInt
+
+  @@index([updatedAt])
+}
+
+model ImageRecord {
+  id        String @id
+  data      Json
+  createdAt BigInt
+  updatedAt BigInt
+
+  @@index([createdAt])
+}
+
+model SyncState {
+  id             String @id @default("webdav-sync")
+  lastSyncAt     BigInt
+  lastSyncStatus String
+  lastError      String?
+}

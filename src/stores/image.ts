@@ -9,7 +9,7 @@ import {
   loadImages as loadImagesFromStorage,
   saveImage as saveImageToStorage,
   deleteImage as deleteImageFromStorage,
-} from '../services/imageStorage';
+} from '../services/imageStorageProxy';
 import { storeLogger } from '../services/logger';
 
 // ============ Store 类型 ============

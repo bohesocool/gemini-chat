@@ -1,32 +1,70 @@
 #!/bin/sh
+set -eu
 
-# 替换配置文件中的占位符
 CONFIG_FILE="/usr/share/nginx/html/config.js"
 
 echo "=== Docker Entrypoint ==="
-echo "VITE_AUTH_PASSWORD 是否设置: $([ -n "$VITE_AUTH_PASSWORD" ] && echo '是' || echo '否')"
+echo "VITE_AUTH_PASSWORD: $([ -n "${VITE_AUTH_PASSWORD:-}" ] && echo 'set' || echo 'not set')"
+echo "DB_ENABLED: ${DB_ENABLED:-false}"
+echo "WEBDAV_ENABLED: ${WEBDAV_ENABLED:-false}"
 
-# 简单哈希函数（与前端 simpleHash 保持一致）
-# 由于 shell 脚本难以精确复制 JavaScript 的位运算，我们直接存储 SHA-256 哈希
-# 前端会检测是否为 SHA-256 格式（64位十六进制），如果是则使用 SHA-256 验证
 simple_hash() {
-  echo -n "$1" | sha256sum | cut -d' ' -f1
+  printf '%s' "$1" | sha256sum | cut -d' ' -f1
 }
 
-if [ -n "$VITE_AUTH_PASSWORD" ]; then
-  echo "正在计算密码哈希并注入到 config.js..."
+if [ -n "${VITE_AUTH_PASSWORD:-}" ]; then
   PASSWORD_HASH=$(simple_hash "$VITE_AUTH_PASSWORD")
-  echo "密码哈希已计算（SHA-256）"
-  # 使用 | 作为分隔符
-  sed -i "s|__AUTH_PASSWORD_HASH__|$PASSWORD_HASH|g" $CONFIG_FILE
-  echo "哈希注入完成"
-else
-  echo "未设置 VITE_AUTH_PASSWORD，使用默认密码"
+  sed -i "s|__AUTH_PASSWORD_HASH__|$PASSWORD_HASH|g" "$CONFIG_FILE"
+  export AUTH_PASSWORD_HASH="$PASSWORD_HASH"
 fi
 
-echo "config.js 内容:"
-cat $CONFIG_FILE
-echo "=== 启动 nginx ==="
+DB_FLAG="${DB_ENABLED:-false}"
+WEBDAV_FLAG="${WEBDAV_ENABLED:-false}"
 
-# 启动 nginx
-exec nginx -g 'daemon off;'
+sed -i "s|__DB_ENABLED__|$DB_FLAG|g" "$CONFIG_FILE"
+sed -i "s|__WEBDAV_ENABLED__|$WEBDAV_FLAG|g" "$CONFIG_FILE"
+
+if [ "$DB_ENABLED" = "true" ]; then
+  echo "=== Starting Node.js server (database mode) ==="
+
+  DB_PROVIDER="${DB_TYPE:-sqlite}"
+  case "$DB_PROVIDER" in
+    sqlite|mysql|postgresql)
+      echo "DB provider: $DB_PROVIDER"
+      ;;
+    *)
+      echo "ERROR: Invalid DB_TYPE '$DB_PROVIDER'. Must be sqlite/mysql/postgresql."
+      exit 1
+      ;;
+  esac
+
+  if [ -d "/app/prisma-clients/${DB_PROVIDER}/.prisma" ]; then
+    rm -rf /app/server/node_modules/.prisma
+    cp -r "/app/prisma-clients/${DB_PROVIDER}/.prisma" /app/server/node_modules/.prisma
+    echo "Loaded Prisma client for $DB_PROVIDER"
+  else
+    echo "WARNING: Pre-built Prisma client for $DB_PROVIDER not found, continuing with default"
+  fi
+
+  node /app/server/scripts/set-db-provider.js "$DB_PROVIDER"
+
+  cd /app/server
+  export SQL_DSN="${SQL_DSN:-file:/app/data/gemini-chat.db}"
+  export STATIC_DIR="/usr/share/nginx/html"
+  export PORT="${PORT:-8080}"
+  export NODE_ENV="${NODE_ENV:-production}"
+
+  if [ -d "/app/server/prisma/migrations" ] && [ "$(ls -A /app/server/prisma/migrations 2>/dev/null)" ]; then
+    echo "Running prisma migrate deploy..."
+    npx prisma migrate deploy --schema=prisma/schema.prisma
+  else
+    echo "No migrations found; running prisma db push (first-time init)..."
+    npx prisma db push --schema=prisma/schema.prisma --skip-generate
+  fi
+
+  echo "Starting Node.js server..."
+  exec node /app/server/dist/index.js
+else
+  echo "=== Starting nginx (static mode) ==="
+  exec nginx -g 'daemon off;'
+fi

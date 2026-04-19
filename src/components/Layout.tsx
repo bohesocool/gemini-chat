@@ -29,6 +29,7 @@ import {
   SafetySettingsSection,
   DataManagementSection,
   AppearanceSettingsSection,
+  SyncSection,
 } from './Settings/SettingsSections';
 import { AboutPanel } from './Settings/AboutPanel';
 import { DebugPanel } from './Debug';
@@ -113,6 +114,8 @@ function renderSettingsContent(tabId: SettingsTabId): React.ReactNode {
       return <SafetySettingsSection />;
     case 'data':
       return <DataManagementSection />;
+    case 'sync':
+      return <SyncSection />;
     case 'about':
       return <AboutPanel />;
     default:

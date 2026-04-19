@@ -13,8 +13,17 @@ import {
   loginWithToken,
   restoreSession,
   logoutWithToken,
+  hashPassword,
 } from '../services/auth';
 import { authLogger as logger } from '../services/logger';
+import {
+  serverLogin,
+  serverLogout,
+  serverChangePassword,
+  setUnauthorizedHandler,
+  getServerToken,
+} from '../services/apiClient';
+import { isApiMode } from '../services/storageAdapter';
 
 // ============ Store 状态接口 ============
 
@@ -65,12 +74,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isLoading: false,
   error: null,
 
-  // 初始化鉴权状态
-  // 需求: 1.1, 1.3 - 检查 Token 并恢复登录状态
   initialize: async () => {
     set({ isLoading: true, error: null });
+
+    setUnauthorizedHandler(() => {
+      logoutWithToken();
+      set({ isAuthenticated: false });
+      logger.warn('Server token 失效，已自动登出');
+    });
+
     try {
-      // Electron 环境下自动跳过密码验证
       if (isElectronEnvironment()) {
         set({
           initialized: true,
@@ -83,15 +96,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
       }
 
       const config = await initAuthConfig();
-
-      // 尝试从 Token 恢复登录状态
-      const sessionRestored = await restoreSession();
+      const localSessionOk = await restoreSession();
+      const apiMode = isApiMode();
+      const serverTokenOk = !apiMode || !!getServerToken();
+      const sessionRestored = localSessionOk && serverTokenOk;
 
       set({
         initialized: true,
         isLoading: false,
         isAuthenticated: sessionRestored,
-        // 如果是默认密码，登录后需要重置
         needsPasswordReset: config.isDefaultPassword,
       });
 
@@ -110,8 +123,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
   },
 
-  // 登录
-  // 需求: 1.1 - 调用 loginWithToken() 生成并存储 Token
   login: async (password: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -121,24 +132,36 @@ export const useAuthStore = create<AuthStore>((set) => ({
         return false;
       }
 
-      // 使用 loginWithToken 进行登录，会自动生成并存储 Token
       const isValid = await loginWithToken(password);
-      if (isValid) {
-        set({
-          isAuthenticated: true,
-          isLoading: false,
-          needsPasswordReset: config.isDefaultPassword,
-        });
-        logger.info('用户登录成功');
-        return true;
-      } else {
-        set({
-          isLoading: false,
-          error: '密码错误',
-        });
+      if (!isValid) {
+        set({ isLoading: false, error: '密码错误' });
         logger.warn('登录失败：密码错误');
         return false;
       }
+
+      if (isApiMode()) {
+        try {
+          const hash = await hashPassword(password);
+          await serverLogin({ password, passwordHash: hash });
+          logger.info('服务端 Token 已签发');
+        } catch (err) {
+          logger.error('服务端登录失败', err);
+          logoutWithToken();
+          set({
+            isLoading: false,
+            error: err instanceof Error ? err.message : '服务端登录失败',
+          });
+          return false;
+        }
+      }
+
+      set({
+        isAuthenticated: true,
+        isLoading: false,
+        needsPasswordReset: config.isDefaultPassword,
+      });
+      logger.info('用户登录成功');
+      return true;
     } catch (error) {
       logger.error('登录过程发生错误', error);
       set({
@@ -149,11 +172,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
   },
 
-  // 登出
-  // 需求: 1.5 - 调用 logoutWithToken() 清除 Token
   logout: () => {
-    // 清除 JWT Token
     logoutWithToken();
+    void serverLogout();
     set({
       isAuthenticated: false,
       error: null,
@@ -184,7 +205,22 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
 
     try {
+      const currentConfig = getAuthConfig();
       await updatePassword(newPassword);
+
+      if (isApiMode() && currentConfig) {
+        try {
+          const newHash = await hashPassword(newPassword);
+          await serverChangePassword({
+            currentPasswordHash: currentConfig.passwordHash,
+            newPasswordHash: newHash,
+          });
+          logger.info('服务端密码已同步更新');
+        } catch (err) {
+          logger.error('服务端密码更新失败', err);
+        }
+      }
+
       set({
         isLoading: false,
         needsPasswordReset: false,

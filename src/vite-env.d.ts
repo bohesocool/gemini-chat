@@ -12,7 +12,14 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
+interface AppConfig {
+  AUTH_PASSWORD_HASH?: string;
+  DB_ENABLED?: string;
+  WEBDAV_ENABLED?: string;
+}
+
 interface Window {
+  __APP_CONFIG__?: AppConfig;
   electronAPI: {
     send: (channel: string, data?: any) => void;
     receive: (channel: string, func: (...args: any[]) => void) => void;

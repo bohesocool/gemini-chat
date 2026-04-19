@@ -10,7 +10,7 @@
 
 import type { Message, Attachment, ApiConfig, ModelAdvancedConfig } from '../../types/models';
 import type { FileReference } from '../../types/filesApi';
-import { saveChatWindow } from '../../services/storage';
+import { saveChatWindow } from '../../services/storageProxy';
 import { storeLogger } from '../../services/logger';
 import { generateId, messagesToGeminiContents } from './utils';
 import type { SetState, GetState } from './types';

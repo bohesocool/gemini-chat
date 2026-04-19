@@ -10,7 +10,7 @@ import {
   saveModelConfigs,
   loadModelConfigs,
   resetModelConfigs,
-} from '../services/storage';
+} from '../services/storageProxy';
 import {
   fetchModels,
   mergeModels,

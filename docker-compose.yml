@@ -13,3 +13,101 @@ services:
     environment:
       # 登录密码（可选，不设置则使用默认密码 adminiadmin）
       - VITE_AUTH_PASSWORD=${VITE_AUTH_PASSWORD:-}
+
+      ## === 数据库配置（取消注释以启用） ===
+      ## 启用后数据将持久化到服务端数据库，支持 sqlite / mysql / postgresql
+      # - DB_ENABLED=true
+      # - DB_TYPE=sqlite
+      # - SQL_DSN=file:/app/data/gemini-chat.db
+
+      ## 如使用外部 MySQL:
+      # - DB_ENABLED=true
+      # - DB_TYPE=mysql
+      # - SQL_DSN=mysql://root:123456@mysql:3306/gemini-chat
+
+      ## 如使用外部 PostgreSQL:
+      # - DB_ENABLED=true
+      # - DB_TYPE=postgresql
+      # - SQL_DSN=postgresql://root:123456@postgres:5432/gemini-chat
+
+      ## === WebDAV 同步配置（取消注释以启用，需同时启用数据库） ===
+      # - WEBDAV_ENABLED=true
+      # - WEBDAV_URL=https://your-webdav-server/dav/
+      # - WEBDAV_USER=username
+      # - WEBDAV_PASSWORD=password
+      ## 推荐用 Docker secrets 存储密码:
+      # - WEBDAV_PASSWORD_FILE=/run/secrets/webdav_password
+      # - WEBDAV_SYNC_INTERVAL=300
+      ## 备份加密（可选，强烈建议，使用 AES-256-GCM）:
+      # - WEBDAV_ENCRYPTION_KEY=change-me
+      # - WEBDAV_ENCRYPTION_KEY_FILE=/run/secrets/webdav_encryption_key
+
+      ## === 后端安全配置 ===
+      ## JWT 签名密钥（不设置则每次重启生成临时密钥，旧 token 失效）
+      # - JWT_SECRET=change-me-to-a-random-long-string
+      # - JWT_SECRET_FILE=/run/secrets/jwt_secret
+      ## 允许的前端来源，逗号分隔；'*' 表示允许所有（不推荐）
+      # - CORS_ORIGINS=https://chat.example.com
+      # - NODE_ENV=production
+    volumes:
+      - chat_data:/app/data
+    # secrets:
+    #   - webdav_password
+    #   - webdav_encryption_key
+    #   - jwt_secret
+    # depends_on:
+    #   mysql:
+    #     condition: service_healthy
+
+  ## === MySQL 服务（取消注释以使用内置 MySQL） ===
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: gemini-chat-mysql
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "123456"
+  #     MYSQL_DATABASE: gemini-chat
+  #     MYSQL_CHARSET: utf8mb4
+  #     MYSQL_COLLATION: utf8mb4_unicode_ci
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  ## === PostgreSQL 服务（取消注释以使用内置 PostgreSQL） ===
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: gemini-chat-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: root
+  #     POSTGRES_PASSWORD: "123456"
+  #     POSTGRES_DB: gemini-chat
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U root -d gemini-chat"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  chat_data:
+  # mysql_data:
+  # postgres_data:
+
+## === Docker secrets（取消注释后，把明文凭据替换为指向 secrets 文件路径） ===
+# secrets:
+#   webdav_password:
+#     file: ./secrets/webdav_password.txt
+#   webdav_encryption_key:
+#     file: ./secrets/webdav_encryption_key.txt
+#   jwt_secret:
+#     file: ./secrets/jwt_secret.txt

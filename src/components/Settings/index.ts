@@ -18,6 +18,7 @@ export {
   SystemInstructionSection,
   SafetySettingsSection,
   DataManagementSection,
+  SyncSection,
 } from './SettingsSections';
 
 // 关于面板组件
