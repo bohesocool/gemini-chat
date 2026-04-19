@@ -38,7 +38,7 @@ RUN npm run build
 FROM node:20-alpine AS production
 
 RUN apk add --no-cache nginx && \
-    mkdir -p /var/cache/nginx /var/log/nginx /run/nginx
+    mkdir -p /var/cache/nginx /var/log/nginx /run/nginx /var/lib/nginx/logs /var/lib/nginx/tmp
 
 RUN addgroup -g 1001 -S appuser && \
     adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G appuser appuser
@@ -61,7 +61,7 @@ RUN mkdir -p /app/data && chown -R appuser:appuser /app/data /app/server /app/pr
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-RUN chown -R appuser:appuser /var/cache/nginx /var/log/nginx /usr/share/nginx/html /app && \
+RUN chown -R appuser:appuser /var/cache/nginx /var/log/nginx /var/lib/nginx /usr/share/nginx/html /app && \
     touch /tmp/nginx.pid && chown appuser:appuser /tmp/nginx.pid
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
