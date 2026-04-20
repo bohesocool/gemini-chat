@@ -1,12 +1,13 @@
-import { config } from '../config.js';
 import { prisma } from '../database.js';
 import {
   uploadBackup,
   downloadLatestBackup,
   cleanupOldBackups,
 } from './webdav.js';
+import { getFullConfig } from './webdavConfigStore.js';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
+let currentInterval: number = 300;
 let isDirty = false;
 let syncInFlight: Promise<void> | null = null;
 
@@ -260,19 +261,44 @@ export async function importFromWebDAV(): Promise<boolean> {
   return true;
 }
 
-export function startSyncScheduler(): void {
+export async function startSyncScheduler(): Promise<void> {
   if (syncTimer) return;
+  const cfg = await getFullConfig().catch(() => null);
+  if (!cfg || !cfg.enabled || !cfg.url) {
+    console.log('[WebDAV] Scheduler not started (disabled or URL missing)');
+    return;
+  }
+  currentInterval = cfg.syncInterval;
   isDirty = true;
   syncTimer = setInterval(() => {
     runSyncWithLock(false).catch(err => console.error('[WebDAV] Scheduler error:', err));
-  }, config.webdavSyncInterval * 1000);
+  }, currentInterval * 1000);
 
   runSyncWithLock(false).catch(err => console.error('[WebDAV] Initial sync error:', err));
+  console.log(`[WebDAV] Sync scheduler started (interval: ${currentInterval}s)`);
 }
 
 export function stopSyncScheduler(): void {
   if (syncTimer) {
     clearInterval(syncTimer);
     syncTimer = null;
+    console.log('[WebDAV] Sync scheduler stopped');
   }
+}
+
+/**
+ * 重新加载调度器，读取最新配置决定启/停/调间隔。
+ * 配置变更后调用（例如 PUT /sync/config 成功之后）。
+ */
+export async function reloadSyncScheduler(): Promise<void> {
+  stopSyncScheduler();
+  await startSyncScheduler();
+}
+
+export function isSchedulerRunning(): boolean {
+  return syncTimer !== null;
+}
+
+export function getCurrentInterval(): number {
+  return currentInterval;
 }

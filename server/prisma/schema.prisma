@@ -84,3 +84,15 @@ model SyncState {
   lastSyncStatus String
   lastError      String?
 }
+
+model WebDAVConfig {
+  id                String  @id @default("webdav-default")
+  enabled           Boolean @default(false)
+  url               String  @default("")
+  username          String  @default("")
+  passwordCipher    String  @default("")
+  encryptionKeyCipher String @default("")
+  syncInterval      Int     @default(300)
+  maxBackups        Int     @default(10)
+  updatedAt         BigInt
+}

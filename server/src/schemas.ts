@@ -94,6 +94,23 @@ export const migrateFromIndexedDBSchema = z.object({
   images: z.array(imageCreateSchema).optional(),
 });
 
+export const webdavConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  url: z.string().trim().optional(),
+  username: z.string().trim().optional(),
+  password: z.string().optional(),
+  encryptionKey: z.string().optional(),
+  syncInterval: z.number().int().min(10).max(86400).optional(),
+  maxBackups: z.number().int().min(1).max(200).optional(),
+});
+
+export const webdavTestSchema = z.object({
+  url: z.string().trim().min(1),
+  username: z.string().trim(),
+  password: z.string(),
+  encryptionKey: z.string().optional(),
+});
+
 export type ChatWindowCreate = z.infer<typeof chatWindowCreateSchema>;
 export type ChatWindowUpdate = z.infer<typeof chatWindowUpdateSchema>;
 export type SubTopicInput = z.infer<typeof subTopicSchema>;
@@ -102,3 +119,5 @@ export type TemplateCreate = z.infer<typeof templateCreateSchema>;
 export type TemplateUpdate = z.infer<typeof templateUpdateSchema>;
 export type ImageCreate = z.infer<typeof imageCreateSchema>;
 export type MigrateFromIndexedDB = z.infer<typeof migrateFromIndexedDBSchema>;
+export type WebDAVConfigInput = z.infer<typeof webdavConfigSchema>;
+export type WebDAVTestInput = z.infer<typeof webdavTestSchema>;

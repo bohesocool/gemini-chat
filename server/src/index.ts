@@ -20,6 +20,7 @@ import { startSyncScheduler, stopSyncScheduler } from './services/syncScheduler.
 import { requireAuth } from './middleware/auth.js';
 import { markDirty } from './services/syncScheduler.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { seedFromEnvIfEmpty } from './services/webdavConfigStore.js';
 
 const app = express();
 
@@ -103,11 +104,16 @@ async function start() {
   if (config.dbEnabled) {
     await initDatabase();
     console.log('Database connected successfully');
-  }
 
-  if (config.webdavEnabled && config.dbEnabled) {
-    startSyncScheduler();
-    console.log(`WebDAV sync started (interval: ${config.webdavSyncInterval}s)`);
+    // 首次启动：把 env 里的 WebDAV 配置 seed 进数据库（仅当 DB 为空）
+    try {
+      await seedFromEnvIfEmpty();
+    } catch (err) {
+      console.warn('[WebDAV] Failed to seed config from env:', err);
+    }
+
+    // 根据数据库里最新的 enabled 决定是否启动调度器
+    await startSyncScheduler();
   }
 
   app.listen(config.port, () => {
