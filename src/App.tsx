@@ -26,6 +26,7 @@ import { getAllConversations, saveAllChatWindows } from './services/storageProxy
 import { detectStorageMode, isApiMode, hasApiModeConfig } from './services/storageAdapter';
 import { appLogger } from './services/logger';
 import { isElectronEnvironment } from './types/auth';
+import { startBrowserScheduler, stopBrowserScheduler } from './services/webdav/browserScheduler';
 
 function AppContent() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -88,6 +89,16 @@ function AppContent() {
     if (hasApiModeConfig() && !isApiMode()) return;
     void loadAllData();
   }, [isAuthenticated, loadAllData]);
+
+  // 浏览器存储模式下启动 WebDAV 自动备份调度器
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (isApiMode()) return;
+    void startBrowserScheduler();
+    return () => {
+      stopBrowserScheduler();
+    };
+  }, [isAuthenticated]);
 
   const handleRetryInit = useCallback(() => {
     void loadAllData();

@@ -5,12 +5,16 @@ export interface ServerConfig {
   dbEnabled: boolean;
   dbProvider: 'sqlite' | 'mysql' | 'postgresql';
   sqlDsn: string;
+  // 以下 webdav* 仅作为「首次初始化」时 seed 进数据库的默认值
+  // 运行时真正生效的是数据库里 WebDAVConfig 表的内容
   webdavEnabled: boolean;
   webdavUrl: string;
   webdavUser: string;
   webdavPassword: string;
   webdavSyncInterval: number;
   webdavEncryptionKey: string | undefined;
+  // 对 DB 里存储的 WebDAV 密码/加密密钥做 AES-GCM 加密用
+  configEncryptionKey: string | undefined;
   authPasswordHash: string | undefined;
   jwtSecret: string | undefined;
   corsOrigins: string | undefined;
@@ -63,6 +67,7 @@ export function loadConfig(): ServerConfig {
     webdavPassword: readSecret('WEBDAV_PASSWORD', 'WEBDAV_PASSWORD_FILE') || '',
     webdavSyncInterval: safeParseInt(process.env.WEBDAV_SYNC_INTERVAL, 300),
     webdavEncryptionKey: readSecret('WEBDAV_ENCRYPTION_KEY', 'WEBDAV_ENCRYPTION_KEY_FILE'),
+    configEncryptionKey: readSecret('CONFIG_ENCRYPTION_KEY', 'CONFIG_ENCRYPTION_KEY_FILE'),
     authPasswordHash: readSecret('AUTH_PASSWORD_HASH', 'AUTH_PASSWORD_HASH_FILE'),
     jwtSecret: readSecret('JWT_SECRET', 'JWT_SECRET_FILE'),
     corsOrigins: process.env.CORS_ORIGINS,

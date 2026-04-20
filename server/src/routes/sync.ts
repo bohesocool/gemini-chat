@@ -1,28 +1,79 @@
 import { Router } from 'express';
 import { prisma } from '../database.js';
-import { config } from '../config.js';
 import {
   importFromWebDAV,
   collectExportData,
   triggerManualSync,
+  reloadSyncScheduler,
 } from '../services/syncScheduler.js';
-import { listBackups } from '../services/webdav.js';
+import { listBackups, testConnection } from '../services/webdav.js';
+import { getPublicConfig, updateConfig } from '../services/webdavConfigStore.js';
 import { asyncHandler, HttpError } from '../middleware/errorHandler.js';
 import { validateBody } from '../middleware/validate.js';
-import { migrateFromIndexedDBSchema, type MigrateFromIndexedDB } from '../schemas.js';
+import {
+  migrateFromIndexedDBSchema,
+  webdavConfigSchema,
+  webdavTestSchema,
+  type MigrateFromIndexedDB,
+  type WebDAVConfigInput,
+  type WebDAVTestInput,
+} from '../schemas.js';
 
 export const syncRouter = Router();
 
+async function isWebDAVEnabledFromDB(): Promise<boolean> {
+  const cfg = await getPublicConfig();
+  return cfg.enabled && cfg.url.length > 0;
+}
+
 syncRouter.get('/status', asyncHandler(async (_req, res) => {
   const state = await prisma.syncState.findUnique({ where: { id: 'webdav-sync' } });
+  const cfg = await getPublicConfig();
   res.json({
-    webdavEnabled: config.webdavEnabled,
+    webdavEnabled: cfg.enabled && cfg.url.length > 0,
     lastSyncAt: state ? Number(state.lastSyncAt) : null,
     lastSyncStatus: state?.lastSyncStatus ?? null,
     lastError: state?.lastError ?? null,
-    syncInterval: config.webdavSyncInterval,
+    syncInterval: cfg.syncInterval,
   });
 }));
+
+syncRouter.get('/config', asyncHandler(async (_req, res) => {
+  const cfg = await getPublicConfig();
+  res.json(cfg);
+}));
+
+syncRouter.put(
+  '/config',
+  validateBody(webdavConfigSchema),
+  asyncHandler(async (req, res) => {
+    const body = req.body as WebDAVConfigInput;
+    await updateConfig(body);
+    // 配置变更：重启调度器以应用新间隔 / 启停
+    await reloadSyncScheduler();
+    const cfg = await getPublicConfig();
+    res.json(cfg);
+  })
+);
+
+syncRouter.post(
+  '/test-connection',
+  validateBody(webdavTestSchema),
+  asyncHandler(async (req, res) => {
+    const body = req.body as WebDAVTestInput;
+    const result = await testConnection({
+      url: body.url,
+      username: body.username,
+      password: body.password,
+      encryptionKey: body.encryptionKey,
+    });
+    if (!result.ok) {
+      res.status(400).json({ success: false, error: result.error });
+      return;
+    }
+    res.json({ success: true });
+  })
+);
 
 syncRouter.get('/dump', asyncHandler(async (_req, res) => {
   const data = await collectExportData();
@@ -31,8 +82,8 @@ syncRouter.get('/dump', asyncHandler(async (_req, res) => {
 }));
 
 syncRouter.post('/export', asyncHandler(async (_req, res) => {
-  if (!config.webdavEnabled) {
-    throw new HttpError(400, 'WebDAV is not enabled');
+  if (!(await isWebDAVEnabledFromDB())) {
+    throw new HttpError(400, 'WebDAV is not enabled or not configured');
   }
   const result = await triggerManualSync();
   if (!result.success) {
@@ -42,16 +93,16 @@ syncRouter.post('/export', asyncHandler(async (_req, res) => {
 }));
 
 syncRouter.post('/import', asyncHandler(async (_req, res) => {
-  if (!config.webdavEnabled) {
-    throw new HttpError(400, 'WebDAV is not enabled');
+  if (!(await isWebDAVEnabledFromDB())) {
+    throw new HttpError(400, 'WebDAV is not enabled or not configured');
   }
   const success = await importFromWebDAV();
   res.json({ success });
 }));
 
 syncRouter.get('/backups', asyncHandler(async (_req, res) => {
-  if (!config.webdavEnabled) {
-    throw new HttpError(400, 'WebDAV is not enabled');
+  if (!(await isWebDAVEnabledFromDB())) {
+    throw new HttpError(400, 'WebDAV is not enabled or not configured');
   }
   const backups = await listBackups();
   res.json(backups);

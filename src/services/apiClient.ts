@@ -156,6 +156,59 @@ export async function triggerSyncImport(): Promise<{ success: boolean }> {
   return api.post('/sync/import', {});
 }
 
+export interface ServerWebDAVPublicConfig {
+  enabled: boolean;
+  url: string;
+  username: string;
+  hasPassword: boolean;
+  hasEncryptionKey: boolean;
+  syncInterval: number;
+  maxBackups: number;
+  updatedAt: number;
+}
+
+export interface ServerWebDAVConfigUpdate {
+  enabled?: boolean;
+  url?: string;
+  username?: string;
+  password?: string;
+  encryptionKey?: string;
+  syncInterval?: number;
+  maxBackups?: number;
+}
+
+export async function getWebDAVConfig(): Promise<ServerWebDAVPublicConfig> {
+  return api.get<ServerWebDAVPublicConfig>('/sync/config');
+}
+
+export async function updateWebDAVConfig(
+  patch: ServerWebDAVConfigUpdate
+): Promise<ServerWebDAVPublicConfig> {
+  return api.put<ServerWebDAVPublicConfig>('/sync/config', patch);
+}
+
+export async function testWebDAVConnection(params: {
+  url: string;
+  username: string;
+  password: string;
+  encryptionKey?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  // 测试连接接口在失败时会返回 400 + { success: false, error }，
+  // 这里用原始 fetch 绕过 doFetch 的 throw，以便拿到详细错误
+  const token = getServerToken();
+  const res = await fetch(`${API_BASE}/sync/test-connection`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(params),
+  });
+  const body = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string };
+  if (res.ok) return { success: Boolean(body.success) };
+  return { success: false, error: body.error ?? `HTTP ${res.status}` };
+}
+
 export async function migrateFromIndexedDB(data: {
   chatWindows?: unknown[];
   settings?: unknown;

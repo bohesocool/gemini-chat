@@ -52,6 +52,9 @@ services:
       # JWT 签名密钥；不设置则每次重启生成临时密钥（所有旧 token 失效）
       - JWT_SECRET=${JWT_SECRET:-}
       - JWT_SECRET_FILE=${JWT_SECRET_FILE:-}
+      # 服务端配置加密密钥：对数据库里存的 WebDAV 密码做 AES-GCM 加密
+      - CONFIG_ENCRYPTION_KEY=${CONFIG_ENCRYPTION_KEY:-}
+      - CONFIG_ENCRYPTION_KEY_FILE=${CONFIG_ENCRYPTION_KEY_FILE:-}
       # 允许的前端来源，逗号分隔；留空表示允许所有来源
       - CORS_ORIGINS=${CORS_ORIGINS:-}
     volumes:
