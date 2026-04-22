@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.19](https://github.com/bohesocool/gemini-chat/compare/v0.2.18...v0.2.19) (2026-04-22)
+
+
+### 🔧 其他更改 (Chores)
+
+* enhance Dockerfile by adding additional Nginx directories for improved logging and permissions ([58eddf7](https://github.com/bohesocool/gemini-chat/commit/58eddf7bfa8636fa4701b98e6ab113fac4ce2364))
+* remove version specification from docker-compose and fix variable name in entrypoint script ([0594bbf](https://github.com/bohesocool/gemini-chat/commit/0594bbfd4064f2a0bcf6dc52987a59d20da2a28c))
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* improve password hashing and verification logic for consistency and security ([c6cd7f1](https://github.com/bohesocool/gemini-chat/commit/c6cd7f10e2a507aa211f40f01f251b93fd95bff5))
+* update Nginx configuration and Dockerfile for improved structure and permissions ([5163b68](https://github.com/bohesocool/gemini-chat/commit/5163b684653faccbd1e21483823d9a2af1ba80c4))
+
+
+### ✨ 新功能 (Features)
+
+* enhance WebDAV configuration and sync functionality with new database model and UI updates ([a596264](https://github.com/bohesocool/gemini-chat/commit/a5962644f6212b6515461f379022b60e0cd11224))
+* enhance WebDAV sync functionality and update environment configurations ([74c0a1e](https://github.com/bohesocool/gemini-chat/commit/74c0a1e9c4af8561ae437eaa0617ffdbfb799952))
+* update .env.example and docker-compose.yml for enhanced configuration options and improved WebDAV support ([cd2bc31](https://github.com/bohesocool/gemini-chat/commit/cd2bc31b65a1877979351976df2c1f585806c2cc))
+
 ### [0.2.18](https://github.com/bohesocool/gemini-chat/compare/v0.2.17...v0.2.18) (2026-03-12)
 
 
