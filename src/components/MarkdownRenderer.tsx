@@ -3,7 +3,7 @@
  * 需求: 9.1, 9.2, 9.3, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 2.1
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -12,6 +12,7 @@ import rehypeKatex from 'rehype-katex';
 import type { Components } from 'react-markdown';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { createLogger } from '../services/logger';
+import { splitMarkdownBlocks } from '../utils/markdownBlocks';
 
 // 模块日志记录器
 const logger = createLogger('MarkdownRenderer');
@@ -119,19 +120,19 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, 
     },
   }), [handleOpenPreview]);
 
-  // 渲染 Markdown 内容
-  // 注意：不缓存渲染结果，因为缓存会导致事件处理函数失效
-  const renderedContent = useMemo(() => {
-    return (
-      <ReactMarkdown
-        remarkPlugins={REMARK_PLUGINS}
-        rehypePlugins={REHYPE_PLUGINS}
-        components={componentsWithPreview}
-      >
-        {content}
-      </ReactMarkdown>
-    );
-  }, [content, componentsWithPreview]);
+  // 按顶层块切分后逐块渲染。块内容稳定时由 MarkdownBlock 的 memo 跳过重解析，
+  // 流式输出时仅最后一块（在变化的那块）需要重新解析，前面已完成的块复用。
+  // componentsWithPreview 引用稳定（依赖项 handleOpenPreview 稳定），不影响 memo 命中。
+  // 需求: 2.1 - 避免重复解析
+  const blocks = useMemo(() => splitMarkdownBlocks(content), [content]);
+
+  const renderedContent = useMemo(
+    () =>
+      blocks.map((block, index) => (
+        <MarkdownBlock key={index} content={block} components={componentsWithPreview} />
+      )),
+    [blocks, componentsWithPreview]
+  );
 
   return (
     <div className={`markdown-content ${className}`}>
@@ -146,6 +147,28 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, 
         />
       )}
     </div>
+  );
+});
+
+/**
+ * 单个顶层 Markdown 块
+ * 按 content 记忆化：流式渲染时已稳定的块不会因整段文本增长而重新解析。
+ * components 由父组件以稳定引用传入，保证 memo 生效。
+ */
+interface MarkdownBlockProps {
+  content: string;
+  components: Components;
+}
+
+const MarkdownBlock = memo(function MarkdownBlock({ content, components }: MarkdownBlockProps) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={REMARK_PLUGINS}
+      rehypePlugins={REHYPE_PLUGINS}
+      components={components}
+    >
+      {content}
+    </ReactMarkdown>
   );
 });
 
