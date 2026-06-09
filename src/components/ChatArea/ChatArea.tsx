@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from '@/i18n';
 import { GeminiIcon, PlusIcon } from '../icons';
 import { useChatWindowStore } from '../../stores/chatWindow';
@@ -45,14 +46,25 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
   const { t } = useTranslation();
 
-  // 从 store 获取状态
+  // 细粒度订阅 chatWindow store：仅在相关状态变化时重渲染
+  // 流式字段（streamingText/Thought、isSending）在流式输出时本就需要驱动本组件更新
+  const activeWindowId = useChatWindowStore((s) => s.activeWindowId);
+  const isSending = useChatWindowStore((s) => s.isSending);
+  const streamingText = useChatWindowStore((s) => s.streamingText);
+  const streamingThought = useChatWindowStore((s) => s.streamingThought);
+  const error = useChatWindowStore((s) => s.error);
+
+  // 确定当前窗口 ID
+  const currentWindowId = propWindowId || activeWindowId;
+
+  // 仅订阅当前窗口对象：其他窗口变化不触发本组件重渲染
+  // （immer 结构共享保证未变窗口的引用稳定，Object.is 比较即可跳过）
+  const currentWindow = useChatWindowStore((s) =>
+    currentWindowId ? s.windows.find((w) => w.id === currentWindowId) ?? null : null
+  );
+
+  // actions 引用稳定，用 useShallow 批量取出，本身不会引起额外重渲染
   const {
-    windows,
-    activeWindowId,
-    isSending,
-    streamingText,
-    streamingThought,
-    error,
     sendMessage,
     cancelRequest,
     createSubTopic,
@@ -67,9 +79,30 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
     retryUserMessage,
     deleteMessage,
     updateMessageContent,
-  } = useChatWindowStore();
+  } = useChatWindowStore(
+    useShallow((s) => ({
+      sendMessage: s.sendMessage,
+      cancelRequest: s.cancelRequest,
+      createSubTopic: s.createSubTopic,
+      deleteSubTopic: s.deleteSubTopic,
+      selectSubTopic: s.selectSubTopic,
+      updateSubTopic: s.updateSubTopic,
+      updateWindowConfig: s.updateWindowConfig,
+      updateAdvancedConfig: s.updateAdvancedConfig,
+      regenerateMessage: s.regenerateMessage,
+      editMessage: s.editMessage,
+      updateMessageError: s.updateMessageError,
+      retryUserMessage: s.retryUserMessage,
+      deleteMessage: s.deleteMessage,
+      updateMessageContent: s.updateMessageContent,
+    }))
+  );
 
-  const { apiEndpoint, apiKey, sidebarCollapsed, setSidebarCollapsed } = useSettingsStore();
+  // 设置项：细粒度订阅，避免无关设置变更（如主题）触发本组件重渲染
+  const apiEndpoint = useSettingsStore((s) => s.apiEndpoint);
+  const apiKey = useSettingsStore((s) => s.apiKey);
+  const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed);
 
   // 获取模型能力 - 需求: 4.6
   const getEffectiveCapabilities = useModelStore(state => state.getEffectiveCapabilities);
@@ -79,14 +112,6 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
 
   // 获取全局设置用于解析流式设置
   const getFullSettings = useSettingsStore(state => state.getFullSettings);
-
-  // 确定当前窗口 ID
-  const currentWindowId = propWindowId || activeWindowId;
-
-  // 获取当前窗口
-  const currentWindow = currentWindowId
-    ? windows.find((w) => w.id === currentWindowId)
-    : null;
 
   // 获取当前子话题
   const currentSubTopic = currentWindow
@@ -450,7 +475,7 @@ export function ChatArea({ windowId: propWindowId }: ChatAreaProps) {
  * 空窗口状态组件 - 居中显示
  */
 function EmptyWindowState() {
-  const { createWindow } = useChatWindowStore();
+  const createWindow = useChatWindowStore((s) => s.createWindow);
   const { t } = useTranslation();
 
   const handleCreateWindow = () => {

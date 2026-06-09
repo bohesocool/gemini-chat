@@ -4,7 +4,7 @@
  * 需求: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
  */
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useTranslation } from '@/i18n';
 import { touchTargets } from '../../design/tokens';
 import type { ChatWindow, SubTopic } from '../../types/chatWindow';
@@ -51,14 +51,14 @@ interface ChatWindowCardProps {
   window: ChatWindow;
   /** 是否为当前活动窗口 */
   isActive: boolean;
-  /** 选择窗口回调 */
-  onSelect: () => void;
-  /** 编辑窗口回调 */
-  onEdit: () => void;
-  /** 删除窗口回调 */
-  onDelete: () => void;
+  /** 选择窗口回调（接收窗口 ID，便于父组件传入稳定引用以命中 memo） */
+  onSelect: (id: string) => void;
+  /** 编辑窗口回调（接收窗口 ID） */
+  onEdit: (id: string) => void;
+  /** 删除窗口回调（接收窗口 ID） */
+  onDelete: (id: string) => void;
   /** 选择子话题回调 */
-  onSelectSubTopic?: (subTopicId: string) => void;
+  onSelectSubTopic?: (windowId: string, subTopicId: string) => void;
 }
 
 interface SubTopicItemProps {
@@ -99,7 +99,7 @@ function SubTopicItem({ subTopic, isActive, onSelect }: SubTopicItemProps) {
  * 聊天窗口卡片
  * 参考图片风格：星标图标在左侧，标题在右侧，紧凑布局
  */
-export function ChatWindowCard({
+export const ChatWindowCard = memo(function ChatWindowCard({
   window,
   isActive,
   onSelect,
@@ -126,7 +126,7 @@ export function ChatWindowCard({
   // 处理删除确认
   const handleConfirmDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete();
+    onDelete(window.id);
     setShowDeleteConfirm(false);
   };
 
@@ -175,7 +175,7 @@ export function ChatWindowCard({
 
   return (
     <div
-      onClick={onSelect}
+      onClick={() => onSelect(window.id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
@@ -223,7 +223,7 @@ export function ChatWindowCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onEdit();
+                onEdit(window.id);
               }}
               className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors"
               title={t('sidebar.rename')}
@@ -266,14 +266,14 @@ export function ChatWindowCard({
               key={subTopic.id}
               subTopic={subTopic}
               isActive={subTopic.id === window.activeSubTopicId}
-              onSelect={() => onSelectSubTopic?.(subTopic.id)}
+              onSelect={() => onSelectSubTopic?.(window.id, subTopic.id)}
             />
           ))}
         </div>
       )}
     </div>
   );
-}
+});
 
 // ============ 图标组件 ============
 
