@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.21](https://github.com/bohesocool/gemini-chat/compare/v0.2.20...v0.2.21) (2026-06-09)
+
+
+### ⚡ 性能优化 (Performance)
+
+* 细化 store 订阅与列表卡片记忆化，减少多窗口场景重渲染 ([7cdcf82](https://github.com/bohesocool/gemini-chat/commit/7cdcf8299d55ffead62f1bf0256eb588426b6a70))
+
 ### [0.2.20](https://github.com/bohesocool/gemini-chat/compare/v0.2.19...v0.2.20) (2026-06-09)
 
 
