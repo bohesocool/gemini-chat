@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.20](https://github.com/bohesocool/gemini-chat/compare/v0.2.19...v0.2.20) (2026-06-09)
+
+
+### ⚡ 性能优化 (Performance)
+
+* Markdown 流式渲染按块记忆化，避免整段重复解析 ([14d7eaa](https://github.com/bohesocool/gemini-chat/commit/14d7eaa64adfae71877300df5fe23c2b059981af))
+
+
+### 🔧 其他更改 (Chores)
+
+* 移除单元测试文件并同步 package-lock ([a69c5e2](https://github.com/bohesocool/gemini-chat/commit/a69c5e29eff9c3352d67d63dd4b5b1395bdd1424))
+
 ### [0.2.19](https://github.com/bohesocool/gemini-chat/compare/v0.2.18...v0.2.19) (2026-04-22)
 
 
