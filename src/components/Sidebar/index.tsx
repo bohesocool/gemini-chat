@@ -172,10 +172,10 @@ export function Sidebar() {
         <ChatWindowCard
           window={window}
           isActive={isActive}
-          onSelect={() => handleSelectWindow(window.id)}
-          onEdit={() => handleStartEdit(window.id)}
-          onDelete={() => handleDeleteWindow(window.id)}
-          onSelectSubTopic={(subTopicId) => handleSelectSubTopic(window.id, subTopicId)}
+          onSelect={handleSelectWindow}
+          onEdit={handleStartEdit}
+          onDelete={handleDeleteWindow}
+          onSelectSubTopic={handleSelectSubTopic}
         />
       </div>
     );

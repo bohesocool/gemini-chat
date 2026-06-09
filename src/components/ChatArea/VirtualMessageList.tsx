@@ -89,7 +89,7 @@ const DEFAULT_CONFIG: VirtualScrollConfig = {
  * - 1.4: 用户向上滚动时暂停自动滚动
  * - 1.5: 正确计算并渲染动态高度的消息项
  */
-export function VirtualMessageList({
+function VirtualMessageListInner({
   messages,
   isSending = false,
   streamingText = '',
@@ -1285,5 +1285,11 @@ export function validateCancelOperation(
     return finalContent === originalContent;
   }
 }
+
+/**
+ * memo 包裹：当父组件（ChatArea）因无关状态（如配置面板开关、侧边栏折叠）重渲染、
+ * 而本组件 props 未变化时，跳过整个虚拟列表的重渲染。
+ */
+export const VirtualMessageList = memo(VirtualMessageListInner);
 
 export default VirtualMessageList;
