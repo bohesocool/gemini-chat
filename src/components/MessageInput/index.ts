@@ -15,3 +15,15 @@ export type { FilesApiToggleProps } from './FilesApiToggle';
 
 export { FileReferencePreview } from './FileReferencePreview';
 export type { FileReferencePreviewProps } from './FileReferencePreview';
+
+export { InputToolbar } from './InputToolbar';
+export type { InputToolbarProps } from './InputToolbar';
+
+export { ToolbarButton } from './ToolbarButton';
+export type { ToolbarButtonProps } from './ToolbarButton';
+
+export { IconButton } from './IconButton';
+export type { IconButtonProps } from './IconButton';
+
+export { AttachmentPreview } from './AttachmentPreview';
+export type { AttachmentPreviewProps } from './AttachmentPreview';

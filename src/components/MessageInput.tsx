@@ -1,30 +1,47 @@
 /**
  * 消息输入组件
  * 现代化设计，支持自动高度调整和丰富的交互反馈
- * 
+ *
  * Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Attachment, ImageGenerationConfig, ThinkingLevel, ModelCapabilities } from '../types/models';
-import { SUPPORTED_IMAGE_TYPES } from '../types/models';
-import { validateFile, fileToBase64, getFileMimeType, isImageFile, formatFileSize } from '../services/file';
 import { useReducedMotion } from './motion';
-import { durationValues, easings, touchTargets } from '../design/tokens';
+import { durationValues, easings } from '../design/tokens';
 import { useModelStore } from '../stores/model';
 import { useSettingsStore } from '../stores/settings';
-import { ImageConfigToolbar } from './MessageInput/ImageConfigToolbar';
-import { StatusIndicators } from './MessageInput/StatusIndicators';
-import { FilesApiToggle } from './MessageInput/FilesApiToggle';
 import { FileReferencePreview } from './MessageInput/FileReferencePreview';
+import { AttachmentPreview } from './MessageInput/AttachmentPreview';
+import { IconButton } from './MessageInput/IconButton';
+import { InputToolbar } from './MessageInput/InputToolbar';
+import { useFileUpload } from './MessageInput/useFileUpload';
+import { INPUT_MIN_ROWS, INPUT_MAX_ROWS, LINE_HEIGHT_PX } from './MessageInput/utils';
+import {
+  ImageIcon,
+  PaperclipIcon,
+  SendIcon,
+  LoadingSpinner,
+  UploadIcon,
+  StopIcon,
+  EditIndicatorIcon,
+} from './MessageInput/icons';
 import type { FileReference } from '../types/filesApi';
 import { createLogger } from '../services/logger';
+import { useTranslation } from '@/i18n';
 
 // 模块日志记录器
 const logger = createLogger('MessageInput');
-import { generateFileReferenceId, createFileReference } from '../types/filesApi';
-import { uploadFileToFilesApi, validateFilesApiFile, FilesApiError, getErrorMessage } from '../services/filesApi';
-import { useTranslation } from '@/i18n';
+
+// 重新导出工具函数与常量，保持原有导入路径兼容（用于属性测试）
+export {
+  INPUT_MIN_ROWS,
+  INPUT_MAX_ROWS,
+  LINE_HEIGHT_PX,
+  getExtensionFromMimeType,
+  generatePastedImageFilename,
+  calculateInputHeight,
+} from './MessageInput/utils';
 
 interface MessageInputProps {
   /** 发送消息回调 */
@@ -83,62 +100,10 @@ interface MessageInputProps {
   modelCapabilities?: ModelCapabilities;
 }
 
-// 输入框高度限制常量（用于属性测试）
-export const INPUT_MIN_ROWS = 1;
-export const INPUT_MAX_ROWS = 6;
-export const LINE_HEIGHT_PX = 24; // 每行高度（像素）
-
-/**
- * 根据 MIME 类型获取文件扩展名
- * 用于生成粘贴图片的文件名
- * 
- * @param mimeType 图片的 MIME 类型
- * @returns 对应的文件扩展名（不含点号）
- */
-export function getExtensionFromMimeType(mimeType: string): string {
-  const mimeToExtension: Record<string, string> = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp',
-    'image/gif': 'gif',
-  };
-  // 使用 Object.prototype.hasOwnProperty.call 避免原型链污染问题
-  if (Object.prototype.hasOwnProperty.call(mimeToExtension, mimeType)) {
-    return mimeToExtension[mimeType]!;
-  }
-  return 'png';
-}
-
-/**
- * 生成粘贴图片的默认文件名
- * 格式: pasted-image-{timestamp}.{extension}
- * 
- * Requirements: 4.4
- * 
- * @param mimeType 图片的 MIME 类型
- * @param timestamp 可选的时间戳，默认使用当前时间
- * @returns 生成的文件名
- */
-export function generatePastedImageFilename(mimeType: string, timestamp?: number): string {
-  const ts = timestamp ?? Date.now();
-  const extension = getExtensionFromMimeType(mimeType);
-  return `pasted-image-${ts}.${extension}`;
-}
-
-/**
- * 计算输入框应有的高度
- * 用于属性测试验证
- */
-export function calculateInputHeight(content: string): number {
-  const lineCount = content.split('\n').length;
-  const clampedLines = Math.max(INPUT_MIN_ROWS, Math.min(lineCount, INPUT_MAX_ROWS));
-  return clampedLines * LINE_HEIGHT_PX;
-}
-
 /**
  * 消息输入组件
  * 支持多行文本输入、图片和文件上传、拖拽上传
- * 
+ *
  * Requirements:
  * - 9.1: 圆角设计，微妙边框和阴影
  * - 9.2: 焦点高亮边框动画
@@ -178,11 +143,22 @@ export function MessageInput({
 }: MessageInputProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [fileReferences, setFileReferences] = useState<FileReference[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // 文件/图片上传与 Files API 上传状态管理（从本组件拆分出的 Hook）
+  const {
+    attachments,
+    setAttachments,
+    fileReferences,
+    setFileReferences,
+    error,
+    handleFiles,
+    handlePaste,
+    handleRemoveAttachment,
+    handleRemoveFileReference,
+    handleRetryFileUpload,
+  } = useFileUpload();
 
   // 使用翻译后的占位符，根据状态选择合适的提示
   const inputPlaceholder = placeholder ?? (disabled ? t('chat.inputPlaceholderNoApiKey') : t('chat.inputPlaceholderWithHint'));
@@ -196,8 +172,6 @@ export function MessageInput({
   // 获取 Files API 开关状态 - 需求: 1.1, 1.2
   const filesApiEnabled = useSettingsStore(state => state.filesApiEnabled);
   const setFilesApiEnabled = useSettingsStore(state => state.setFilesApiEnabled);
-  const apiKey = useSettingsStore(state => state.apiKey);
-  const apiEndpoint = useSettingsStore(state => state.apiEndpoint);
 
   // 获取模型 store 的 getEffectiveCapabilities 方法
   // 需求: 4.1, 4.2, 4.3, 4.4, 4.5 (model-redirect-enhancement)
@@ -226,14 +200,6 @@ export function MessageInput({
     }
   }, [content]);
 
-  // 清除错误提示
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-
   // 判断是否显示图片配置工具栏 - 需求: 1.1, 1.2, 1.3, 1.4
   // 使用有效能力（考虑重定向）判断是否显示图片配置
   // 需求: 4.1, 4.2, 4.3, 4.4, 4.5 (model-redirect-enhancement)
@@ -255,175 +221,14 @@ export function MessageInput({
     return capabilities.supportsImageSize !== false;
   })();
 
-
-
-  // 处理文件选择
-  const handleFiles = useCallback(async (files: FileList | File[]) => {
-    const fileArray = Array.from(files);
-    const newAttachments: Attachment[] = [];
-
-    // 调试日志
-    logger.debug('handleFiles called', {
-      filesApiEnabled,
-      fileCount: fileArray.length,
-      apiKey: apiKey ? '***' : 'empty',
-    });
-
-    for (const file of fileArray) {
-      // 如果启用了 Files API 模式，使用 Files API 上传
-      // 需求: 2.1 - Files API 模式下上传文件到 Gemini Files API
-      if (filesApiEnabled) {
-        logger.debug('Using Files API mode for:', file.name);
-        // 验证文件是否可以通过 Files API 上传
-        const validation = validateFilesApiFile(file);
-        if (!validation.valid) {
-          setError(validation.error || '文件验证失败');
-          continue;
-        }
-
-        // 创建初始文件引用（上传中状态）
-        const tempRef: FileReference = {
-          id: generateFileReferenceId(),
-          uri: '',
-          mimeType: file.type || 'application/octet-stream',
-          displayName: file.name,
-          sizeBytes: file.size,
-          status: 'uploading',
-          progress: 0,
-          originalFile: file, // 保存原始文件用于重试 - 需求: 5.2
-        };
-
-        // 添加到文件引用列表
-        setFileReferences(prev => [...prev, tempRef]);
-
-        try {
-          // 上传文件到 Files API
-          // 需求: 2.2 - 显示上传进度
-          const result = await uploadFileToFilesApi(
-            file,
-            apiKey,
-            apiEndpoint || undefined,
-            (progress) => {
-              // 更新上传进度
-              setFileReferences(prev =>
-                prev.map(ref =>
-                  ref.id === tempRef.id
-                    ? { ...ref, progress }
-                    : ref
-                )
-              );
-            }
-          );
-
-          // 更新文件引用为成功状态
-          // 需求: 2.3 - 存储文件引用
-          const successRef = createFileReference(result, file.name);
-          setFileReferences(prev =>
-            prev.map(ref =>
-              ref.id === tempRef.id
-                ? { ...successRef, id: tempRef.id }
-                : ref
-            )
-          );
-        } catch (err) {
-          logger.error('Files API 上传失败:', err);
-          // 更新文件引用为错误状态
-          // 需求: 2.4, 5.1, 5.2, 5.4 - 显示上传错误，保留错误代码和原始文件用于重试
-          const errorMessage = getErrorMessage(err);
-          const errorCode = err instanceof FilesApiError ? err.code : undefined;
-
-          setFileReferences(prev =>
-            prev.map(ref =>
-              ref.id === tempRef.id
-                ? {
-                  ...ref,
-                  status: 'error' as const,
-                  error: errorMessage,
-                  errorCode: errorCode,
-                  originalFile: file, // 保留原始文件用于重试
-                }
-                : ref
-            )
-          );
-          // 需求: 5.4 - 错误时保留文本内容（不清空 content）
-          setError(errorMessage);
-        }
-      } else {
-        // 使用传统的 base64 内联方式
-        // 需求: 4.4 - Files API 模式禁用时使用现有内联 base64 上传方法
-        logger.debug('Using traditional base64 mode for:', file.name);
-        const validation = validateFile(file);
-        if (!validation.valid) {
-          setError(validation.error || '文件验证失败');
-          continue;
-        }
-
-        try {
-          const mimeType = getFileMimeType(file);
-          const base64Data = await fileToBase64(file);
-
-          const attachment: Attachment = {
-            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            type: isImageFile(mimeType) ? 'image' : 'file',
-            name: file.name,
-            mimeType,
-            data: base64Data,
-            size: file.size,
-          };
-
-          newAttachments.push(attachment);
-        } catch (err) {
-          logger.error('文件处理失败:', err);
-          setError(`文件处理失败: ${file.name}`);
-        }
-      }
-    }
-
-    if (newAttachments.length > 0) {
-      setAttachments((prev) => [...prev, ...newAttachments]);
-    }
-  }, [filesApiEnabled, apiKey, apiEndpoint]);
-
-  /**
-   * 处理粘贴事件，从剪贴板提取图片
-   * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
-   */
-  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    const imageFiles: File[] = [];
-
-    // 遍历剪贴板项目，提取图片
-    for (const item of items) {
-      // 检查是否为支持的图片类型
-      if (item.kind === 'file' && SUPPORTED_IMAGE_TYPES.includes(item.type)) {
-        const file = item.getAsFile();
-        if (file) {
-          // 生成带时间戳的默认文件名
-          const filename = generatePastedImageFilename(item.type);
-          // 创建带有新文件名的 File 对象
-          const renamedFile = new File([file], filename, { type: file.type });
-          imageFiles.push(renamedFile);
-        }
-      }
-    }
-
-    // 如果有图片，阻止默认粘贴行为并处理图片
-    if (imageFiles.length > 0) {
-      e.preventDefault();
-      await handleFiles(imageFiles);
-    }
-    // 如果没有图片，允许默认的文本粘贴行为
-  }, [handleFiles]);
-
-  const handleImageClick = () => {
+  // 使用 useCallback 稳定回调引用，配合 InputToolbar 的 React.memo 隔离打字重渲染
+  const handleImageClick = useCallback(() => {
     imageInputRef.current?.click();
-  };
+  }, []);
 
-  const handleFileClick = () => {
+  const handleFileClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -432,96 +237,11 @@ export function MessageInput({
     }
   };
 
-  const handleRemoveAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  // 删除文件引用 - 需求: 3.2
-  const handleRemoveFileReference = (id: string) => {
-    setFileReferences((prev) => prev.filter((ref) => ref.id !== id));
-  };
-
-  // 重试上传文件 - 需求: 5.2
-  const handleRetryFileUpload = useCallback(async (id: string) => {
-    // 找到需要重试的文件引用
-    const refToRetry = fileReferences.find(ref => ref.id === id);
-    if (!refToRetry || !refToRetry.originalFile) {
-      setError('无法重试：原始文件不可用');
-      return;
-    }
-
-    const file = refToRetry.originalFile;
-
-    // 更新状态为上传中
-    setFileReferences(prev =>
-      prev.map(ref =>
-        ref.id === id
-          ? {
-            ...ref,
-            status: 'uploading' as const,
-            progress: 0,
-            error: undefined,
-            errorCode: undefined,
-          }
-          : ref
-      )
-    );
-
-    try {
-      // 重新上传文件
-      const result = await uploadFileToFilesApi(
-        file,
-        apiKey,
-        apiEndpoint || undefined,
-        (progress) => {
-          setFileReferences(prev =>
-            prev.map(ref =>
-              ref.id === id
-                ? { ...ref, progress }
-                : ref
-            )
-          );
-        }
-      );
-
-      // 更新为成功状态
-      const successRef = createFileReference(result, file.name);
-      setFileReferences(prev =>
-        prev.map(ref =>
-          ref.id === id
-            ? { ...successRef, id }
-            : ref
-        )
-      );
-
-      // 清除错误提示
-      setError(null);
-    } catch (err) {
-      logger.error('重试上传失败:', err);
-      const errorMessage = getErrorMessage(err);
-      const errorCode = err instanceof FilesApiError ? err.code : undefined;
-
-      setFileReferences(prev =>
-        prev.map(ref =>
-          ref.id === id
-            ? {
-              ...ref,
-              status: 'error' as const,
-              error: errorMessage,
-              errorCode: errorCode,
-            }
-            : ref
-        )
-      );
-      setError(errorMessage);
-    }
-  }, [fileReferences, apiKey, apiEndpoint]);
-
   // 切换 Files API 模式 - 需求: 1.3
-  const handleFilesApiToggle = () => {
+  const handleFilesApiToggle = useCallback(() => {
     logger.debug('Toggling Files API mode:', !filesApiEnabled);
     setFilesApiEnabled(!filesApiEnabled);
-  };
+  }, [filesApiEnabled, setFilesApiEnabled]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -732,7 +452,7 @@ export function MessageInput({
         )}
 
         {/* 文本输入框 - Requirements: 9.1, 9.2, 4.1, 4.2, 4.3, 4.4 */}
-        <div 
+        <div
           className={`
             flex-1 min-w-0 flex items-center gap-2
             rounded-full px-4 py-2
@@ -816,143 +536,33 @@ export function MessageInput({
 
       {/* 工具栏 - 移到输入框下方 - Requirements: 7.2, 7.3 */}
       {showExtendedToolbar && (
-        <div className="flex items-center gap-1 mt-2 pt-1">
-          {/* 附件按钮 */}
-          <ToolbarButton
-            onClick={handleImageClick}
-            disabled={isDisabled}
-            title={t('chat.uploadImage')}
-            reducedMotion={reducedMotion}
-          >
-            <ImageIcon className="w-4 h-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            onClick={handleFileClick}
-            disabled={isDisabled}
-            title={t('chat.uploadFile')}
-            reducedMotion={reducedMotion}
-          >
-            <PaperclipIcon className="w-4 h-4" />
-          </ToolbarButton>
-
-          {/* Files API 开关 - 需求: 1.1, 1.3, 1.4 */}
-          <FilesApiToggle
-            enabled={filesApiEnabled}
-            onToggle={handleFilesApiToggle}
-            disabled={isDisabled}
-          />
-
-          {/* 分隔线 */}
-          <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
-
-          {/* 联网搜索按钮 - 需求: 联网搜索 */}
-          <ToolbarButton
-            onClick={() => onWebSearchToggle?.()}
-            disabled={isDisabled}
-            title={webSearchEnabled ? t('chat.disableWebSearch') : t('chat.enableWebSearch')}
-            active={webSearchEnabled}
-            reducedMotion={reducedMotion}
-          >
-            <GlobeIcon className="w-4 h-4" />
-          </ToolbarButton>
-
-          {/* URL 上下文按钮 - 需求: 1.2, 1.3, 1.4 */}
-          <ToolbarButton
-            onClick={() => onUrlContextToggle?.()}
-            disabled={isDisabled}
-            title={urlContextEnabled ? t('chat.disableUrlContext') : t('chat.enableUrlContext')}
-            active={urlContextEnabled}
-            reducedMotion={reducedMotion}
-          >
-            <LinkIcon className="w-4 h-4" />
-          </ToolbarButton>
-
-          {/* 图片搜索按钮 */}
-          {modelCapabilities?.supportsImageSearch && (
-            <ToolbarButton
-              onClick={() => onImageSearchToggle?.()}
-              disabled={isDisabled}
-              title={imageSearchEnabled ? t('chat.disableImageSearch') : t('chat.enableImageSearch')}
-              active={imageSearchEnabled}
-              reducedMotion={reducedMotion}
-            >
-              <ImageSearchIcon className="w-4 h-4" />
-            </ToolbarButton>
-          )}
-
-          {/* 图片配置工具栏 - 需求: 2.1, 3.1 */}
-          {showImageConfig && imageConfig && onImageConfigChange && (
-            <>
-              {/* 分隔线 */}
-              <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
-              <ImageConfigToolbar
-                config={imageConfig}
-                onChange={onImageConfigChange}
-                disabled={isDisabled}
-                supportsImageSize={supportsImageSize}
-                supportsExtendedAspectRatios={modelCapabilities?.supportsExtendedAspectRatios === true}
-                supports512Resolution={modelCapabilities?.supports512Resolution === true}
-              />
-            </>
-          )}
-
-          {/* 状态指示器 - 需求: 4.1, 4.2, 4.3, 4.6, 2.1, 3.3 */}
-          {modelCapabilities && (
-            <>
-              {/* 分隔线 */}
-              <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
-              <StatusIndicators
-                streamingEnabled={streamingEnabled}
-                onStreamingToggle={onStreamingToggle}
-                includeThoughts={includeThoughts}
-                onThoughtsToggle={onThoughtsToggle}
-                thinkingLevel={thinkingLevel}
-                onThinkingLevelChange={onThinkingLevelChange}
-                thinkingBudget={thinkingBudget}
-                onThinkingBudgetChange={onThinkingBudgetChange}
-                capabilities={modelCapabilities}
-                disabled={isDisabled}
-                supportedThinkingLevels={modelCapabilities.supportedThinkingLevels}
-              />
-            </>
-          )}
-
-          <div className="flex-1" />
-
-          {/* Files API 状态指示 - 需求: 1.6 */}
-          {filesApiEnabled && (
-            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              {t('chat.filesApiEnabled')}
-            </span>
-          )}
-
-          {/* 联网搜索状态指示 */}
-          {webSearchEnabled && (
-            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              {t('chat.webSearchEnabled')}
-            </span>
-          )}
-
-          {/* URL 上下文状态指示 - 需求: 1.3 */}
-          {urlContextEnabled && (
-            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              {t('chat.urlContextEnabled')}
-            </span>
-          )}
-
-          {/* 图片搜索状态指示 */}
-          {imageSearchEnabled && (
-            <span className="text-xs text-primary-500 dark:text-primary-400 hidden sm:inline">
-              {t('chat.imageSearchEnabled')}
-            </span>
-          )}
-
-          {/* 提示文字 */}
-          <span className="text-xs text-neutral-400 dark:text-neutral-500 hidden sm:inline">
-            {t('chat.enterToSend')} · {t('chat.shiftEnterNewLine')}
-          </span>
-        </div>
+        <InputToolbar
+          onImageClick={handleImageClick}
+          onFileClick={handleFileClick}
+          isDisabled={isDisabled}
+          reducedMotion={reducedMotion}
+          filesApiEnabled={filesApiEnabled}
+          onFilesApiToggle={handleFilesApiToggle}
+          webSearchEnabled={webSearchEnabled}
+          onWebSearchToggle={onWebSearchToggle}
+          urlContextEnabled={urlContextEnabled}
+          onUrlContextToggle={onUrlContextToggle}
+          imageSearchEnabled={imageSearchEnabled}
+          onImageSearchToggle={onImageSearchToggle}
+          modelCapabilities={modelCapabilities}
+          showImageConfig={showImageConfig}
+          imageConfig={imageConfig}
+          onImageConfigChange={onImageConfigChange}
+          supportsImageSize={supportsImageSize}
+          streamingEnabled={streamingEnabled}
+          onStreamingToggle={onStreamingToggle}
+          includeThoughts={includeThoughts}
+          onThoughtsToggle={onThoughtsToggle}
+          thinkingLevel={thinkingLevel}
+          onThinkingLevelChange={onThinkingLevelChange}
+          thinkingBudget={thinkingBudget}
+          onThinkingBudgetChange={onThinkingBudgetChange}
+        />
       )}
 
       {/* 隐藏的文件输入 */}
@@ -979,294 +589,6 @@ export function MessageInput({
         className="hidden"
       />
     </div>
-  );
-}
-
-/**
- * 工具栏按钮组件 - Requirements: 9.2
- */
-interface ToolbarButtonProps {
-  onClick: () => void;
-  disabled?: boolean;
-  title: string;
-  children: React.ReactNode;
-  active?: boolean;
-  reducedMotion: boolean;
-}
-
-function ToolbarButton({ onClick, disabled, title, children, active = false, reducedMotion }: ToolbarButtonProps) {
-  const transitionStyle = reducedMotion
-    ? {}
-    : { transition: `all ${durationValues.fast}ms ${easings.easeOut}` };
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`
-        p-2 rounded-lg flex items-center justify-center touch-manipulation
-        ${active
-          ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-          : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-        }
-        active:scale-95
-        disabled:opacity-50 disabled:cursor-not-allowed
-      `}
-      style={transitionStyle}
-      title={title}
-    >
-      {children}
-    </button>
-  );
-}
-
-/**
- * 图标按钮组件
- */
-interface IconButtonProps {
-  onClick: () => void;
-  disabled?: boolean;
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-  reducedMotion: boolean;
-}
-
-function IconButton({ onClick, disabled, title, children, className = '', reducedMotion }: IconButtonProps) {
-  const transitionStyle = reducedMotion
-    ? {}
-    : { transition: `all ${durationValues.fast}ms ${easings.easeOut}` };
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`
-        p-2 rounded-xl flex items-center justify-center touch-manipulation
-        text-neutral-500 dark:text-neutral-400
-        hover:text-neutral-700 dark:hover:text-neutral-200
-        hover:bg-neutral-100 dark:hover:bg-neutral-800
-        active:scale-95
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${className}
-      `}
-      style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-      title={title}
-    >
-      {children}
-    </button>
-  );
-}
-
-/**
- * 附件预览组件
- */
-interface AttachmentPreviewProps {
-  attachment: Attachment;
-  onRemove: () => void;
-  reducedMotion: boolean;
-}
-
-function AttachmentPreview({ attachment, onRemove, reducedMotion }: AttachmentPreviewProps) {
-  const { t } = useTranslation();
-  const transitionStyle = reducedMotion
-    ? {}
-    : { transition: `all ${durationValues.fast}ms ${easings.easeOut}` };
-
-  if (attachment.type === 'image') {
-    return (
-      <div className="relative group aspect-square">
-        <img
-          src={`data:${attachment.mimeType};base64,${attachment.data}`}
-          alt={attachment.name}
-          className="w-full h-full object-cover rounded-xl"
-        />
-        <button
-          onClick={onRemove}
-          className="
-            absolute -top-2 -right-2 
-            bg-error-light hover:bg-red-600 
-            text-white rounded-full 
-            flex items-center justify-center 
-            opacity-0 group-hover:opacity-100
-            shadow-md touch-manipulation
-          "
-          style={{ ...transitionStyle, minWidth: '28px', minHeight: '28px' }}
-          title={t('chat.remove')}
-        >
-          <XIcon className="w-3 h-3" />
-        </button>
-        <div className="
-          absolute bottom-0 left-0 right-0 
-          bg-black/60 text-white text-xs px-1.5 py-0.5 
-          rounded-b-xl truncate
-          backdrop-blur-sm
-        ">
-          {attachment.name}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="
-      relative group col-span-2
-      flex items-center gap-2 
-      bg-neutral-100 dark:bg-neutral-700 
-      rounded-xl px-3 py-2
-    ">
-      <FileIcon className="w-5 h-5 text-neutral-500 dark:text-neutral-400 flex-shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
-          {attachment.name}
-        </p>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {formatFileSize(attachment.size)}
-        </p>
-      </div>
-      <button
-        onClick={onRemove}
-        className="
-          p-2 text-neutral-400 hover:text-error-light touch-manipulation
-          dark:hover:text-error-dark
-        "
-        style={{ ...transitionStyle, minWidth: touchTargets.minimum, minHeight: touchTargets.minimum }}
-        title={t('chat.remove')}
-      >
-        <XIcon className="w-4 h-4" />
-      </button>
-    </div>
-  );
-}
-
-// ============ 图标组件 ============
-
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  );
-}
-
-function PaperclipIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-    </svg>
-  );
-}
-
-function SendIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-    </svg>
-  );
-}
-
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  );
-}
-
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function LoadingSpinner({ className }: { className?: string }) {
-  return (
-    <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-    </svg>
-  );
-}
-
-function UploadIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-    </svg>
-  );
-}
-
-/**
- * 停止图标 - 需求: 5.1
- */
-function StopIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <rect x="6" y="6" width="12" height="12" rx="2" />
-    </svg>
-  );
-}
-
-/**
- * 编辑指示器图标 - 需求: 3.3
- */
-function EditIndicatorIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-      />
-    </svg>
-  );
-}
-
-/**
- * 地球图标 - 需求: 联网搜索
- */
-function GlobeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-      />
-    </svg>
-  );
-}
-
-/**
- * 链接图标 - 需求: URL 上下文 1.2, 1.4
- */
-function LinkIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-      />
-    </svg>
-  );
-}
-
-function ImageSearchIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-    </svg>
   );
 }
 
