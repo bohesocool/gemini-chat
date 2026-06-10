@@ -24,7 +24,30 @@ async function currentConfig(): Promise<WebDAVStoredConfig> {
   return cfg;
 }
 
+/**
+ * 校验 WebDAV URL，防止 SSRF。
+ * 注意：本功能预期用途包含连接 LAN / 内网 WebDAV（如 docker 内 http://dufs:5000/），
+ * 故不封禁私网地址，仅限制协议为 http/https 并封禁云元数据 / link-local 地址。
+ */
+function assertSafeWebdavUrl(raw: string): void {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new Error('Invalid WebDAV URL');
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+    throw new Error(`Unsupported WebDAV protocol: ${u.protocol} (only http/https allowed)`);
+  }
+  const host = u.hostname.toLowerCase();
+  // 封禁 link-local / 云元数据地址（169.254.0.0/16，含 169.254.169.254；IPv6 fe80::/10）
+  if (host === '169.254.169.254' || host.startsWith('169.254.') || host.startsWith('fe80:')) {
+    throw new Error('Access to link-local/metadata address is not allowed');
+  }
+}
+
 function buildClient(cfg: WebDAVStoredConfig): WebDAVClient {
+  assertSafeWebdavUrl(cfg.url);
   return createClient(cfg.url, {
     username: cfg.username,
     password: cfg.password,

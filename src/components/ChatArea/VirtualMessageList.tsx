@@ -900,16 +900,20 @@ const AttachmentPreview = memo(function AttachmentPreview({ attachment }: { atta
             shadow-md
           "
           onClick={() => {
-            const win = window.open();
-            if (win) {
-              win.document.write(`
-                <html>
-                  <head><title>${attachment.name}</title></head>
-                  <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
-                    <img src="data:${attachment.mimeType};base64,${attachment.data}" style="max-width:100%;max-height:100vh;object-fit:contain;" />
-                  </body>
-                </html>
-              `);
+            // 用 Blob URL 直接以浏览器原生图片查看器打开，避免拼接 HTML 导致 XSS
+            try {
+              const byteChars = atob(attachment.data);
+              const bytes = new Uint8Array(byteChars.length);
+              for (let i = 0; i < byteChars.length; i++) {
+                bytes[i] = byteChars.charCodeAt(i);
+              }
+              const blob = new Blob([bytes], { type: attachment.mimeType });
+              const url = URL.createObjectURL(blob);
+              window.open(url, '_blank', 'noopener,noreferrer');
+              // 延迟回收，给新标签页留出加载时间
+              setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch {
+              // base64 解析失败时静默忽略
             }
           }}
         />

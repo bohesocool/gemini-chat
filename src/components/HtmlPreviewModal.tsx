@@ -85,7 +85,7 @@ export function HtmlPreviewModal({ html, isOpen, onClose }: HtmlPreviewModalProp
         <div className="w-full h-[calc(100%-52px)] bg-white">
           <iframe
             srcDoc={wrappedHtml}
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts"
             className="w-full h-full border-0"
             title="HTML 预览"
           />
