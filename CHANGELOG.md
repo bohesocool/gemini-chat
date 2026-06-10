@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.26](https://github.com/bohesocool/gemini-chat/compare/v0.2.25...v0.2.26) (2026-06-10)
+
+
+### ⚡ 性能优化 (Performance)
+
+* 侧边栏窗口列表虚拟化与 Markdown 流式增量切分 ([0ff6bdb](https://github.com/bohesocool/gemini-chat/commit/0ff6bdbb197ebf53ca926e0c4db1e5b26a7592ae))
+
+
+### ♻️ 代码重构 (Code Refactoring)
+
+* 拆分 live store 音频处理逻辑至 LiveSessionManager 服务 ([62808d1](https://github.com/bohesocool/gemini-chat/commit/62808d1ee93e4fc26a831a7d417247184240fea3))
+* 拆分超大组件并删除死代码 ([c85da25](https://github.com/bohesocool/gemini-chat/commit/c85da2554f750623de587b7773a418cbc8be78f7))
+
+
+### 🔧 其他更改 (Chores)
+
+* 删除未使用的 markdownCache 服务及其专属常量 ([c15b751](https://github.com/bohesocool/gemini-chat/commit/c15b75151494068434f85e83cced889137f21484))
+
 ### [0.2.25](https://github.com/bohesocool/gemini-chat/compare/v0.2.24...v0.2.25) (2026-06-10)
 
 
