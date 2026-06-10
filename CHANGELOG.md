@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.24](https://github.com/bohesocool/gemini-chat/compare/v0.2.23...v0.2.24) (2026-06-10)
+
+
+### 🐛 Bug 修复 (Bug Fixes)
+
+* 安全加固（iframe 沙箱、图片预览 XSS、WebDAV SSRF） ([1efd924](https://github.com/bohesocool/gemini-chat/commit/1efd924d747f8b0ecde1a0b512b8d7e865c1b08b))
+* 安全加固第二批（启动告警 + 数据库端口收敛） ([b0c1266](https://github.com/bohesocool/gemini-chat/commit/b0c1266e5bd64d011006f009cbf668eaaaa123e8))
+
 ### [0.2.23](https://github.com/bohesocool/gemini-chat/compare/v0.2.22...v0.2.23) (2026-06-10)
 
 
