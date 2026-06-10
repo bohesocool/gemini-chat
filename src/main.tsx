@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { appLogger } from './services/logger';
+import { preloadMarkdownRenderer } from './components/MarkdownRenderer';
 
 // 输出启动日志
 // 需求: 2.1
@@ -29,3 +30,11 @@ createRoot(rootElement).render(
 );
 
 appLogger.info('应用渲染完成');
+
+// 应用空闲时预取重型 Markdown 渲染 chunk，避免首次渲染消息时的回退闪烁
+const preload = () => preloadMarkdownRenderer();
+if ('requestIdleCallback' in window) {
+  window.requestIdleCallback(preload);
+} else {
+  setTimeout(preload, 1000);
+}
