@@ -5,7 +5,6 @@
  * Requirements: 2.1, 4.1, 4.2, 4.3
  */
 
-import { toPng } from 'html-to-image';
 import { IMAGE_EXPORT_CONFIG, formatTimestamp, downloadFile } from './export';
 import type { ExportMetadata } from './export';
 import { createLogger } from './logger';
@@ -75,6 +74,8 @@ export async function exportElementToPng(
   options: ImageExportOptions
 ): Promise<Blob> {
   try {
+    // 懒加载 html-to-image：仅在实际导出时才下载该依赖，移出首屏 bundle
+    const { toPng } = await import('html-to-image');
     // 使用 html-to-image 将 DOM 转换为 PNG data URL
     const dataUrl = await toPng(element, {
       width: options.width,
