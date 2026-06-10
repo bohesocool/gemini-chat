@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.22](https://github.com/bohesocool/gemini-chat/compare/v0.2.21...v0.2.22) (2026-06-10)
+
+
+### ⚡ 性能优化 (Performance)
+
+* Markdown 渲染器拆分为按需加载 chunk，React 核心独立 vendor 缓存 ([1bcb907](https://github.com/bohesocool/gemini-chat/commit/1bcb9075fd5bc778ca25598c7341e57639639adb))
+
+
+### 🐛 Bug 修复 (Bug Fixes)
+
+* Live API 音频缓存设置 5s 上限，防止网络积压导致内存无限增长 ([1f91355](https://github.com/bohesocool/gemini-chat/commit/1f913556c00b35638dcf3b84f462f97d2f89515c))
+
 ### [0.2.21](https://github.com/bohesocool/gemini-chat/compare/v0.2.20...v0.2.21) (2026-06-09)
 
 
