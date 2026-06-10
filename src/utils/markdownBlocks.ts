@@ -127,23 +127,28 @@ function shouldMerge(lines: string[], a: Segment, b: Segment): boolean {
   return false;
 }
 
+/** 切分结果（含最后一块的起始偏移，用于增量切分） */
+interface SplitResult {
+  blocks: string[];
+  /** 最后一块在原文本中的起始字符偏移（blocks 为空时为 0） */
+  lastBlockStart: number;
+}
+
 /**
- * 把 Markdown 文本切分为可独立渲染的顶层块。
+ * 全量切分（内部实现），同时计算最后一块的起始字符偏移。
  *
- * 保证：blocks 顺序渲染的结果与整段渲染一致（块间空行为分隔符，
- * 在 Markdown 中不影响渲染）。无内容时返回单元素数组。
- *
- * @param text 原始 Markdown 文本
- * @returns 顶层块文本数组
+ * @param asTail 作为增量切分的尾部调用时为 true：此时即使只有一个段
+ *   也按组格式化（去掉段外空行），保证拼接结果与全量切分逐字一致。
  */
-export function splitMarkdownBlocks(text: string): string[] {
-  if (!text) return [];
+function splitWithOffset(text: string, asTail = false): SplitResult {
+  if (!text) return { blocks: [], lastBlockStart: 0 };
 
   const lines = text.split('\n');
   const segments = collectSegments(lines);
 
   // 全是空行 / 无有效段：作为单块返回，保持原样
-  if (segments.length <= 1) return [text];
+  if (segments.length === 0) return { blocks: [text], lastBlockStart: 0 };
+  if (segments.length === 1 && !asTail) return { blocks: [text], lastBlockStart: 0 };
 
   // 第二遍：按合并规则把段聚合成最终块
   const groups: Segment[][] = [];
@@ -158,9 +163,78 @@ export function splitMarkdownBlocks(text: string): string[] {
   }
 
   // 每个最终块取原始行范围（含内部空行，保留松散列表等原始间距）
-  return groups.map((group) => {
+  const blocks = groups.map((group) => {
     const first = group[0]!;
     const last = group[group.length - 1]!;
     return lines.slice(first.start, last.end).join('\n');
   });
+
+  // 计算最后一块起始行对应的字符偏移（行长 + 换行符）
+  const lastStartLine = groups[groups.length - 1]![0]!.start;
+  let lastBlockStart = 0;
+  for (let i = 0; i < lastStartLine; i++) {
+    lastBlockStart += (lines[i]?.length ?? 0) + 1;
+  }
+
+  return { blocks, lastBlockStart };
+}
+
+/**
+ * 把 Markdown 文本切分为可独立渲染的顶层块。
+ *
+ * 保证：blocks 顺序渲染的结果与整段渲染一致（块间空行为分隔符，
+ * 在 Markdown 中不影响渲染）。无内容时返回单元素数组。
+ *
+ * @param text 原始 Markdown 文本
+ * @returns 顶层块文本数组
+ */
+export function splitMarkdownBlocks(text: string): string[] {
+  return splitWithOffset(text).blocks;
+}
+
+/** 增量切分缓存（保存上一次的输入与结果） */
+export interface MarkdownBlocksCache {
+  text: string;
+  blocks: string[];
+  /** 最后一块在 text 中的起始字符偏移 */
+  lastBlockStart: number;
+}
+
+/**
+ * 增量切分：流式输出时新文本通常只是在旧文本末尾追加。
+ * 此时除最后一块外的所有块都已稳定（段边界只依赖其之前的行，
+ * 未闭合的围栏/公式只会出现在最后一块），只需重切最后一块起点
+ * 之后的尾部文本，避免每个流式更新都全量重扫。
+ *
+ * 安全条件：旧文本在最后一块起点之后必须已出现过换行——
+ * 否则最后一块的首行还可能被追加内容改写，而首行参与
+ * 与前一块的合并判定（如列表编号连续性），此时回退全量切分。
+ *
+ * @param text 当前完整 Markdown 文本
+ * @param cache 上一次的切分缓存（首次传 null）
+ * @returns 新的缓存（blocks 与全量切分结果一致）
+ */
+export function splitMarkdownBlocksIncremental(
+  text: string,
+  cache: MarkdownBlocksCache | null
+): MarkdownBlocksCache {
+  if (cache && text === cache.text) return cache;
+
+  if (
+    cache &&
+    cache.blocks.length > 1 &&
+    text.startsWith(cache.text) &&
+    cache.text.indexOf('\n', cache.lastBlockStart) !== -1
+  ) {
+    const tail = text.slice(cache.lastBlockStart);
+    const tailResult = splitWithOffset(tail, true);
+    return {
+      text,
+      blocks: [...cache.blocks.slice(0, -1), ...tailResult.blocks],
+      lastBlockStart: cache.lastBlockStart + tailResult.lastBlockStart,
+    };
+  }
+
+  const { blocks, lastBlockStart } = splitWithOffset(text);
+  return { text, blocks, lastBlockStart };
 }

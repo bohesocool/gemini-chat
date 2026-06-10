@@ -3,7 +3,7 @@
  * 需求: 9.1, 9.2, 9.3, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 2.1
  */
 
-import React, { useState, useCallback, useMemo, memo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -12,7 +12,7 @@ import rehypeKatex from 'rehype-katex';
 import type { Components } from 'react-markdown';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { createLogger } from '../services/logger';
-import { splitMarkdownBlocks } from '../utils/markdownBlocks';
+import { splitMarkdownBlocksIncremental, type MarkdownBlocksCache } from '../utils/markdownBlocks';
 
 // 模块日志记录器
 const logger = createLogger('MarkdownRenderer');
@@ -123,8 +123,14 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, 
   // 按顶层块切分后逐块渲染。块内容稳定时由 MarkdownBlock 的 memo 跳过重解析，
   // 流式输出时仅最后一块（在变化的那块）需要重新解析，前面已完成的块复用。
   // componentsWithPreview 引用稳定（依赖项 handleOpenPreview 稳定），不影响 memo 命中。
+  // 切分本身也增量化：流式追加时只重切最后一块之后的尾部，不全量重扫。
   // 需求: 2.1 - 避免重复解析
-  const blocks = useMemo(() => splitMarkdownBlocks(content), [content]);
+  const blocksCacheRef = useRef<MarkdownBlocksCache | null>(null);
+  const blocks = useMemo(() => {
+    const next = splitMarkdownBlocksIncremental(content, blocksCacheRef.current);
+    blocksCacheRef.current = next;
+    return next.blocks;
+  }, [content]);
 
   const renderedContent = useMemo(
     () =>

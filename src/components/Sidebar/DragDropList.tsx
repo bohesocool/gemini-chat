@@ -1,9 +1,13 @@
 /**
- * 拖拽排序列表组件
+ * 拖拽排序列表组件（虚拟化）
  * 需求: 7.5
+ *
+ * 使用 @tanstack/react-virtual 只渲染可视区域内的项
+ * （与 VirtualMessageList 同方案），窗口数量多时避免全量渲染。
  */
 
 import React, { useState, useCallback, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 // ============ 类型定义 ============
 
@@ -16,6 +20,8 @@ interface DragDropListProps<T> {
   renderItem: (item: T, index: number, isDragging: boolean, isDropTarget: boolean) => React.ReactNode;
   /** 排序变化回调 */
   onReorder: (items: T[]) => void;
+  /** 滚动容器引用（虚拟化需要，由父组件提供可滚动元素） */
+  scrollRef: React.RefObject<HTMLElement>;
   /** 自定义类名 */
   className?: string;
 }
@@ -68,6 +74,7 @@ export function DragDropList<T>({
   keyExtractor,
   renderItem,
   onReorder,
+  scrollRef,
   className = '',
 }: DragDropListProps<T>) {
   // 拖拽状态
@@ -78,6 +85,15 @@ export function DragDropList<T>({
 
   // 拖拽数据引用
   const dragDataRef = useRef<{ index: number } | null>(null);
+
+  // 虚拟化器：只渲染可视区域内的项，动态测量实际高度
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 96,
+    overscan: 5,
+    measureElement: (element) => element.getBoundingClientRect().height,
+  });
 
   // 处理拖拽开始
   const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
@@ -164,8 +180,15 @@ export function DragDropList<T>({
   }, [items, onReorder]);
 
   return (
-    <div className={`space-y-1 ${className}`}>
-      {items.map((item, index) => {
+    <div
+      className={`relative w-full ${className}`}
+      style={{ height: `${virtualizer.getTotalSize()}px` }}
+    >
+      {virtualizer.getVirtualItems().map((virtualItem) => {
+        const index = virtualItem.index;
+        const item = items[index];
+        if (item === undefined) return null;
+
         const key = keyExtractor(item);
         const isDragging = dragState.dragIndex === index;
         const isDropTarget = dragState.dropIndex === index && dragState.dragIndex !== index;
@@ -173,15 +196,24 @@ export function DragDropList<T>({
         return (
           <div
             key={key}
+            data-index={index}
+            ref={virtualizer.measureElement}
             draggable
             onDragStart={(e) => handleDragStart(e, index)}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleDragOver(e, index)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, index)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualItem.start}px)`,
+            }}
             className={`
-              transition-all duration-200 cursor-grab active:cursor-grabbing
-              ${isDropTarget ? 'transform translate-y-1 border-t-2 border-primary-500' : ''}
+              pb-1 transition-all duration-200 cursor-grab active:cursor-grabbing
+              ${isDropTarget ? 'border-t-2 border-primary-500' : ''}
             `}
           >
             {renderItem(item, index, isDragging, isDropTarget)}

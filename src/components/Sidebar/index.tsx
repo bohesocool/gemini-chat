@@ -4,7 +4,7 @@
  * 需求: 4.1, 4.2, 4.6, 7.1, 7.2
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useChatWindowStore } from '../../stores/chatWindow';
 import { useSettingsStore } from '../../stores/settings';
 import { useSidebarView } from '../Layout';
@@ -51,6 +51,8 @@ export function Sidebar() {
   // 图片预览状态
   const [previewImage, setPreviewImage] = useState<GeneratedImage | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // 窗口列表滚动容器（供 DragDropList 虚拟化使用）
+  const listScrollRef = useRef<HTMLDivElement>(null);
 
   // 过滤后的窗口列表
   const filteredWindows = useMemo(() => {
@@ -213,14 +215,14 @@ export function Sidebar() {
           <div className="px-3 pb-2">
             <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('sidebar.searchPlaceholder')} />
           </div>
-          <div className="flex-1 overflow-y-auto px-2 custom-scrollbar">
+          <div ref={listScrollRef} className="flex-1 overflow-y-auto px-2 custom-scrollbar">
             {filteredWindows.length === 0 ? (
               <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
                 <ChatIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 {searchTerm ? (<><p>{t('sidebar.noMatchingChats')}</p><p className="text-sm mt-1">{t('sidebar.tryOtherKeywords')}</p></>) : (<><p>{t('sidebar.noChats')}</p><p className="text-sm mt-1">{t('sidebar.startNewChat')}</p></>)}
               </div>
             ) : (
-              <DragDropList items={filteredWindows} keyExtractor={(window) => window.id} renderItem={renderWindowCard} onReorder={handleReorder} />
+              <DragDropList items={filteredWindows} keyExtractor={(window) => window.id} renderItem={renderWindowCard} onReorder={handleReorder} scrollRef={listScrollRef} />
             )}
           </div>
           <div className="p-3">
