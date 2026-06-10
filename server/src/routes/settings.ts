@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { prisma } from '../database.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { validateBody } from '../middleware/validate.js';
+import { appSettingsSchema } from '../schemas.js';
 
 export const settingsRouter = Router();
 
@@ -11,7 +13,7 @@ settingsRouter.get('/', asyncHandler(async (_req, res) => {
   res.json(record?.value ?? null);
 }));
 
-settingsRouter.put('/', asyncHandler(async (req, res) => {
+settingsRouter.put('/', validateBody(appSettingsSchema), asyncHandler(async (req, res) => {
   const record = await prisma.appSetting.upsert({
     where: { key: SETTINGS_KEY },
     update: { value: req.body },

@@ -183,7 +183,7 @@ export async function importDataAuto(jsonString: string): Promise<void> {
 }
 
 export async function clearAllData(): Promise<void> {
-  await api.del('/sync/all');
+  await api.del('/sync/all', { confirm: true });
 }
 
 export function closeDB(): void {

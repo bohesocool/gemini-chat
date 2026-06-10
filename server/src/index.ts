@@ -21,13 +21,32 @@ import { requireAuth } from './middleware/auth.js';
 import { markDirty } from './services/syncScheduler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { seedFromEnvIfEmpty } from './services/webdavConfigStore.js';
+import { warnIfJwtSecretMissing } from './services/serverAuth.js';
 
 const app = express();
 
 app.disable('x-powered-by');
 
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      // React 行内 style 属性需要 unsafe-inline
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      fontSrc: ["'self'", 'data:'],
+      // 语音消息通过 blob URL 播放
+      mediaSrc: ["'self'", 'blob:', 'data:'],
+      // API 端点（Gemini / OpenAI 兼容代理）和 Live API WebSocket 由用户配置，
+      // 可能是任意主机；LAN 部署也可能走 http/ws
+      connectSrc: ["'self'", 'https:', 'wss:', 'http:', 'ws:'],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'self'"],
+      // LAN 上常见纯 http 部署，不强制升级到 https
+      upgradeInsecureRequests: null,
+    },
+  },
   crossOriginEmbedderPolicy: false,
 }));
 
@@ -100,6 +119,9 @@ async function start() {
   console.log(`DB_ENABLED: ${config.dbEnabled}`);
   console.log(`DB_PROVIDER: ${config.dbProvider}`);
   console.log(`WEBDAV_ENABLED: ${config.webdavEnabled}`);
+
+  // JWT_SECRET 未配置时在启动阶段就给出醒目告警，而不是等到第一次登录
+  warnIfJwtSecretMissing();
 
   if (config.dbEnabled) {
     await initDatabase();
