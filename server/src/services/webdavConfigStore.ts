@@ -67,6 +67,21 @@ function decrypt(cipherB64: string, keyInput: string): string {
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
 }
 
+/**
+ * 启动时检测 CONFIG_ENCRYPTION_KEY 强度。
+ * 加密密钥经单轮 SHA-256 派生，对高熵随机密钥（openssl rand -hex 32）已足够安全，
+ * 但若设置了过短/低熵的密钥则易被暴力破解，此处给出告警引导用户使用强密钥。
+ */
+export function warnIfWeakConfigEncryptionKey(): void {
+  const k = config.configEncryptionKey;
+  if (k && k.length < 16) {
+    console.warn('='.repeat(64));
+    console.warn(`[webdav] WARNING: CONFIG_ENCRYPTION_KEY 过短（${k.length} 字符），加密强度不足。`);
+    console.warn('[webdav] 请使用高熵随机密钥，例如 `openssl rand -hex 32`。');
+    console.warn('='.repeat(64));
+  }
+}
+
 function getEncryptionKeyOrThrow(): string {
   const k = config.configEncryptionKey;
   if (!k || k.length === 0) {

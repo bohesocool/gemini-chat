@@ -146,6 +146,22 @@ export function warnIfJwtSecretMissing(): void {
   getJwtSecret();
 }
 
+/**
+ * 启动时检测是否在使用公开的默认密码（未配置 AUTH_PASSWORD_HASH / VITE_AUTH_PASSWORD）。
+ * 默认密码 'adminiadmin' 是公开已知值，暴露在公网时任何人都能登录。
+ */
+export function warnIfUsingDefaultPassword(): void {
+  const fromEnv = config.authPasswordHash;
+  const configured = !!fromEnv && (isScryptHash(fromEnv) || /^[a-f0-9]{64}$/i.test(fromEnv));
+  if (!configured) {
+    console.warn('='.repeat(64));
+    console.warn('[auth] WARNING: 未配置登录密码，正在使用公开的默认密码 "adminiadmin"。');
+    console.warn('[auth] 任何能访问本服务的人都可用该默认密码登录。');
+    console.warn('[auth] 请设置 VITE_AUTH_PASSWORD（容器会自动哈希）或 AUTH_PASSWORD_HASH。');
+    console.warn('='.repeat(64));
+  }
+}
+
 export function verifyPasswordInput(input: { password?: string; passwordHash?: string }): boolean {
   const target = getAuthPasswordHash();
   let candidate: string | undefined;

@@ -20,8 +20,8 @@ import { startSyncScheduler, stopSyncScheduler } from './services/syncScheduler.
 import { requireAuth } from './middleware/auth.js';
 import { markDirty } from './services/syncScheduler.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { seedFromEnvIfEmpty } from './services/webdavConfigStore.js';
-import { warnIfJwtSecretMissing } from './services/serverAuth.js';
+import { seedFromEnvIfEmpty, warnIfWeakConfigEncryptionKey } from './services/webdavConfigStore.js';
+import { warnIfJwtSecretMissing, warnIfUsingDefaultPassword } from './services/serverAuth.js';
 
 const app = express();
 
@@ -122,6 +122,10 @@ async function start() {
 
   // JWT_SECRET 未配置时在启动阶段就给出醒目告警，而不是等到第一次登录
   warnIfJwtSecretMissing();
+  // 未配置登录密码（使用公开默认密码）时给出醒目告警
+  warnIfUsingDefaultPassword();
+  // CONFIG_ENCRYPTION_KEY 过短时给出告警
+  warnIfWeakConfigEncryptionKey();
 
   if (config.dbEnabled) {
     await initDatabase();
