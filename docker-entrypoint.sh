@@ -15,7 +15,12 @@ simple_hash() {
 if [ -n "${VITE_AUTH_PASSWORD:-}" ]; then
   PASSWORD_HASH=$(simple_hash "$VITE_AUTH_PASSWORD")
   sed -i "s|__AUTH_PASSWORD_HASH__|$PASSWORD_HASH|g" "$CONFIG_FILE"
-  export AUTH_PASSWORD_HASH="$PASSWORD_HASH"
+  # 后端使用加盐 scrypt 哈希；node 不可用时回退到 sha256（后端仍兼容旧格式）
+  if SCRYPT_HASH=$(node /app/server/scripts/hash-password.js "$VITE_AUTH_PASSWORD" 2>/dev/null); then
+    export AUTH_PASSWORD_HASH="$SCRYPT_HASH"
+  else
+    export AUTH_PASSWORD_HASH="$PASSWORD_HASH"
+  fi
 fi
 
 DB_FLAG="${DB_ENABLED:-false}"

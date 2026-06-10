@@ -94,6 +94,18 @@ export const migrateFromIndexedDBSchema = z.object({
   images: z.array(imageCreateSchema).optional(),
 });
 
+// 设置/模型配置的具体字段由前端演进，这里只校验顶层结构，
+// 防止 null/标量/超深嵌套等异常 JSON 直接写入数据库
+export const appSettingsSchema = z.record(z.string(), z.unknown());
+
+export const modelConfigsSchema = z.array(
+  z.object({ id: z.string().min(1) }).passthrough()
+);
+
+export const deleteAllConfirmSchema = z.object({
+  confirm: z.literal(true),
+});
+
 export const webdavConfigSchema = z.object({
   enabled: z.boolean().optional(),
   url: z.string().trim().optional(),

@@ -11,6 +11,7 @@ import { getPublicConfig, updateConfig } from '../services/webdavConfigStore.js'
 import { asyncHandler, HttpError } from '../middleware/errorHandler.js';
 import { validateBody } from '../middleware/validate.js';
 import {
+  deleteAllConfirmSchema,
   migrateFromIndexedDBSchema,
   webdavConfigSchema,
   webdavTestSchema,
@@ -248,7 +249,8 @@ syncRouter.post(
   })
 );
 
-syncRouter.delete('/all', asyncHandler(async (_req, res) => {
+// 清空全部数据是不可逆操作，要求 body 显式传 { confirm: true } 作为二次确认
+syncRouter.delete('/all', validateBody(deleteAllConfirmSchema), asyncHandler(async (_req, res) => {
   await prisma.$transaction(async (tx) => {
     await tx.subTopic.deleteMany({});
     await tx.chatWindow.deleteMany({});
