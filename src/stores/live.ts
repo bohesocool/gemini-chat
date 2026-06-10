@@ -1,10 +1,11 @@
 /**
  * Live API 状态管理
  * 需求: 2.1, 2.2, 2.2-2.6, 3.6, 4.2, 6.1-6.4, 9.1-9.4
- * 
+ *
  * 管理 Live API 实时对话功能的所有状态，包括连接状态、音频状态、
  * 说话状态、转录消息和会话配置。
- * 支持音频数据累积用于历史记录保存。
+ * 服务实例生命周期与音频处理逻辑在 services/liveApi/LiveSessionManager 中，
+ * 本 store 只保留状态和对管理器的薄委托。
  */
 
 import { create } from 'zustand';
@@ -13,39 +14,19 @@ import type {
   Speaker,
   TranscriptMessage,
   LiveSessionConfig,
-  LiveApiCallbacks,
   ScreenShareStatus,
   ScreenShareConfig,
 } from '../types/liveApi';
 import {
-  LiveApiService,
-  AudioCaptureService,
-  AudioPlayerService,
-  ScreenCaptureService,
-  getFriendlyErrorMessage,
+  liveSessionManager,
   DEFAULT_LIVE_CONFIG,
 } from '../services/liveApi';
+import type { TurnAudio, TurnAudioSegment } from '../services/liveApi';
 import { DEFAULT_SCREEN_SHARE_CONFIG } from '../constants/liveApi';
 import { useSettingsStore } from './settings';
 import { storeLogger } from '../services/logger';
 
-// ============ Store 状态接口 ============
-
-/**
- * 音频数据累积器
- * 用于收集一个轮次内的所有音频数据
- * 需求: 2.1, 2.2
- */
-interface AudioAccumulator {
-  /** 用户音频数据块 */
-  userChunks: ArrayBuffer[];
-  /** AI 音频数据块 */
-  modelChunks: ArrayBuffer[];
-  /** 用户音频开始时间 */
-  userStartTime: number | null;
-  /** AI 音频开始时间 */
-  modelStartTime: number | null;
-}
+// ============ 类型定义 ============
 
 /**
  * 完成的音频消息
@@ -182,74 +163,6 @@ interface LiveActions {
 
 export type LiveStore = LiveState & LiveActions;
 
-// ============ 服务实例 ============
-
-/** Live API 服务实例 */
-let liveApiService: LiveApiService | null = null;
-/** 音频捕获服务实例 */
-let audioCaptureService: AudioCaptureService | null = null;
-/** 音频播放服务实例 */
-let audioPlayerService: AudioPlayerService | null = null;
-/** 屏幕捕获服务实例 */
-let screenCaptureService: ScreenCaptureService | null = null;
-
-// ============ 音频累积器 ============
-// 需求: 2.1, 2.2
-
-/** 音频数据累积器实例 */
-let audioAccumulator: AudioAccumulator = {
-  userChunks: [],
-  modelChunks: [],
-  userStartTime: null,
-  modelStartTime: null,
-};
-
-/**
- * 重置音频累积器
- */
-function resetAudioAccumulator(): void {
-  audioAccumulator = {
-    userChunks: [],
-    modelChunks: [],
-    userStartTime: null,
-    modelStartTime: null,
-  };
-}
-
-/**
- * 合并音频数据块
- * @param chunks 音频数据块数组
- * @returns 合并后的 ArrayBuffer
- */
-function mergeAudioChunks(chunks: ArrayBuffer[]): ArrayBuffer {
-  if (chunks.length === 0) {
-    return new ArrayBuffer(0);
-  }
-  
-  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  
-  for (const chunk of chunks) {
-    result.set(new Uint8Array(chunk), offset);
-    offset += chunk.byteLength;
-  }
-  
-  return result.buffer;
-}
-
-/**
- * 计算 PCM 音频时长（毫秒）
- * @param audioData PCM 音频数据
- * @param sampleRate 采样率
- * @returns 时长（毫秒）
- */
-function calculatePcmDuration(audioData: ArrayBuffer, sampleRate: number): number {
-  // 16 位 PCM，每个样本 2 字节
-  const numSamples = audioData.byteLength / 2;
-  return Math.round((numSamples / sampleRate) * 1000);
-}
-
 // ============ 辅助函数 ============
 
 /**
@@ -260,23 +173,20 @@ function generateTranscriptId(): string {
 }
 
 /**
- * 清理服务实例
+ * 把轮次音频片段转换为待保存消息（补充转录文字）
  */
-function cleanupServices(): void {
-  if (liveApiService) {
-    liveApiService.disconnect();
-    liveApiService = null;
-  }
-
-  if (audioCaptureService) {
-    audioCaptureService.stop();
-    audioCaptureService = null;
-  }
-
-  if (audioPlayerService) {
-    audioPlayerService.destroy();
-    audioPlayerService = null;
-  }
+function toCompletedMessage(
+  role: 'user' | 'model',
+  segment: TurnAudioSegment,
+  transcript: string
+): CompletedAudioMessage {
+  return {
+    role,
+    audioData: segment.audioData,
+    durationMs: segment.durationMs,
+    transcript: transcript.trim(),
+    timestamp: segment.timestamp,
+  };
 }
 
 // ============ Store 创建 ============
@@ -287,7 +197,7 @@ function cleanupServices(): void {
  */
 export const useLiveStore = create<LiveStore>((set, get) => ({
   // ============ 初始状态 ============
-  
+
   // 连接状态
   connectionStatus: 'disconnected',
   errorMessage: null,
@@ -328,245 +238,70 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
    */
   startSession: async () => {
     const state = get();
-    
+
     // 如果已经连接或正在连接，不重复操作
     if (state.connectionStatus === 'connected' || state.connectionStatus === 'connecting') {
+      return;
+    }
+
+    // 获取 API 配置
+    const { apiKey, apiEndpoint } = useSettingsStore.getState();
+
+    if (!apiKey) {
+      set({ connectionStatus: 'error', errorMessage: '请先配置 API 密钥' });
       return;
     }
 
     // 设置连接中状态
     set({ connectionStatus: 'connecting', errorMessage: null });
 
-    try {
-      // 获取 API 配置
-      const settingsStore = useSettingsStore.getState();
-      const { apiKey, apiEndpoint } = settingsStore;
-
-      if (!apiKey) {
-        throw new Error('请先配置 API 密钥');
-      }
-
-      const config = state.config;
-
-      // 创建 Live API 服务回调
-      const liveApiCallbacks: LiveApiCallbacks = {
-        onOpen: () => {
-          storeLogger.info('Live API 连接已打开');
-        },
-        onClose: (reason) => {
-          storeLogger.info('Live API 连接已关闭', { reason });
-          set({ 
-            connectionStatus: 'disconnected',
-            currentSpeaker: 'none',
-          });
-          cleanupServices();
-        },
-        onError: (error) => {
-          storeLogger.error('Live API 错误', { error: error.message });
-          const friendlyMessage = getFriendlyErrorMessage(error);
-          set({ 
-            connectionStatus: 'error',
-            errorMessage: friendlyMessage,
-            currentSpeaker: 'none',
-          });
-        },
-        onAudioData: (data) => {
-          // 将音频数据添加到播放队列
-          if (audioPlayerService) {
-            audioPlayerService.enqueue(data);
-          }
-          
-          // 累积 AI 音频数据用于历史记录保存
-          // 需求: 2.2
-          if (audioAccumulator.modelStartTime === null) {
-            audioAccumulator.modelStartTime = Date.now();
-          }
-          audioAccumulator.modelChunks.push(data.slice(0)); // 复制数据
-        },
-        onTextData: (text) => {
-          // 处理文本响应（如果响应模态为文本）
-          storeLogger.debug('收到文本响应', { text });
-        },
-        onInputTranscription: (text) => {
-          // 更新输入转录（增量累积）
-          const before = get().pendingInputTranscript;
-          get().updatePendingTranscript('input', text);
-          const after = get().pendingInputTranscript;
-          storeLogger.debug('[LiveAPI] 输入转录累积:', { 增量: text, 之前: before, 之后: after });
-        },
-        onOutputTranscription: (text) => {
-          // 更新输出转录（增量累积）
-          const before = get().pendingOutputTranscript;
-          get().updatePendingTranscript('output', text);
-          const after = get().pendingOutputTranscript;
-          storeLogger.debug('[LiveAPI] 输出转录累积:', { 增量: text, 之前: before, 之后: after });
-        },
-        onInterrupted: () => {
-          // 处理中断 - 停止音频播放
-          storeLogger.info('AI 响应被中断');
-          if (audioPlayerService) {
-            audioPlayerService.stop();
-          }
-          set({ currentSpeaker: 'none' });
-        },
-        onTurnComplete: () => {
-          // 轮次完成 - 完成待处理的转录并保存音频消息
-          storeLogger.info('轮次完成');
+    await liveSessionManager.startSession(
+      {
+        apiKey,
+        apiEndpoint,
+        config: state.config,
+        outputVolume: state.outputVolume,
+        muted: state.isMuted,
+      },
+      {
+        onConnectionStatusChange: (status) => set({ connectionStatus: status }),
+        onError: (message) => set({ errorMessage: message }),
+        onSpeakerChange: (speaker) => set({ currentSpeaker: speaker }),
+        onInputLevel: (level) => set({ inputLevel: level }),
+        onOutputLevel: (level) => set({ outputLevel: level }),
+        onInputTranscription: (text) => get().updatePendingTranscript('input', text),
+        onOutputTranscription: (text) => get().updatePendingTranscript('output', text),
+        onTurnComplete: (audio: TurnAudio) => {
+          // 轮次完成 - 把累积音频与转录合并入待保存队列
+          // 需求: 2.1, 2.2
           const currentState = get();
-          const newPendingMessages: CompletedAudioMessage[] = [...currentState.pendingMessages];
-          
-          // 处理用户音频消息
-          // 需求: 2.1
-          if (audioAccumulator.userChunks.length > 0) {
-            const userAudioData = mergeAudioChunks(audioAccumulator.userChunks);
-            const userDurationMs = calculatePcmDuration(userAudioData, 16000); // 用户音频 16kHz
-            
-            if (userAudioData.byteLength > 0) {
-              newPendingMessages.push({
-                role: 'user',
-                audioData: userAudioData,
-                durationMs: userDurationMs,
-                transcript: currentState.pendingInputTranscript.trim(),
-                timestamp: audioAccumulator.userStartTime || Date.now(),
-              });
-            }
+          const newPendingMessages = [...currentState.pendingMessages];
+
+          if (audio.user) {
+            newPendingMessages.push(
+              toCompletedMessage('user', audio.user, currentState.pendingInputTranscript)
+            );
           }
-          
-          // 处理 AI 音频消息
-          // 需求: 2.2
-          if (audioAccumulator.modelChunks.length > 0) {
-            const modelAudioData = mergeAudioChunks(audioAccumulator.modelChunks);
-            const modelDurationMs = calculatePcmDuration(modelAudioData, 24000); // AI 音频 24kHz
-            
-            if (modelAudioData.byteLength > 0) {
-              newPendingMessages.push({
-                role: 'model',
-                audioData: modelAudioData,
-                durationMs: modelDurationMs,
-                transcript: currentState.pendingOutputTranscript.trim(),
-                timestamp: audioAccumulator.modelStartTime || Date.now(),
-              });
-            }
+          if (audio.model) {
+            newPendingMessages.push(
+              toCompletedMessage('model', audio.model, currentState.pendingOutputTranscript)
+            );
           }
-          
-          // 更新待保存消息队列
+
           set({ pendingMessages: newPendingMessages });
-          
-          // 重置音频累积器
-          resetAudioAccumulator();
-          
-          // 完成输入转录
+
+          // 完成输入/输出转录
           if (currentState.pendingInputTranscript) {
             currentState.finalizePendingTranscript('input');
           }
-          
-          // 完成输出转录
           if (currentState.pendingOutputTranscript) {
             currentState.finalizePendingTranscript('output');
           }
-          
+
           set({ currentSpeaker: 'none' });
         },
-        onSetupComplete: () => {
-          storeLogger.info('Live API 设置完成');
-          set({ connectionStatus: 'connected' });
-        },
-      };
-
-      // 创建 Live API 服务
-      liveApiService = new LiveApiService(
-        {
-          apiKey,
-          apiEndpoint,
-          model: config.model,
-          responseModality: config.responseModality,
-          voiceName: config.voiceName,
-          systemInstruction: config.systemInstruction,
-          thinkingBudget: config.thinkingBudget,
-          enableAffectiveDialog: config.enableAffectiveDialog,
-          enableProactiveAudio: config.enableProactiveAudio,
-          enableInputTranscription: config.enableInputTranscription,
-          enableOutputTranscription: config.enableOutputTranscription,
-          vadConfig: config.vadConfig,
-        },
-        liveApiCallbacks
-      );
-
-      // 创建音频播放服务
-      audioPlayerService = new AudioPlayerService({
-        onPlaybackStart: () => {
-          set({ currentSpeaker: 'model' });
-        },
-        onPlaybackEnd: () => {
-          // 只有在没有待处理音频时才设置为 none
-          if (!audioPlayerService?.isPlaying()) {
-            set({ currentSpeaker: 'none' });
-          }
-        },
-        onLevelChange: (level) => {
-          set({ outputLevel: level });
-        },
-      });
-
-      // 初始化音频播放服务
-      await audioPlayerService.initialize();
-
-      // 设置输出音量
-      audioPlayerService.setVolume(state.outputVolume);
-
-      // 创建音频捕获服务
-      audioCaptureService = new AudioCaptureService({
-        onAudioData: (pcmData) => {
-          // 发送音频数据到 Live API
-          if (liveApiService?.isConnected() && !get().isMuted) {
-            liveApiService.sendRealtimeInput(pcmData);
-            
-            // 累积用户音频数据用于历史记录保存
-            // 需求: 2.1
-            if (audioAccumulator.userStartTime === null) {
-              audioAccumulator.userStartTime = Date.now();
-            }
-            audioAccumulator.userChunks.push(pcmData.slice(0)); // 复制数据
-          }
-        },
-        onLevelChange: (level) => {
-          set({ inputLevel: level });
-          // 如果有音频输入，设置当前说话方为用户
-          if (level > 0.1 && !get().isMuted) {
-            set({ currentSpeaker: 'user' });
-          }
-        },
-        onError: (error) => {
-          storeLogger.error('音频捕获错误', { error: error.message });
-          const friendlyMessage = getFriendlyErrorMessage(error);
-          set({ errorMessage: friendlyMessage });
-        },
-      });
-
-      // 连接 Live API
-      await liveApiService.connect();
-
-      // 开始音频捕获
-      await audioCaptureService.start();
-
-      storeLogger.info('Live 会话已开始');
-    } catch (error) {
-      storeLogger.error('启动 Live 会话失败', { 
-        error: error instanceof Error ? error.message : '未知错误' 
-      });
-      
-      const friendlyMessage = error instanceof Error 
-        ? getFriendlyErrorMessage(error)
-        : '启动会话失败';
-      
-      set({ 
-        connectionStatus: 'error',
-        errorMessage: friendlyMessage,
-      });
-      
-      // 清理已创建的服务
-      cleanupServices();
-    }
+      }
+    );
   },
 
   /**
@@ -575,16 +310,13 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
    */
   endSession: () => {
     storeLogger.info('结束 Live 会话');
-    
+
     // 停止屏幕共享并清理资源
     // 需求: 1.6
     get().stopScreenShare();
-    
-    // 清理服务
-    cleanupServices();
-    
-    // 重置音频累积器
-    resetAudioAccumulator();
+
+    // 清理服务并重置音频累积器
+    liveSessionManager.endSession();
 
     // 重置状态
     set({
@@ -605,17 +337,8 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
    * 需求: 3.6
    */
   toggleMute: () => {
-    const state = get();
-    const newMuted = !state.isMuted;
-
-    if (audioCaptureService) {
-      if (newMuted) {
-        audioCaptureService.pause();
-      } else {
-        audioCaptureService.resume();
-      }
-    }
-
+    const newMuted = !get().isMuted;
+    liveSessionManager.setMuted(newMuted);
     set({ isMuted: newMuted });
     storeLogger.info('静音状态切换', { isMuted: newMuted });
   },
@@ -630,14 +353,11 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
     if (Number.isNaN(volume)) {
       return;
     }
-    
+
     // 限制音量范围在 0-1 之间
     const clampedVolume = Math.max(0, Math.min(1, volume));
 
-    if (audioPlayerService) {
-      audioPlayerService.setVolume(clampedVolume);
-    }
-
+    liveSessionManager.setVolume(clampedVolume);
     set({ outputVolume: clampedVolume });
   },
 
@@ -714,7 +434,7 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
   /**
    * 更新待处理转录
    * 需求: 6.1, 6.2
-   * 
+   *
    * 注意：API 返回的转录是增量的，每次只返回新的部分
    * 需要累积拼接成完整文本
    */
@@ -736,8 +456,8 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
    */
   finalizePendingTranscript: (type: 'input' | 'output') => {
     const state = get();
-    const text = type === 'input' 
-      ? state.pendingInputTranscript 
+    const text = type === 'input'
+      ? state.pendingInputTranscript
       : state.pendingOutputTranscript;
 
     if (!text.trim()) {
@@ -765,7 +485,7 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
    * 清除所有转录
    */
   clearTranscripts: () => {
-    set({ 
+    set({
       transcripts: [],
       pendingInputTranscript: '',
       pendingOutputTranscript: '',
@@ -775,7 +495,7 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
   /**
    * 获取并清除待保存的消息
    * 需求: 2.1, 2.2
-   * 
+   *
    * 用于外部（如 LiveApiView）获取待保存的音频消息并保存到历史记录
    */
   consumePendingMessages: () => {
@@ -789,9 +509,9 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
   /**
    * 切换屏幕共享
    * 需求: 1.1, 1.6, 2.1, 2.2, 2.3, 4.1
-   * 
+   *
    * 如果当前正在共享或请求中，则停止共享；
-   * 否则创建 ScreenCaptureService 实例并开始屏幕捕获。
+   * 否则通过会话管理器开始屏幕捕获。
    */
   toggleScreenShare: async () => {
     const state = get();
@@ -805,70 +525,40 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
     // 设置状态为请求中
     set({ screenShareStatus: 'requesting', screenShareError: null });
 
-    // 创建 ScreenCaptureService 实例，传入配置和回调
-    screenCaptureService = new ScreenCaptureService(state.screenShareConfig, {
-      // 截取到一帧屏幕时的回调
-      // 需求: 2.1 - 发送帧到 Live API
-      onFrame: (base64Data: string) => {
-        // 通过 LiveApiService 发送屏幕帧
-        if (liveApiService?.isConnected()) {
-          try {
-            liveApiService.sendScreenFrame(base64Data);
-          } catch (error) {
-            storeLogger.warn('发送屏幕帧失败', {
-              error: error instanceof Error ? error.message : '未知错误',
-            });
-          }
-        }
-        // 更新最新屏幕帧（用于预览）
+    await liveSessionManager.startScreenShare(state.screenShareConfig, {
+      // 截取到一帧屏幕（已由管理器发送到 Live API），更新预览
+      onFrame: (base64Data) => {
         set({ latestScreenFrame: base64Data });
       },
-
-      // 屏幕共享开始回调
       onStart: () => {
-        storeLogger.info('屏幕共享已开始');
         set({ screenShareStatus: 'sharing' });
       },
-
-      // 屏幕共享停止回调（包括用户通过浏览器原生 UI 停止）
+      // 屏幕共享停止（包括用户通过浏览器原生 UI 停止）
       // 需求: 1.5
       onStop: () => {
-        storeLogger.info('屏幕共享已停止');
-        screenCaptureService = null;
         set({
           screenShareStatus: 'inactive',
           latestScreenFrame: null,
         });
       },
-
-      // 屏幕共享错误回调
       // 需求: 7.1, 7.2
-      onError: (error: Error) => {
-        storeLogger.error('屏幕共享错误', { error: error.message });
-        screenCaptureService = null;
+      onError: (error) => {
         set({
           screenShareStatus: 'inactive',
           screenShareError: error.message,
         });
       },
     });
-
-    // 启动屏幕捕获
-    await screenCaptureService.start();
   },
 
   /**
    * 停止屏幕共享
    * 需求: 1.4, 1.6
-   * 
-   * 停止 ScreenCaptureService 并重置所有屏幕共享相关状态。
+   *
+   * 停止屏幕捕获并重置所有屏幕共享相关状态。
    */
   stopScreenShare: () => {
-    // 如果 screenCaptureService 存在，调用 stop() 停止捕获
-    if (screenCaptureService) {
-      screenCaptureService.stop();
-      screenCaptureService = null;
-    }
+    liveSessionManager.stopScreenShare();
 
     // 重置屏幕共享状态
     set({
@@ -881,7 +571,7 @@ export const useLiveStore = create<LiveStore>((set, get) => ({
   /**
    * 更新屏幕共享配置
    * 需求: 3.3
-   * 
+   *
    * 合并传入的部分配置到现有配置（部分更新）。
    */
   updateScreenShareConfig: (config: Partial<ScreenShareConfig>) => {

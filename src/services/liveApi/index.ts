@@ -12,6 +12,14 @@ export { AudioPlayerService } from './AudioPlayerService';
 export { VoicePlayerService, PlaybackError } from './VoicePlayerService';
 export type { VoicePlayerCallbacks } from './VoicePlayerService';
 export { ScreenCaptureService } from './ScreenCaptureService';
+export { LiveSessionManager, liveSessionManager } from './LiveSessionManager';
+export type {
+  TurnAudio,
+  TurnAudioSegment,
+  LiveSessionManagerCallbacks,
+  ScreenShareSessionCallbacks,
+  StartSessionOptions,
+} from './LiveSessionManager';
 
 // 历史记录存储服务导出
 export {
