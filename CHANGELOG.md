@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.25](https://github.com/bohesocool/gemini-chat/compare/v0.2.24...v0.2.25) (2026-06-10)
+
+
+### ✅ 测试 (Tests)
+
+* 为核心逻辑层补充单元测试（数据迁移/SSE 解析/IndexedDB 存储/聊天窗口 Store） ([589c890](https://github.com/bohesocool/gemini-chat/commit/589c890605c2db2e0d50062d9a80a5d7942755f4))
+
 ### [0.2.24](https://github.com/bohesocool/gemini-chat/compare/v0.2.23...v0.2.24) (2026-06-10)
 
 
