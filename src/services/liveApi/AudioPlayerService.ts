@@ -34,6 +34,9 @@ export class AudioPlayerService {
   // 音频配置常量
   private readonly sampleRate = AUDIO_CONFIG.OUTPUT_SAMPLE_RATE; // 24kHz
 
+  // 最大缓存时长（秒）：提前调度和待调度队列各自不超过该时长，防止网络积压导致内存无限增长
+  private readonly maxBufferedSeconds = 5;
+
   constructor(callbacks: AudioPlayerCallbacks) {
     this.callbacks = callbacks;
   }
@@ -82,7 +85,30 @@ export class AudioPlayerService {
    */
   enqueue(pcmData: ArrayBuffer): void {
     this.audioQueue.push(pcmData);
+
+    // 队列超过最大缓存时长时丢弃最早的块
+    let droppedCount = 0;
+    while (this.getQueuedDuration() > this.maxBufferedSeconds && this.audioQueue.length > 1) {
+      this.audioQueue.shift();
+      droppedCount++;
+    }
+    if (droppedCount > 0) {
+      logger.warn(`音频队列超过 ${this.maxBufferedSeconds}s 上限，丢弃最早的 ${droppedCount} 个音频块`);
+    }
+
     this.schedulePlayback();
+  }
+
+  /**
+   * 计算队列中待调度音频的总时长（秒）
+   */
+  private getQueuedDuration(): number {
+    let totalBytes = 0;
+    for (const chunk of this.audioQueue) {
+      totalBytes += chunk.byteLength;
+    }
+    // 16 位单声道 PCM：每个采样 2 字节
+    return totalBytes / 2 / this.sampleRate;
   }
 
   /**
@@ -107,8 +133,12 @@ export class AudioPlayerService {
       this.callbacks.onPlaybackStart();
     }
 
-    // 处理队列中的所有音频块
+    // 处理队列中的音频块，最多提前调度 maxBufferedSeconds 的音频
+    // 剩余的块留在队列中，由 onended 回调继续调度
     while (this.audioQueue.length > 0) {
+      if (this.nextPlayTime - this.audioContext.currentTime >= this.maxBufferedSeconds) {
+        break;
+      }
       const pcmData = this.audioQueue.shift();
       if (!pcmData) {
         continue;
@@ -175,6 +205,9 @@ export class AudioPlayerService {
       if (index > -1) {
         this.scheduledSources.splice(index, 1);
       }
+
+      // 继续调度因缓存上限而留在队列中的音频块
+      this.schedulePlayback();
 
       // 如果没有更多调度的音频且队列为空，通知播放结束
       if (this.scheduledSources.length === 0 && this.audioQueue.length === 0) {
