@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.23](https://github.com/bohesocool/gemini-chat/compare/v0.2.22...v0.2.23) (2026-06-10)
+
+
+### 🐛 Bug 修复 (Bug Fixes)
+
+* 服务端安全加固 ([6b27cb3](https://github.com/bohesocool/gemini-chat/commit/6b27cb35e9b0edc009c1b94871de207fb06936a8))
+
 ### [0.2.22](https://github.com/bohesocool/gemini-chat/compare/v0.2.21...v0.2.22) (2026-06-10)
 
 
