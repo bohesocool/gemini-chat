@@ -32,10 +32,6 @@ export const TIMEOUTS = {
   ANIMATION: 200,
   /** 最小加载时间（毫秒），用于避免闪烁 */
   MIN_LOAD_TIME: 500,
-  /** 清理定时器间隔（毫秒） */
-  CLEANUP_INTERVAL: 60 * 1000,
-  /** 缓存过期时间（毫秒） */
-  CACHE_TTL: 5 * 60 * 1000,
 } as const;
 
 // ============ UI 限制 ============
@@ -49,8 +45,6 @@ export const UI_LIMITS = {
   MAX_TITLE_LENGTH: 30,
   /** 模块最大行数 */
   MAX_MODULE_LINES: 400,
-  /** 缓存最大条目数 */
-  MAX_CACHE_ENTRIES: 100,
 } as const;
 
 // ============ 动画配置 ============
