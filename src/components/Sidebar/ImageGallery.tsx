@@ -116,7 +116,7 @@ function ImageThumbnail({ image, onClick, formatTime }: ImageThumbnailProps) {
   return (
     <button
       onClick={onClick}
-      className="group relative aspect-square rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-700 hover:ring-2 hover:ring-primary-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+      className="group relative aspect-square rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-700 hover:ring-2 hover:ring-primary-500 transition-all duration-normal focus:outline-none focus:ring-2 focus:ring-primary-500"
     >
       <img
         src={imageUrl}
@@ -125,9 +125,9 @@ function ImageThumbnail({ image, onClick, formatTime }: ImageThumbnailProps) {
         loading="lazy"
       />
       {/* 悬停遮罩 */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200" />
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-normal" />
       {/* 时间标签 */}
-      <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-normal">
         <p className="text-xs text-white truncate">
           {formatTime(image.createdAt)}
         </p>

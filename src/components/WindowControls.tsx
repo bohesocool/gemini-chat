@@ -4,9 +4,9 @@
  * 判断是否在 Electron 环境中运行
  */
 const isElectronEnvironment = (): boolean => {
-  return typeof window !== 'undefined' && 
-    'electronAPI' in window && 
-    (window as { electronAPI?: unknown }).electronAPI !== undefined;
+  return typeof window !== 'undefined' &&
+    'electronAPI' in window &&
+    window.electronAPI !== undefined;
 };
 
 /**
@@ -15,7 +15,7 @@ const isElectronEnvironment = (): boolean => {
 const isMacOS = (): boolean => {
   if (isElectronEnvironment()) {
     // Electron 环境下通过 electronAPI 获取平台信息
-    return (window as any).electronAPI?.platform === 'darwin';
+    return window.electronAPI?.platform === 'darwin';
   }
   // 网页环境下通过 userAgent 检测
   return /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);

@@ -190,7 +190,7 @@ export const FullscreenGallery = memo(function FullscreenGallery({
         className="flex-1 overflow-y-auto"
       >
         <div
-          className={`transition-opacity duration-150 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'
+          className={`transition-opacity duration-fast ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'
             }`}
         >
           {imageGroups.map((group) => (
@@ -204,11 +204,11 @@ export const FullscreenGallery = memo(function FullscreenGallery({
               </h3>
 
               {/* 图片网格 - 带过渡动画 */}
-              <div className={`grid ${getGridClasses(viewMode)} transition-all duration-200 ease-out p-3 sm:p-4 md:p-6`}>
+              <div className={`grid ${getGridClasses(viewMode)} transition-all duration-normal ease-out p-3 sm:p-4 md:p-6`}>
                 {group.images.map((image, index) => (
                   <div
                     key={image.id}
-                    className="transform transition-all duration-200 ease-out"
+                    className="transform transition-all duration-normal ease-out"
                     style={{
                       // 交错动画延迟，让图片依次出现
                       animationDelay: `${Math.min(index * 20, 200)}ms`,

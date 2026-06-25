@@ -170,7 +170,7 @@ export function Sidebar() {
     }
 
     return (
-      <div className={`transition-opacity duration-200 ${isDragging ? 'opacity-50' : 'opacity-100'} ${isDropTarget ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
+      <div className={`transition-opacity duration-normal ${isDragging ? 'opacity-50' : 'opacity-100'} ${isDropTarget ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}>
         <ChatWindowCard
           window={window}
           isActive={isActive}
@@ -184,7 +184,7 @@ export function Sidebar() {
   }, [activeWindowId, editingId, editingTitle, handleEditKeyDown, handleSaveEdit, handleCancelEdit, handleSelectWindow, handleStartEdit, handleDeleteWindow, handleSelectSubTopic]);
 
   return (
-    <div className="flex h-full flex-col bg-neutral-50 dark:bg-neutral-800 transition-colors duration-300">
+    <div className="flex h-full flex-col bg-neutral-50 dark:bg-neutral-800 transition-colors duration-slow">
       <div className="flex items-center justify-between px-4 py-3">
         <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
           {currentView === 'assistants' ? t('sidebar.assistants') : currentView === 'images' ? t('sidebar.gallery') : currentView === 'templates' ? t('sidebar.templates') : currentView === 'bookmarks' ? t('sidebar.bookmarks') : currentView === 'live' ? t('sidebar.live') : t('settings.title')}
@@ -205,7 +205,7 @@ export function Sidebar() {
           <div className="p-3">
             <button
               onClick={handleCreateWindow}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm touch-manipulation"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-lg transition-colors duration-normal font-medium shadow-sm touch-manipulation"
               style={{ minHeight: touchTargets.minimum }}
             >
               <PlusIcon className="h-5 w-5" />

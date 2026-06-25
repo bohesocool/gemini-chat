@@ -100,7 +100,7 @@ export function VersionDisplay({ onCheckUpdate }: VersionDisplayProps) {
       disabled={updateStatus === 'checking'}
       className="inline-flex items-center text-xs text-neutral-500 dark:text-neutral-400 
                  hover:text-primary-500 dark:hover:text-primary-400 
-                 transition-colors duration-200 cursor-pointer
+                 transition-colors duration-normal cursor-pointer
                  disabled:cursor-wait"
       title="点击检查更新"
       aria-label={`当前版本 ${formattedVersion}，点击检查更新`}

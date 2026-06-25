@@ -102,7 +102,7 @@ export function SearchBar({
           text-neutral-900 dark:text-neutral-100
           placeholder-neutral-500 dark:placeholder-neutral-400
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-          transition-all duration-200
+          transition-all duration-normal
         "
         style={{ minHeight: touchTargets.minimum }}
       />

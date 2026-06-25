@@ -264,7 +264,7 @@ const ActionButton = memo(function ActionButton({ onClick, variant, disabled = f
       className={`
         flex items-center gap-1.5 px-3 py-1.5 rounded-lg
         text-sm font-medium
-        transition-all duration-200
+        transition-all duration-normal
         ${isPrimary
           ? 'bg-green-500 hover:bg-green-600 text-white shadow-md shadow-green-500/30 hover:shadow-lg hover:shadow-green-500/40'
           : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:text-neutral-200'

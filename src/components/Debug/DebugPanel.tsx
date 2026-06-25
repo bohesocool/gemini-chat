@@ -111,13 +111,13 @@ export function DebugPanel({ isOpen, onClose }: DebugPanelProps) {
                 aria-checked={debugEnabled}
                 aria-label={t('debug.debugMode')}
                 className={`
-                  relative w-9 sm:w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0
+                  relative w-9 sm:w-10 h-5 rounded-full transition-colors duration-normal flex-shrink-0
                   ${debugEnabled ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-600'}
                 `}
               >
                 <span
                   className={`
-                    absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200
+                    absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-normal
                     ${debugEnabled ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0'}
                   `}
                 />

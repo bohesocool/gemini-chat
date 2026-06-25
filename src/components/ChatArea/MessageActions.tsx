@@ -226,7 +226,7 @@ const ActionButton = memo(function ActionButton({ onClick, title, disabled = fal
         text-neutral-400 hover:text-neutral-600
         dark:text-neutral-500 dark:hover:text-neutral-300
         hover:bg-neutral-100 dark:hover:bg-neutral-700
-        transition-all duration-200
+        transition-all duration-normal
         ${disabled || isLoading ? 'opacity-50 cursor-not-allowed' : 'opacity-100'}
       `}
     >

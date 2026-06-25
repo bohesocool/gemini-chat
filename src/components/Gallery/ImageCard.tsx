@@ -86,7 +86,7 @@ export const ImageCard = memo(function ImageCard({
         bg-neutral-100 dark:bg-neutral-700 
         hover:ring-2 hover:ring-primary-500 hover:ring-offset-1 sm:hover:ring-offset-2 
         dark:hover:ring-offset-neutral-800 
-        transition-all duration-200 ease-out
+        transition-all duration-normal ease-out
         focus:outline-none focus:ring-2 focus:ring-primary-500 
         focus:ring-offset-1 sm:focus:ring-offset-2 dark:focus:ring-offset-neutral-800
         active:scale-[0.98] sm:active:scale-100
@@ -114,7 +114,7 @@ export const ImageCard = memo(function ImageCard({
         <img
           src={imageUrl}
           alt={image.prompt || '生成的图片'}
-          className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+          className={`w-full h-full object-cover transition-transform duration-slow group-hover:scale-105 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           loading="lazy"
@@ -140,10 +140,10 @@ export const ImageCard = memo(function ImageCard({
       )}
 
       {/* 悬停遮罩 - 需求: 5.1, 5.3 */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-normal" />
 
       {/* 日期和规格信息 - 需求: 4.1, 1.4, 5.3 响应式布局 */}
-      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-normal">
         <p className="text-xs sm:text-sm font-medium text-white truncate">
           {dateText}
         </p>
@@ -162,7 +162,7 @@ export const ImageCard = memo(function ImageCard({
 
       {/* 始终显示的日期角标（小图标模式）- 需求: 1.4 响应式布局 */}
       {viewMode === 'small' && (
-        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 bg-black/50 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 bg-black/50 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-normal">
           <span className="text-[10px] sm:text-xs text-white font-medium">{dateText}</span>
         </div>
       )}

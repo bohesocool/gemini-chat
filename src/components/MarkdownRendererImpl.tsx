@@ -248,7 +248,7 @@ function CodeBlock({
           {isHtml && onPreview && (
             <button
               onClick={onPreview}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 transition-all duration-200 text-xs font-medium"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 transition-all duration-normal text-xs font-medium"
               title="预览 HTML"
             >
               <PreviewIcon className="w-3.5 h-3.5" />
@@ -259,7 +259,7 @@ function CodeBlock({
           {/* 复制按钮 - 需求 2.1, 2.2 */}
           <button
             onClick={handleCopy}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-200 text-xs font-medium ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-normal text-xs font-medium ${
               copied
                 ? 'bg-green-600/20 text-green-400'
                 : 'bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-white'

@@ -31,9 +31,9 @@ export interface AuthConfig {
  * 判断是否在 Electron 环境中运行
  */
 export const isElectronEnvironment = (): boolean => {
-  return typeof window !== 'undefined' && 
-    'electronAPI' in window && 
-    (window as { electronAPI?: unknown }).electronAPI !== undefined;
+  return typeof window !== 'undefined' &&
+    'electronAPI' in window &&
+    window.electronAPI !== undefined;
 };
 
 /**

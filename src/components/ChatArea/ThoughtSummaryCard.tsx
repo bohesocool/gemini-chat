@@ -110,7 +110,7 @@ export function ThoughtSummaryCard({
           px-4 py-3
           text-left
           hover:bg-purple-100/50 dark:hover:bg-purple-800/20
-          transition-colors duration-150
+          transition-colors duration-fast
           focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50
         "
         aria-expanded={isExpanded}
@@ -125,7 +125,7 @@ export function ThoughtSummaryCard({
         <ChevronIcon
           className={`
             w-4 h-4 text-purple-500 dark:text-purple-400
-            transform transition-transform duration-200
+            transform transition-transform duration-normal
             ${isExpanded ? 'rotate-180' : 'rotate-0'}
           `}
         />
@@ -136,7 +136,7 @@ export function ThoughtSummaryCard({
         id="thought-content"
         className={`
           overflow-hidden
-          transition-all duration-300 ease-in-out
+          transition-all duration-slow ease-in-out
           ${isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}
         `}
       >

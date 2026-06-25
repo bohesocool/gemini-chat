@@ -70,7 +70,7 @@ export function TemplateManager() {
       <div className="p-3">
         <button
           onClick={handleCreateTemplate}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm touch-manipulation"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 dark:bg-primary-200 dark:hover:bg-primary-300 text-white rounded-lg transition-colors duration-normal font-medium shadow-sm touch-manipulation"
           style={{ minHeight: touchTargets.minimum }}
         >
           <PlusIcon className="h-5 w-5" />
@@ -166,7 +166,7 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
     <button
       onClick={onSelect}
       className={`
-        w-full p-3 text-left rounded-lg border transition-all duration-200
+        w-full p-3 text-left rounded-lg border transition-all duration-normal
         touch-manipulation cursor-pointer
         ${isSelected 
           ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-400 dark:border-primary-600 ring-1 ring-primary-400 dark:ring-primary-600' 

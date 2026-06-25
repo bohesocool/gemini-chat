@@ -26,7 +26,7 @@ export const AppearanceSettingsSection = memo(function AppearanceSettingsSection
         <button
           onClick={() => setTheme('light')}
           className={`
-            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            relative p-4 rounded-xl border-2 transition-all duration-normal text-left cursor-pointer
             ${theme === 'light'
               ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
               : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
@@ -46,7 +46,7 @@ export const AppearanceSettingsSection = memo(function AppearanceSettingsSection
         <button
           onClick={() => setTheme('dark')}
           className={`
-            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            relative p-4 rounded-xl border-2 transition-all duration-normal text-left cursor-pointer
             ${theme === 'dark'
               ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
               : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
@@ -69,7 +69,7 @@ export const AppearanceSettingsSection = memo(function AppearanceSettingsSection
             // 切换回浅色/深色时保留用户的自定义颜色偏好
           }}
           className={`
-            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            relative p-4 rounded-xl border-2 transition-all duration-normal text-left cursor-pointer
             ${theme === 'snow-white'
               ? 'border-neutral-900 bg-neutral-50 shadow-sm'
               : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
@@ -89,7 +89,7 @@ export const AppearanceSettingsSection = memo(function AppearanceSettingsSection
         <button
           onClick={() => setTheme('system')}
           className={`
-            relative p-4 rounded-xl border-2 transition-all duration-200 text-left cursor-pointer
+            relative p-4 rounded-xl border-2 transition-all duration-normal text-left cursor-pointer
             ${theme === 'system'
               ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
               : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
@@ -118,7 +118,7 @@ function CustomColorSelector() {
 
   return (
     <div className={`
-      relative p-4 rounded-xl border-2 transition-all duration-200 text-left
+      relative p-4 rounded-xl border-2 transition-all duration-normal text-left
       ${customThemeColor
         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-sm'
         : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'}

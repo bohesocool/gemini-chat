@@ -179,7 +179,7 @@ export const ChatWindowCard = memo(function ChatWindowCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
-        group relative rounded-lg cursor-pointer transition-all duration-150 mb-1.5
+        group relative rounded-lg cursor-pointer transition-all duration-fast mb-1.5
         ${isActive
           ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-300 dark:border-primary-600'
           : 'hover:bg-neutral-100 dark:hover:bg-neutral-700/50'
@@ -213,12 +213,12 @@ export const ChatWindowCard = memo(function ChatWindowCard({
           {/* 模型标签 - 悬停时渐隐 */}
           <ModelBadge 
             modelId={window.config.model} 
-            className={`transition-opacity duration-200 ${isHovered && !isActive ? 'opacity-0' : 'opacity-100'}`} 
+            className={`transition-opacity duration-normal ${isHovered && !isActive ? 'opacity-0' : 'opacity-100'}`} 
           />
           
           {/* 操作按钮 - 悬停时渐显，绝对定位覆盖在模型标签位置 */}
           <div 
-            className={`absolute inset-0 flex items-center justify-end gap-1 transition-opacity duration-200 ${isHovered && !isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className={`absolute inset-0 flex items-center justify-end gap-1 transition-opacity duration-normal ${isHovered && !isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           >
             <button
               onClick={(e) => {
@@ -252,7 +252,7 @@ export const ChatWindowCard = memo(function ChatWindowCard({
           className="flex items-center gap-1 px-3 pb-2 text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
         >
           <ChevronIcon 
-            className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
+            className={`h-3 w-3 transition-transform duration-normal ${isExpanded ? 'rotate-90' : ''}`} 
           />
           <span>{window.subTopics.length} {t('sidebar.subTopics')}</span>
         </button>

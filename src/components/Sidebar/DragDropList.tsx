@@ -212,7 +212,7 @@ export function DragDropList<T>({
               transform: `translateY(${virtualItem.start}px)`,
             }}
             className={`
-              pb-1 transition-all duration-200 cursor-grab active:cursor-grabbing
+              pb-1 transition-all duration-normal cursor-grab active:cursor-grabbing
               ${isDropTarget ? 'border-t-2 border-primary-500' : ''}
             `}
           >

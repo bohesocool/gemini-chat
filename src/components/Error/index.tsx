@@ -177,7 +177,7 @@ export function ErrorMessage({
             disabled:bg-blue-400 disabled:cursor-not-allowed
             text-white font-medium
             rounded-lg
-            ${prefersReducedMotion ? '' : 'transition-colors duration-200'}
+            ${prefersReducedMotion ? '' : 'transition-colors duration-normal'}
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
             dark:focus:ring-offset-slate-900
           `}
@@ -335,7 +335,7 @@ export function InlineError({
               p-1.5 rounded-md
               text-red-600 dark:text-red-400
               hover:bg-red-100 dark:hover:bg-red-900/30
-              ${prefersReducedMotion ? '' : 'transition-colors duration-200'}
+              ${prefersReducedMotion ? '' : 'transition-colors duration-normal'}
             `}
             title={t('common.retry')}
           >
@@ -350,7 +350,7 @@ export function InlineError({
               p-1.5 rounded-md
               text-red-600 dark:text-red-400
               hover:bg-red-100 dark:hover:bg-red-900/30
-              ${prefersReducedMotion ? '' : 'transition-colors duration-200'}
+              ${prefersReducedMotion ? '' : 'transition-colors duration-normal'}
             `}
             title={t('common.close')}
           >
@@ -459,7 +459,7 @@ export function EmptyState({
             bg-blue-500 hover:bg-blue-600
             text-white font-medium text-sm
             rounded-lg
-            ${prefersReducedMotion ? '' : 'transition-colors duration-200'}
+            ${prefersReducedMotion ? '' : 'transition-colors duration-normal'}
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
             dark:focus:ring-offset-slate-900
           `}

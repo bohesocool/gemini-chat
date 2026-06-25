@@ -144,7 +144,7 @@ export function LoadingOverlay({
         flex items-center justify-center
         bg-white/80 dark:bg-slate-900/80
         ${blur ? 'backdrop-blur-sm' : ''}
-        ${prefersReducedMotion ? '' : 'transition-opacity duration-300'}
+        ${prefersReducedMotion ? '' : 'transition-opacity duration-slow'}
         ${className}
       `}
     >

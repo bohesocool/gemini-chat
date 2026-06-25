@@ -144,7 +144,7 @@ export function CircularAudioLevel({
       {/* 主圆点 */}
       <div
         className={`
-          absolute inset-0 rounded-full transition-colors duration-150
+          absolute inset-0 rounded-full transition-colors duration-fast
           ${isActive ? activeColor : inactiveColor}
         `}
       />

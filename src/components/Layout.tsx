@@ -524,7 +524,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
 
   return (
     <SidebarContext.Provider value={sidebarContextValue}>
-      <div className="flex flex-col overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-300 relative" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+      <div className="flex flex-col overflow-hidden bg-white dark:bg-neutral-900 transition-colors duration-slow relative" style={{ height: '100dvh', minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
         {/* 自定义标题栏 - 仅 Electron 环境显示 */}
         <TitleBar effectiveTheme={effectiveTheme} />
 
@@ -532,7 +532,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
           {/* 移动端遮罩层 - 需求: 4.2 图片库视图时不显示遮罩 */}
           {!sidebarCollapsed && isMobile && currentView !== 'images' && (
             <div
-              className="fixed inset-0 z-20 bg-black/50 transition-opacity duration-300"
+              className="fixed inset-0 z-20 bg-black/50 transition-opacity duration-slow"
               onClick={toggleSidebar}
               aria-hidden="true"
             />
@@ -540,7 +540,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
 
           {/* 左侧图标导航栏 - 只保留有功能的按钮 */}
           <nav className={`
-          relative flex flex-col w-14 flex-shrink-0 z-40 transition-colors duration-300 pt-2 no-drag
+          relative flex flex-col w-14 flex-shrink-0 z-40 transition-colors duration-slow pt-2 no-drag
           ${theme === 'snow-white'
               ? 'bg-white'
               : effectiveTheme === 'dark' ? 'bg-black' : 'bg-primary-600'}
@@ -653,7 +653,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
           {currentView !== 'images' && currentView !== 'live' && (
             <aside
               className={`
-              fixed inset-y-0 left-12 z-30 transform transition-[width,transform,opacity] duration-300 ease-in-out overflow-hidden
+              fixed inset-y-0 left-12 z-30 transform transition-[width,transform,opacity] duration-slow ease-in-out overflow-hidden
               md:relative md:left-0 md:translate-x-0
               ${sidebarCollapsed ? '-translate-x-full md:w-0 md:opacity-0' : 'translate-x-0 md:w-64 md:opacity-100'}
               ${theme === 'snow-white'
@@ -672,7 +672,7 @@ export function Layout({ sidebar, children }: LayoutProps) {
 
           {/* 主内容区 - 需求: 2.1, 2.2, 2.3, 3.3 */}
           <main className={`
-          flex flex-1 flex-col overflow-hidden transition-all duration-300 relative
+          flex flex-1 flex-col overflow-hidden transition-all duration-slow relative
           ${effectiveTheme === 'dark' ? 'bg-[#050505]' : 'bg-white'}
         `}>
             <div className="flex-1 overflow-hidden relative flex flex-col">
@@ -759,7 +759,7 @@ function NavIconButton({ icon, label, onClick, isActive }: { icon: React.ReactNo
     <button
       onClick={onClick}
       className={`
-          w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
+          w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-normal
           ${activeClass}
         `}
       title={label}

@@ -166,7 +166,7 @@ export const ImageItem = memo(function ImageItem({
         title={theme === 'purple' ? '点击放大' : undefined}
         className={`
           h-auto object-contain rounded-xl
-          cursor-pointer hover:opacity-90 transition-all duration-200
+          cursor-pointer hover:opacity-90 transition-all duration-normal
           hover:scale-[1.02]
           ${themeStyles.image.border}
           ${themeStyles.image.hoverBorder}
@@ -186,7 +186,7 @@ export const ImageItem = memo(function ImageItem({
           px-2 py-0.5 rounded text-xs
           bg-purple-500/80 text-white
           opacity-0 group-hover:opacity-100
-          transition-opacity duration-200
+          transition-opacity duration-normal
           pointer-events-none
         ">
           点击放大

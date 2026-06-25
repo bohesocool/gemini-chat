@@ -342,3 +342,15 @@ body,
 .no-drag {
   -webkit-app-region: no-drag;
 }
+
+/* 无障碍：遵循系统「减少动态效果」偏好，全局兜底未受控的动画。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

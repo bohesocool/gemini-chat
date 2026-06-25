@@ -58,7 +58,7 @@ export const GalleryToolbar = memo(function GalleryToolbar({
   const { t } = useTranslation();
   
   return (
-    <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-colors duration-200">
+    <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-colors duration-normal">
       {/* 左侧：标题 - 响应式布局 */}
       <div className="flex items-center gap-1.5 sm:gap-3">
         <h2 className="text-sm sm:text-lg font-semibold text-neutral-800 dark:text-neutral-100">
@@ -70,10 +70,10 @@ export const GalleryToolbar = memo(function GalleryToolbar({
       </div>
 
       {/* 右侧：视图模式切换 - 响应式布局 */}
-      <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-neutral-100 dark:bg-neutral-700 rounded-md sm:rounded-lg transition-colors duration-200">
+      <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-neutral-100 dark:bg-neutral-700 rounded-md sm:rounded-lg transition-colors duration-normal">
         <button
           onClick={() => onViewModeChange('small')}
-          className={`p-1.5 sm:p-2 rounded-md transition-all duration-200 ${
+          className={`p-1.5 sm:p-2 rounded-md transition-all duration-normal ${
             viewMode === 'small'
               ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm scale-100'
               : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:scale-105'
@@ -85,7 +85,7 @@ export const GalleryToolbar = memo(function GalleryToolbar({
         </button>
         <button
           onClick={() => onViewModeChange('large')}
-          className={`p-1.5 sm:p-2 rounded-md transition-all duration-200 ${
+          className={`p-1.5 sm:p-2 rounded-md transition-all duration-normal ${
             viewMode === 'large'
               ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm scale-100'
               : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:scale-105'

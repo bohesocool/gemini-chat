@@ -17,7 +17,7 @@ import { useSettingsStore } from '../stores/settings';
 const isElectronEnvironment = (): boolean => {
   return typeof window !== 'undefined' &&
     'electronAPI' in window &&
-    (window as { electronAPI?: unknown }).electronAPI !== undefined;
+    window.electronAPI !== undefined;
 };
 
 /**
@@ -25,7 +25,7 @@ const isElectronEnvironment = (): boolean => {
  */
 const isMacOS = (): boolean => {
   if (isElectronEnvironment()) {
-    return (window as any).electronAPI?.platform === 'darwin';
+    return window.electronAPI?.platform === 'darwin';
   }
   return false;
 };
@@ -40,15 +40,15 @@ interface WindowControlButtonsProps {
  */
 function WindowControlButtons({ isLightTheme }: WindowControlButtonsProps) {
   const handleMinimize = () => {
-    (window as any).electronAPI?.send('window-minimize');
+    window.electronAPI?.send('window-minimize');
   };
 
   const handleMaximize = () => {
-    (window as any).electronAPI?.send('window-maximize');
+    window.electronAPI?.send('window-maximize');
   };
 
   const handleClose = () => {
-    (window as any).electronAPI?.send('window-close');
+    window.electronAPI?.send('window-close');
   };
 
   // 根据主题决定按钮颜色
@@ -138,7 +138,7 @@ export function TitleBar({ effectiveTheme }: TitleBarProps) {
 
       {/* Snow White 主题的底部边框线 - 使用 opacity 过渡避免闪烁 */}
       <div
-        className={`absolute bottom-0 h-[1px] bg-black pointer-events-none transition-opacity duration-300 ${theme === 'snow-white' ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute bottom-0 h-[1px] bg-black pointer-events-none transition-opacity duration-slow ${theme === 'snow-white' ? 'opacity-100' : 'opacity-0'}`}
         style={{
           zIndex: 50,
           left: 'calc(3.5rem + 15px)', // 56px (sidebar) + 16px (radius) - 1px (overlap)

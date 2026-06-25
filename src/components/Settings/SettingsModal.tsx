@@ -218,7 +218,7 @@ export function SettingsModal({
       zIndex: 50,
       opacity: isHidden ? 0 : 1,
       // 始终应用过渡效果
-      transition: `opacity ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+      transition: `opacity ${duration}ms ${easings.easeInOut}`,
     };
   };
 
@@ -244,7 +244,7 @@ export function SettingsModal({
         opacity: isHidden ? 0 : 1,
         transform: isHidden ? 'translateY(20px)' : 'translateY(0)',
         // 始终应用过渡效果，使用更平滑的缓动
-        transition: `opacity ${duration}ms cubic-bezier(0.4, 0, 0.2, 1), transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        transition: `opacity ${duration}ms ${easings.easeInOut}, transform ${duration}ms ${easings.easeInOut}`,
       };
     }
 
@@ -266,7 +266,7 @@ export function SettingsModal({
       opacity: isHidden ? 0 : 1,
       transform: isHidden ? 'scale(0.95) translateY(10px)' : 'scale(1) translateY(0)',
       // 始终应用过渡效果，使用更平滑的缓动
-      transition: `opacity ${duration}ms cubic-bezier(0.4, 0, 0.2, 1), transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+      transition: `opacity ${duration}ms ${easings.easeInOut}, transform ${duration}ms ${easings.easeInOut}`,
     };
   };
 
